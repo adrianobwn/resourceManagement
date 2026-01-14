@@ -12,6 +12,10 @@ frontend/dist/
 frontend/.env
 frontend/.env.local
 
+# IDE
+.vscode/
+.idea/
+
 # System Files
 .DS_Store
 Thumbs.db
