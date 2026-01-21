@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Sidebar from '../components/Sidebar';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -17,12 +18,6 @@ const Dashboard = () => {
         setUser(JSON.parse(storedUser));
     }, [navigate]);
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        navigate('/');
-    };
-
     if (!user) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#E6F2F1]">
@@ -32,41 +27,20 @@ const Dashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#E6F2F1] font-sf">
-            {/* Header */}
-            <header className="bg-white shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center py-4">
-                        <div className="flex items-center">
-                            <img
-                                src="/Logo.png"
-                                alt="INTELEQ Logo"
-                                className="h-10"
-                            />
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <div className="text-right">
-                                <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                                <p className="text-xs text-gray-500">{user.userType}</p>
-                            </div>
-                            <button
-                                onClick={handleLogout}
-                                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                            >
-                                Logout
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </header>
+        <div className="flex min-h-screen bg-[#E6F2F1] font-sf">
+            {/* Sidebar */}
+            <Sidebar />
 
             {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex-1 ml-[267px] p-8">
+                {/* Page Title */}
+                <h1 className="text-4xl font-bold text-gray-800 mb-8">Dashboard</h1>
+
                 {/* Welcome Card */}
                 <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
                         Welcome back, {user.name}! 👋
-                    </h1>
+                    </h2>
                     <p className="text-gray-600">
                         You are logged in as <span className="font-medium text-[#00B4A6]">{user.userType}</span>
                     </p>
@@ -121,10 +95,16 @@ const Dashboard = () => {
                 <div className="bg-white rounded-xl shadow-sm p-6">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
                     <div className="flex flex-wrap gap-4">
-                        <button className="bg-[#00B4A6] hover:bg-[#009688] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <button 
+                            onClick={() => navigate('/project')}
+                            className="bg-[#00B4A6] hover:bg-[#009688] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        >
                             View Projects
                         </button>
-                        <button className="bg-[#00B4A6] hover:bg-[#009688] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <button 
+                            onClick={() => navigate('/resources')}
+                            className="bg-[#00B4A6] hover:bg-[#009688] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        >
                             View Resources
                         </button>
                         {user.userType === 'ADMIN' && (
@@ -134,7 +114,7 @@ const Dashboard = () => {
                         )}
                     </div>
                 </div>
-            </main>
+            </div>
         </div>
     );
 };
