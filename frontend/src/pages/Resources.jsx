@@ -12,6 +12,15 @@ const Resources = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [notification, setNotification] = useState({ show: false, message: '' });
     const [detailModal, setDetailModal] = useState({ show: false, resource: null, projects: [] });
+    const [addResourceModal, setAddResourceModal] = useState({ show: false });
+    const [newResource, setNewResource] = useState({
+        fullName: '',
+        email: '',
+        employeeType: '',
+        joinDate: '',
+        skills: []
+    });
+    const [skillInput, setSkillInput] = useState('');
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -67,13 +76,13 @@ const Resources = () => {
         setFilteredResources(result);
     }, [searchQuery, activeFilter, resources]);
 
-    const showNotification = (message) => {
-        setNotification({ show: true, message, closing: false });
+    const showNotification = (message, type = 'info') => {
+        setNotification({ show: true, message, type, closing: false });
         // Auto hide after 4 seconds with smooth animation
         setTimeout(() => {
             setNotification(prev => ({ ...prev, closing: true }));
             setTimeout(() => {
-                setNotification({ show: false, message: '', closing: false });
+                setNotification({ show: false, message: '', type: 'info', closing: false });
             }, 300);
         }, 4000);
     };
@@ -89,8 +98,46 @@ const Resources = () => {
     };
 
     const handleAddResource = () => {
-        // Add Resource functionality
-        alert('Add Resource feature coming soon!');
+        setAddResourceModal({ show: true });
+    };
+
+    const closeAddResourceModal = () => {
+        setAddResourceModal({ show: false });
+        setNewResource({
+            fullName: '',
+            email: '',
+            employeeType: '',
+            joinDate: '',
+            skills: []
+        });
+        setSkillInput('');
+    };
+
+    const handleAddSkill = (e) => {
+        if (e.key === 'Enter' && skillInput.trim()) {
+            e.preventDefault();
+            if (!newResource.skills.includes(skillInput.trim())) {
+                setNewResource(prev => ({
+                    ...prev,
+                    skills: [...prev.skills, skillInput.trim()]
+                }));
+            }
+            setSkillInput('');
+        }
+    };
+
+    const removeSkill = (skillToRemove) => {
+        setNewResource(prev => ({
+            ...prev,
+            skills: prev.skills.filter(skill => skill !== skillToRemove)
+        }));
+    };
+
+    const handleSaveResource = () => {
+        // Save resource logic here
+        console.log('Saving resource:', newResource);
+        closeAddResourceModal();
+        showNotification('Saved Successfully! Resources created successfully.', 'success');
     };
 
     const handleViewDetail = (resource) => {
@@ -138,29 +185,53 @@ const Resources = () => {
                             : 'opacity-100 translate-x-0 animate-slide-in'
                     }`}
                     style={{ 
-                        backgroundColor: 'rgba(0, 180, 216, 0.2)',
-                        borderColor: '#00B4D8'
+                        backgroundColor: notification.type === 'success' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(0, 180, 216, 0.2)',
+                        borderColor: notification.type === 'success' ? '#06D001' : '#00B4D8'
                     }}
                 >
-                    <svg 
-                        className="w-5 h-5" 
-                        fill="none" 
-                        stroke="#00B4D8" 
-                        viewBox="0 0 24 24"
-                        style={{ color: '#00B4D8' }}
+                    {notification.type === 'success' ? (
+                        <svg 
+                            className="w-5 h-5" 
+                            fill="none" 
+                            stroke="#06D001" 
+                            viewBox="0 0 24 24"
+                        >
+                            <path 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round" 
+                                strokeWidth="2" 
+                                d="M5 13l4 4L19 7" 
+                            />
+                        </svg>
+                    ) : (
+                        <svg 
+                            className="w-5 h-5" 
+                            fill="none" 
+                            stroke="#00B4D8" 
+                            viewBox="0 0 24 24"
+                            style={{ color: '#00B4D8' }}
+                        >
+                            <path 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round" 
+                                strokeWidth="2" 
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                            />
+                        </svg>
+                    )}
+                    <span 
+                        className="font-bold" 
+                        style={{ 
+                            color: notification.type === 'success' ? '#06D001' : '#00B4D8', 
+                            fontSize: '14px' 
+                        }}
                     >
-                        <path 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round" 
-                            strokeWidth="2" 
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
-                        />
-                    </svg>
-                    <span className="font-bold" style={{ color: '#00B4D8', fontSize: '14px' }}>{notification.message}</span>
+                        {notification.message}
+                    </span>
                     <button 
                         onClick={closeNotification}
                         className="ml-2 hover:opacity-70 transition-opacity"
-                        style={{ color: '#00B4D8' }}
+                        style={{ color: notification.type === 'success' ? '#06D001' : '#00B4D8' }}
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -218,8 +289,8 @@ const Resources = () => {
                                 <table className="w-full table-fixed" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
                                         <tr className="bg-[#CAF0F8] border-b border-gray-200">
-                                            <th className="text-left py-3 px-4 font-bold text-gray-700 border-r border-gray-200" style={{ fontSize: '14px', width: '35%' }}>Project Name</th>
-                                            <th className="text-left py-3 px-4 font-bold text-gray-700 border-r border-gray-200" style={{ fontSize: '14px', width: '25%' }}>Role</th>
+                                            <th className="text-center py-3 px-4 font-bold text-gray-700 border-r border-gray-200" style={{ fontSize: '14px', width: '35%' }}>Project Name</th>
+                                            <th className="text-center py-3 px-4 font-bold text-gray-700 border-r border-gray-200" style={{ fontSize: '14px', width: '25%' }}>Role</th>
                                             <th className="text-center py-3 px-4 font-bold text-gray-700 border-r border-gray-200" style={{ fontSize: '14px', width: '20%' }}>Start Date</th>
                                             <th className="text-center py-3 px-4 font-bold text-gray-700" style={{ fontSize: '14px', width: '20%' }}>End Date</th>
                                         </tr>
@@ -227,8 +298,8 @@ const Resources = () => {
                                     <tbody>
                                         {detailModal.projects.map((project, index) => (
                                             <tr key={index} className={`hover:bg-gray-50 ${index < detailModal.projects.length - 1 ? 'border-b border-gray-200' : ''}`}>
-                                                <td className="py-3 px-4 font-bold text-gray-800 border-r border-gray-200 truncate" style={{ fontSize: '14px' }}>{project.projectName}</td>
-                                                <td className="py-3 px-4 font-bold text-gray-600 border-r border-gray-200 truncate" style={{ fontSize: '14px' }}>{project.role}</td>
+                                                <td className="py-3 px-4 font-bold text-gray-800 border-r border-gray-200 truncate text-center" style={{ fontSize: '14px' }}>{project.projectName}</td>
+                                                <td className="py-3 px-4 font-bold text-gray-600 border-r border-gray-200 truncate text-center" style={{ fontSize: '14px' }}>{project.role}</td>
                                                 <td className="py-3 px-4 font-bold text-gray-600 border-r border-gray-200 text-center" style={{ fontSize: '14px' }}>{project.startDate}</td>
                                                 <td className="py-3 px-4 font-bold text-gray-600 text-center" style={{ fontSize: '14px' }}>{project.endDate}</td>
                                             </tr>
@@ -236,6 +307,185 @@ const Resources = () => {
                                     </tbody>
                                 </table>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Resource Modal */}
+            {addResourceModal.show && (
+                <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
+                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+                >
+                    <div 
+                        className="rounded-2xl relative flex flex-col animate-scale-in overflow-hidden"
+                        style={{ width: '500px', height: '643px', backgroundColor: '#F5F5F5' }}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-8 pt-6 pb-4">
+                            <h2 className="font-bold text-black" style={{ fontSize: '30px' }}>
+                                Add New Resource
+                            </h2>
+                            <button 
+                                onClick={closeAddResourceModal}
+                                className="text-gray-500 hover:text-gray-700 transition-colors"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Line below title */}
+                        <div className="border-b border-gray-300 mx-0" style={{ width: '500px' }}></div>
+
+                        {/* Form Content */}
+                        <div className="flex-1 px-8 py-4 overflow-y-auto">
+                            {/* Identity & Contact Section */}
+                            <div className="mb-6">
+                                <div className="flex items-center justify-center gap-2 mb-4">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    <span className="font-bold text-black" style={{ fontSize: '20px' }}>Identity & contact</span>
+                                </div>
+                                <div className="flex justify-between px-4">
+                                    <div>
+                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Full Name</label>
+                                        <input
+                                            type="text"
+                                            value={newResource.fullName}
+                                            onChange={(e) => setNewResource(prev => ({ ...prev, fullName: e.target.value }))}
+                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6]"
+                                            style={{ width: '170px', height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Email Address</label>
+                                        <input
+                                            type="email"
+                                            value={newResource.email}
+                                            onChange={(e) => setNewResource(prev => ({ ...prev, email: e.target.value }))}
+                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6]"
+                                            style={{ width: '170px', height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Separator */}
+                            <div className="border-b border-gray-300 mb-6"></div>
+
+                            {/* Employment Status Section */}
+                            <div className="mb-6">
+                                <div className="flex items-center justify-center gap-2 mb-4">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                    <span className="font-bold text-black" style={{ fontSize: '20px' }}>Emplyoment Status</span>
+                                </div>
+                                <div className="flex justify-between px-4">
+                                    <div>
+                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Employee Type</label>
+                                        <div className="relative">
+                                            <select
+                                                value={newResource.employeeType}
+                                                onChange={(e) => setNewResource(prev => ({ ...prev, employeeType: e.target.value }))}
+                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] appearance-none cursor-pointer"
+                                                style={{ width: '170px', height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', paddingRight: '32px', fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '400' }}
+                                            >
+                                                <option value="">Select</option>
+                                                <option value="full-time">Full Time</option>
+                                                <option value="part-time">Part Time</option>
+                                                <option value="contract">Contract</option>
+                                                <option value="intern">Intern</option>
+                                            </select>
+                                            <svg 
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500" 
+                                                fill="none" 
+                                                stroke="currentColor" 
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Join Date</label>
+                                        <input
+                                            type="date"
+                                            value={newResource.joinDate}
+                                            onChange={(e) => setNewResource(prev => ({ ...prev, joinDate: e.target.value }))}
+                                            placeholder="DD/MM/YYYY"
+                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6]"
+                                            style={{ width: '170px', height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '400' }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Separator */}
+                            <div className="border-b border-gray-300 mb-6"></div>
+
+                            {/* Skills Section */}
+                            <div className="mb-6">
+                                <div className="flex items-center justify-center gap-2 mb-4">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span className="font-bold text-black" style={{ fontSize: '20px' }}>Skills & Tags</span>
+                                </div>
+                                <div className="flex flex-col items-center">
+                                    {/* Skills Tags */}
+                                    <div className="flex flex-wrap gap-2 mb-3 justify-center">
+                                        {newResource.skills.map((skill, index) => (
+                                            <span 
+                                                key={index} 
+                                                className="flex items-center gap-1 px-3 py-1 rounded-md text-white"
+                                                style={{ backgroundColor: '#0059FF', fontSize: '14px' }}
+                                            >
+                                                {skill}
+                                                <button 
+                                                    onClick={() => removeSkill(skill)}
+                                                    className="hover:opacity-70 ml-1"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={skillInput}
+                                        onChange={(e) => setSkillInput(e.target.value)}
+                                        onKeyDown={handleAddSkill}
+                                        placeholder="Type to add skills..."
+                                        className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6]"
+                                        style={{ width: '200px', height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '13px', fontFamily: 'SF Pro Display', fontWeight: '300', fontStyle: 'italic' }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer Buttons */}
+                        <div className="flex items-center justify-between px-8 pb-6">
+                            <button
+                                onClick={closeAddResourceModal}
+                                className="font-bold text-black bg-white hover:bg-gray-100 transition-colors"
+                                style={{ width: '76px', height: '40px', fontSize: '14px', border: '1px solid #A9A9A9', borderRadius: '8px' }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSaveResource}
+                                className="font-bold text-black hover:opacity-90 transition-colors"
+                                style={{ width: '180px', height: '40px', fontSize: '14px', backgroundColor: '#CAF0F8', borderRadius: '8px' }}
+                            >
+                                Save & Create Resource
+                            </button>
                         </div>
                     </div>
                 </div>
