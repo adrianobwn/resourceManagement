@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import api from '../utils/api';
+import * as XLSX from 'xlsx';
 
 const Resources = () => {
     const navigate = useNavigate();
@@ -105,8 +106,75 @@ const Resources = () => {
     };
 
     const handleExport = () => {
-        // Export functionality
-        alert('Export feature coming soon!');
+        try {
+            // Prepare data rows
+            const exportData = [];
+            
+            resources.forEach((resource) => {
+                if (resource.status === 'AVAILABLE') {
+                    // For AVAILABLE resources, add one row with empty project fields
+                    exportData.push({
+                        'Nama': resource.resourceName,
+                        'Role': '',
+                        'Status': resource.status,
+                        'Project': '',
+                        'Start Date': '',
+                        'End Date': ''
+                    });
+                } else if (resource.status === 'ASSIGNED' && resource.currentAssignments) {
+                    // For ASSIGNED resources, add a row for each active assignment
+                    if (resource.currentAssignments.length === 0) {
+                        // If no assignments found, add one row with empty project fields
+                        exportData.push({
+                            'Nama': resource.resourceName,
+                            'Role': '',
+                            'Status': resource.status,
+                            'Project': '',
+                            'Start Date': '',
+                            'End Date': ''
+                        });
+                    } else {
+                        resource.currentAssignments.forEach((assignment) => {
+                            exportData.push({
+                                'Nama': resource.resourceName,
+                                'Role': assignment.projectRole,
+                                'Status': resource.status,
+                                'Project': assignment.projectName,
+                                'Start Date': new Date(assignment.startDate).toLocaleDateString('en-GB'),
+                                'End Date': new Date(assignment.endDate).toLocaleDateString('en-GB')
+                            });
+                        });
+                    }
+                }
+            });
+
+            // Create workbook and worksheet
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Resources');
+
+            // Set column widths for better readability
+            const columnWidths = [
+                { wch: 30 }, // Nama
+                { wch: 25 }, // Role
+                { wch: 12 }, // Status
+                { wch: 35 }, // Project
+                { wch: 15 }, // Start Date
+                { wch: 15 }  // End Date
+            ];
+            worksheet['!cols'] = columnWidths;
+
+            // Generate filename with current date
+            const fileName = `Resource_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+            // Export file
+            XLSX.writeFile(workbook, fileName);
+
+            showNotification('Export successful! File downloaded.', 'success');
+        } catch (error) {
+            console.error('Export error:', error);
+            showNotification('Failed to export data', 'error');
+        }
     };
 
     const handleAddDevMan = () => {
