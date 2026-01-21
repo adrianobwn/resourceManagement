@@ -1,16 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../components/AuthContext';
 import api from '../utils/api';
 
 const Login = () => {
+    const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const { login } = useAuth();
-    const navigate = useNavigate();
+
+    // Clear old tokens on login page load
+    useEffect(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -20,7 +24,15 @@ const Login = () => {
         try {
             const response = await api.post('/auth/login', { email, password });
             const { token, name, email: userEmail, userType } = response.data;
-            login({ name, email: userEmail, userType }, token);
+            
+            // Build user object from response
+            const user = { name, email: userEmail, userType };
+            
+            // Store token and user data
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(user));
+            
+            // Redirect to dashboard
             navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Invalid credentials. Please try again.');

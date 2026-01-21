@@ -28,33 +28,44 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
+        // Skip JWT filter for public endpoints
+        String path = request.getRequestURI();
+        if (path.startsWith("/api/auth/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                String token = authHeader.substring(7);
+                String email = jwtUtil.extractEmail(token);
 
-            String token = authHeader.substring(7);
-            String email = jwtUtil.extractEmail(token);
+                if (email != null &&
+                    SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            if (email != null &&
-                SecurityContextHolder.getContext().getAuthentication() == null) {
+                    var userDetails =
+                            userDetailsService.loadUserByUsername(email);
 
-                var userDetails =
-                        userDetailsService.loadUserByUsername(email);
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
+                    authentication.setDetails(
+                            new WebAuthenticationDetailsSource()
+                                    .buildDetails(request)
+                    );
 
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource()
-                                .buildDetails(request)
-                );
-
-                SecurityContextHolder.getContext()
-                        .setAuthentication(authentication);
+                    SecurityContextHolder.getContext()
+                            .setAuthentication(authentication);
+                }
+            } catch (Exception e) {
+                // Invalid token - continue without authentication
+                SecurityContextHolder.clearContext();
             }
         }
 
