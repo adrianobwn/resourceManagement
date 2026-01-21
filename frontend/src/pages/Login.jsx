@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../components/AuthContext';
+import api from '../utils/api';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -6,6 +9,8 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const { login } = useAuth();
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -13,15 +18,12 @@ const Login = () => {
         setIsLoading(true);
 
         try {
-            // TODO: Connect to backend API
-            console.log('Login attempt:', { email, password });
-            // Simulate login for now
-            setTimeout(() => {
-                alert('Login functionality will be connected to backend');
-                setIsLoading(false);
-            }, 1000);
+            const response = await api.post('/auth/login', { email, password });
+            const { token, name, email: userEmail, userType } = response.data;
+            login({ name, email: userEmail, userType }, token);
+            navigate('/dashboard');
         } catch (err) {
-            setError('Invalid credentials. Please try again.');
+            setError(err.response?.data?.message || 'Invalid credentials. Please try again.');
             setIsLoading(false);
         }
     };
