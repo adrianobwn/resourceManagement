@@ -14,6 +14,8 @@ const Resources = () => {
     const [detailModal, setDetailModal] = useState({ show: false, resource: null, projects: [] });
     const [addResourceModal, setAddResourceModal] = useState({ show: false });
     const [addDevManModal, setAddDevManModal] = useState({ show: false });
+    const [assignModal, setAssignModal] = useState({ show: false, resource: null });
+    const [trackRecordModal, setTrackRecordModal] = useState({ show: false, resource: null });
     const [newResource, setNewResource] = useState({
         fullName: '',
         email: '',
@@ -26,7 +28,14 @@ const Resources = () => {
         email: '',
         password: ''
     });
+    const [assignmentData, setAssignmentData] = useState({
+        project: '',
+        role: '',
+        startDate: '',
+        endDate: ''
+    });
     const [skillInput, setSkillInput] = useState('');
+    const [hoveredProject, setHoveredProject] = useState(null);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -118,6 +127,49 @@ const Resources = () => {
         showNotification('Saved Successfully! DevMan created successfully.', 'success');
     };
 
+    const handleAssignToProject = (resource) => {
+        setAssignModal({ show: true, resource });
+    };
+
+    const closeAssignModal = () => {
+        setAssignModal({ show: false, resource: null });
+        setAssignmentData({
+            project: '',
+            role: '',
+            startDate: '',
+            endDate: ''
+        });
+    };
+
+    const handleAssign = () => {
+        // Assign logic here
+        console.log('Assigning:', assignmentData);
+        closeAssignModal();
+        showNotification('Assigned Successfully!', 'success');
+    };
+
+    const getProjectBadgeColors = (projectCount) => {
+        if (projectCount <= 1) {
+            return {
+                border: '#06D001',
+                background: 'rgba(6, 208, 1, 0.2)',
+                text: '#06D001'
+            };
+        } else if (projectCount === 2) {
+            return {
+                border: '#F97316',
+                background: 'rgba(249, 115, 22, 0.2)',
+                text: '#F97316'
+            };
+        } else {
+            return {
+                border: '#FF0000',
+                background: 'rgba(255, 0, 0, 0.2)',
+                text: '#FF0000'
+            };
+        }
+    };;
+
     const handleAddResource = () => {
         setAddResourceModal({ show: true });
     };
@@ -180,12 +232,12 @@ const Resources = () => {
         setDetailModal({ show: false, resource: null, projects: [] });
     };
 
-    const handleViewTrackRecord = (resourceId) => {
-        alert(`View track record for resource ${resourceId}`);
+    const handleViewTrackRecord = (resource) => {
+        setTrackRecordModal({ show: true, resource });
     };
 
-    const handleAssignToProject = (resourceId) => {
-        alert(`Assign resource ${resourceId} to project`);
+    const closeTrackRecordModal = () => {
+        setTrackRecordModal({ show: false, resource: null });
     };
 
     const closeNotification = () => {
@@ -614,6 +666,500 @@ const Resources = () => {
                 </div>
             )}
 
+            {/* Assign to Project Modal */}
+            {assignModal.show && (
+                <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
+                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+                >
+                    <div 
+                        className="rounded-2xl relative flex flex-col animate-scale-in bg-white"
+                        style={{ width: '620px', height: '580px' }}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-8 pt-6 pb-4">
+                            <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
+                                Assign to a Project
+                            </h2>
+                            <button 
+                                onClick={closeAssignModal}
+                                className="text-gray-500 hover:text-gray-700 transition-colors"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Line below title */}
+                        <div className="border-b border-gray-300"></div>
+
+                        {/* Form Content */}
+                        <div className="px-8 py-6 flex-1 overflow-y-auto">
+                            {/* User Info */}
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-10 h-10 rounded-full bg-[#00B4D8] flex items-center justify-center">
+                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-black" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
+                                        Rudi Tabuti Sugiharto
+                                    </h3>
+                                    <div className="flex gap-2 mt-1">
+                                        <span 
+                                            className="px-2 py-0.5 text-xs font-medium rounded" 
+                                            style={{ 
+                                                backgroundColor: getProjectBadgeColors(2).background, 
+                                                color: getProjectBadgeColors(2).text,
+                                                border: `1px solid ${getProjectBadgeColors(2).border}`,
+                                                fontFamily: 'SF Pro Display',
+                                                fontSize: '11px'
+                                            }}
+                                        >
+                                            ACTIVE IN 2 PROJECTS
+                                        </span>
+                                        <span className="px-2 py-0.5 text-xs font-medium rounded" style={{ backgroundColor: '#D1FAE5', color: '#059669', fontFamily: 'SF Pro Display', fontSize: '11px', border: '1px solid #059669' }}>
+                                            AVAILABLE
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Current Projects */}
+                            <div className="mb-6">
+                                <h4 className="font-bold text-black mb-3" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>
+                                    Current Project
+                                </h4>
+                                <div className="space-y-2">
+                                    <p className="text-black" style={{ fontSize: '14px', fontFamily: 'SF Pro Display' }}>
+                                        1. E-commerce Web Revamp - Ends : 1 Desember 2025
+                                    </p>
+                                    <p className="text-black" style={{ fontSize: '14px', fontFamily: 'SF Pro Display' }}>
+                                        2. E-commerce Web Revamp - Ends : 1 Desember 2025
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Separator */}
+                            <div className="border-b border-gray-300 mb-6"></div>
+
+                            {/* Project Selection */}
+                            <div className="space-y-4">
+                                {/* 1. Project */}
+                                <div>
+                                    <label className="block mb-2 font-bold text-black" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
+                                        1. Project
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            value={assignmentData.project}
+                                            onChange={(e) => setAssignmentData(prev => ({ ...prev, project: e.target.value }))}
+                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full appearance-none"
+                                            style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 35px 0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
+                                        >
+                                            <option value="">Select project</option>
+                                            <option value="ecommerce">E-commerce Web Revamp</option>
+                                        </select>
+                                        <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                {/* 2. Select Project */}
+                                <div>
+                                    <label className="block mb-3 font-bold text-black" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
+                                        2. Select Project
+                                    </label>
+                                    
+                                    {/* Project Role */}
+                                    <div className="mb-4">
+                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>
+                                            Project Role
+                                        </label>
+                                        <div className="relative">
+                                            <select
+                                                value={assignmentData.role}
+                                                onChange={(e) => setAssignmentData(prev => ({ ...prev, role: e.target.value }))}
+                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full appearance-none"
+                                                style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 35px 0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
+                                            >
+                                                <option value="">Select role</option>
+                                                <option value="backend">Backend Developer</option>
+                                                <option value="frontend">Frontend Developer</option>
+                                                <option value="fullstack">Fullstack Developer</option>
+                                            </select>
+                                            <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </div>
+                                    </div>
+
+                                    {/* Assignment Duration */}
+                                    <div>
+                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>
+                                            Assignment Duration
+                                        </label>
+                                        <div className="flex items-center gap-3">
+                                            <div className="relative flex-1">
+                                                <input
+                                                    type="date"
+                                                    value={assignmentData.startDate}
+                                                    onChange={(e) => setAssignmentData(prev => ({ ...prev, startDate: e.target.value }))}
+                                                    className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                    style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
+                                                />
+                                            </div>
+                                            <span className="text-gray-600" style={{ fontSize: '14px', fontFamily: 'SF Pro Display' }}>to</span>
+                                            <div className="relative flex-1">
+                                                <input
+                                                    type="date"
+                                                    value={assignmentData.endDate}
+                                                    onChange={(e) => setAssignmentData(prev => ({ ...prev, endDate: e.target.value }))}
+                                                    className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                    style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
+                                                />
+                                            </div>
+                                        </div>
+                                        <p className="text-gray-500 mt-2" style={{ fontSize: '12px', fontFamily: 'SF Pro Display' }}>
+                                            Hint : Project ends Mar 2025
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer Buttons */}
+                        <div className="flex items-center justify-between px-8 pb-6 pt-4 border-t border-gray-300">
+                            <button
+                                onClick={closeAssignModal}
+                                className="font-bold text-black bg-white hover:bg-gray-100 transition-colors"
+                                style={{ width: '100px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', border: '1px solid #A9A9A9', borderRadius: '8px' }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleAssign}
+                                className="font-bold text-black hover:opacity-90 transition-colors"
+                                style={{ width: '100px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', backgroundColor: '#CAF0F8', borderRadius: '8px' }}
+                            >
+                                Assign
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Track Record Modal */}
+            {trackRecordModal.show && (
+                <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
+                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+                >
+                    <div 
+                        className="rounded-2xl relative flex flex-col animate-scale-in bg-white"
+                        style={{ width: '1300px', height: '771px' }}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-8 pt-6 pb-4">
+                            <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
+                                Rudi Tabuti Sugiharto
+                            </h2>
+                            <button 
+                                onClick={closeTrackRecordModal}
+                                className="text-gray-500 hover:text-gray-700 transition-colors"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Line below title */}
+                        <div className="border-b border-gray-300"></div>
+
+                        {/* Timeline Content */}
+                        <div className="flex items-center justify-center px-8 py-6 flex-1">
+                            <div className="rounded-lg" style={{ width: '1240px', height: '588px' }}>
+                                {/* Month Headers */}
+                                <div className="grid grid-cols-9 gap-0">
+                                    {['Sep 2025', 'Oct 2025', 'Nov 2025', 'Des 2025', 'Jan 2026', 'Feb 2026', 'Mar 2026', 'Apr 2026', 'Mei 2026'].map((month, index) => (
+                                        <div 
+                                            key={month}
+                                            className="text-center py-3 font-bold border border-gray-300"
+                                            style={{ 
+                                                fontSize: '20px', 
+                                                fontFamily: 'SF Pro Display',
+                                                backgroundColor: month === 'Jan 2026' ? '#0059FF' : 'rgba(0, 180, 216, 0.2)',
+                                                color: month === 'Jan 2026' ? '#FFFFFF' : '#000000',
+                                                borderTopLeftRadius: index === 0 ? '8px' : '0',
+                                                borderTopRightRadius: index === 8 ? '8px' : '0'
+                                            }}
+                                        >
+                                            {month}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Project Timeline Rows */}
+                                <div className="space-y-0">
+                                    {trackRecordModal.resource && trackRecordModal.resource.status === 'AVAILABLE' ? (
+                                        // Empty rows for available resources
+                                        <>
+                                            {Array.from({ length: 4 }).map((_, rowIndex) => (
+                                                <div key={rowIndex} className="relative" style={{ height: '117.6px' }}>
+                                                    <div className="grid grid-cols-9 h-full">
+                                                        {Array.from({ length: 9 }).map((_, index) => (
+                                                            <div 
+                                                                key={index} 
+                                                                className="border-r border-b border-l border-gray-300"
+                                                                style={{
+                                                                    borderBottomLeftRadius: rowIndex === 3 && index === 0 ? '8px' : '0',
+                                                                    borderBottomRightRadius: rowIndex === 3 && index === 8 ? '8px' : '0'
+                                                                }}
+                                                            ></div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </>
+                                    ) : (
+                                        // Project rows for assigned resources
+                                        <>
+                                            {/* Row 1 - Closed (Red) - Sep to Jan */}
+                                            <div className="relative" style={{ height: '117.6px' }}>
+                                                <div className="grid grid-cols-9 h-full">
+                                                    {Array.from({ length: 9 }).map((_, index) => (
+                                                        <div key={index} className="border-r border-b border-l border-gray-300"></div>
+                                                    ))}
+                                                </div>
+                                                <div 
+                                                    className="absolute flex items-center justify-center rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                                    style={{ 
+                                                        left: '0%', 
+                                                        width: '44.4%', 
+                                                        height: '60px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                backgroundColor: '#FF0000'
+                                            }}
+                                            onMouseEnter={() => setHoveredProject('project1')}
+                                            onMouseLeave={() => setHoveredProject(null)}
+                                        >
+                                            <span className="font-bold text-white text-center px-4" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>
+                                                E-Commerce Web Revamp • Backend Develop
+                                            </span>
+                                            
+                                            {/* Tooltip */}
+                                            {hoveredProject === 'project1' && (
+                                                <div 
+                                                    className="absolute z-10 bg-white rounded-lg shadow-xl p-4 border border-gray-200"
+                                                    style={{ 
+                                                        top: '-120px',
+                                                        left: '50%',
+                                                        transform: 'translateX(-50%)',
+                                                        width: '300px',
+                                                        fontFamily: 'SF Pro Display'
+                                                    }}
+                                                >
+                                                    <div className="space-y-2">
+                                                        <h4 className="font-bold text-black" style={{ fontSize: '16px' }}>E-Commerce Web Revamp</h4>
+                                                        <div className="text-sm text-gray-700">
+                                                            <p><span className="font-semibold">Role:</span> Backend Developer</p>
+                                                            <p><span className="font-semibold">Start:</span> Sep 2025</p>
+                                                            <p><span className="font-semibold">End:</span> Jan 2026</p>
+                                                            <p><span className="font-semibold">Status:</span> <span className="text-red-600 font-bold">Closed</span></p>
+                                                        </div>
+                                                    </div>
+                                                    {/* Arrow */}
+                                                    <div 
+                                                        className="absolute"
+                                                        style={{
+                                                            bottom: '-8px',
+                                                            left: '50%',
+                                                            transform: 'translateX(-50%)',
+                                                            width: '0',
+                                                            height: '0',
+                                                            borderLeft: '8px solid transparent',
+                                                            borderRight: '8px solid transparent',
+                                                            borderTop: '8px solid white'
+                                                        }}
+                                                    ></div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Row 2 - Ongoing (Green) - Feb to Apr */}
+                                    <div className="relative" style={{ height: '117.6px' }}>
+                                        <div className="grid grid-cols-9 h-full">
+                                            {Array.from({ length: 9 }).map((_, index) => (
+                                                <div key={index} className="border-r border-b border-l border-gray-300"></div>
+                                            ))}
+                                        </div>
+                                        <div 
+                                            className="absolute flex items-center justify-center rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                            style={{ 
+                                                left: '55.5%', 
+                                                width: '33.3%', 
+                                                height: '60px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                backgroundColor: '#06D001'
+                                            }}
+                                            onMouseEnter={() => setHoveredProject('project2')}
+                                            onMouseLeave={() => setHoveredProject(null)}
+                                        >
+                                            <span className="font-bold text-white text-center px-4" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>
+                                                E-Commerce Web Revamp • Backend Develop
+                                            </span>
+                                            
+                                            {/* Tooltip */}
+                                            {hoveredProject === 'project2' && (
+                                                <div 
+                                                    className="absolute z-10 bg-white rounded-lg shadow-xl p-4 border border-gray-200"
+                                                    style={{ 
+                                                        top: '-120px',
+                                                        left: '50%',
+                                                        transform: 'translateX(-50%)',
+                                                        width: '300px',
+                                                        fontFamily: 'SF Pro Display'
+                                                    }}
+                                                >
+                                                    <div className="space-y-2">
+                                                        <h4 className="font-bold text-black" style={{ fontSize: '16px' }}>E-Commerce Web Revamp</h4>
+                                                        <div className="text-sm text-gray-700">
+                                                            <p><span className="font-semibold">Role:</span> Backend Developer</p>
+                                                            <p><span className="font-semibold">Start:</span> Feb 2026</p>
+                                                            <p><span className="font-semibold">End:</span> Apr 2026</p>
+                                                            <p><span className="font-semibold">Status:</span> <span className="text-green-600 font-bold">Ongoing</span></p>
+                                                        </div>
+                                                    </div>
+                                                    {/* Arrow */}
+                                                    <div 
+                                                        className="absolute"
+                                                        style={{
+                                                            bottom: '-8px',
+                                                            left: '50%',
+                                                            transform: 'translateX(-50%)',
+                                                            width: '0',
+                                                            height: '0',
+                                                            borderLeft: '8px solid transparent',
+                                                            borderRight: '8px solid transparent',
+                                                            borderTop: '8px solid white'
+                                                        }}
+                                                    ></div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Row 3 - Hold (Orange) - Oct to Feb */}
+                                    <div className="relative" style={{ height: '117.6px' }}>
+                                        <div className="grid grid-cols-9 h-full">
+                                            {Array.from({ length: 9 }).map((_, index) => (
+                                                <div key={index} className="border-r border-b border-l border-gray-300"></div>
+                                            ))}
+                                        </div>
+                                        <div 
+                                            className="absolute flex items-center justify-center rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                            style={{ 
+                                                left: '11.1%', 
+                                                width: '44.4%', 
+                                                height: '60px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                backgroundColor: '#F97316'
+                                            }}
+                                            onMouseEnter={() => setHoveredProject('project3')}
+                                            onMouseLeave={() => setHoveredProject(null)}
+                                        >
+                                            <span className="font-bold text-white text-center px-4" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>
+                                                E-Commerce Web Revamp • Backend Develop
+                                            </span>
+                                            
+                                            {/* Tooltip */}
+                                            {hoveredProject === 'project3' && (
+                                                <div 
+                                                    className="absolute z-10 bg-white rounded-lg shadow-xl p-4 border border-gray-200"
+                                                    style={{ 
+                                                        top: '-120px',
+                                                        left: '50%',
+                                                        transform: 'translateX(-50%)',
+                                                        width: '300px',
+                                                        fontFamily: 'SF Pro Display'
+                                                    }}
+                                                >
+                                                    <div className="space-y-2">
+                                                        <h4 className="font-bold text-black" style={{ fontSize: '16px' }}>E-Commerce Web Revamp</h4>
+                                                        <div className="text-sm text-gray-700">
+                                                            <p><span className="font-semibold">Role:</span> Backend Developer</p>
+                                                            <p><span className="font-semibold">Start:</span> Oct 2025</p>
+                                                            <p><span className="font-semibold">End:</span> Feb 2026</p>
+                                                            <p><span className="font-semibold">Status:</span> <span className="text-orange-600 font-bold">Hold</span></p>
+                                                        </div>
+                                                    </div>
+                                                    {/* Arrow */}
+                                                    <div 
+                                                        className="absolute"
+                                                        style={{
+                                                            bottom: '-8px',
+                                                            left: '50%',
+                                                            transform: 'translateX(-50%)',
+                                                            width: '0',
+                                                            height: '0',
+                                                            borderLeft: '8px solid transparent',
+                                                            borderRight: '8px solid transparent',
+                                                            borderTop: '8px solid white'
+                                                        }}
+                                                    ></div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                            {/* Row 4 - Empty */}
+                                            <div className="relative" style={{ height: '117.6px' }}>
+                                                <div className="grid grid-cols-9 h-full">
+                                                    {Array.from({ length: 9 }).map((_, index) => (
+                                                        <div 
+                                                            key={index} 
+                                                            className="border-r border-b border-l border-gray-300"
+                                                            style={{
+                                                                borderBottomLeftRadius: index === 0 ? '8px' : '0',
+                                                                borderBottomRightRadius: index === 8 ? '8px' : '0'
+                                                            }}
+                                                        ></div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Legend */}
+                        <div className="flex items-center justify-center gap-6 pb-6">
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#06D001' }}></div>
+                                <span style={{ fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '500' }}>Ongoing</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#F97316' }}></div>
+                                <span style={{ fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '500' }}>Hold</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#FF0000' }}></div>
+                                <span style={{ fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '500' }}>Closed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Sidebar */}
             <Sidebar />
 
@@ -738,7 +1284,12 @@ const Resources = () => {
                                                             ? 'bg-green-100 text-green-600'
                                                             : 'bg-red-100 text-red-600'
                                                     }`}
-                                                    style={{ fontSize: '12px' }}
+                                                    style={{ 
+                                                        fontSize: '12px',
+                                                        border: resource.status === 'AVAILABLE' 
+                                                            ? '1px solid #059669' 
+                                                            : '1px solid #DC2626'
+                                                    }}
                                                 >
                                                     {resource.status}
                                                 </span>
