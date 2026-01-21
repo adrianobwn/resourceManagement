@@ -95,7 +95,7 @@ const Sidebar = () => {
                             </svg>
                         </div>
                         <div>
-                            <p className="font-medium text-white" style={{ fontSize: '14px' }}>{user.name || 'User'}</p>
+                            <p className="font-bold text-white" style={{ fontSize: '14px' }}>{user.name || 'User'}</p>
                             <p className="text-[#CAF0F8] italic" style={{ fontSize: '10px' }}>{user.userType || 'Admin'}</p>
                         </div>
                     </div>

@@ -13,12 +13,18 @@ const Resources = () => {
     const [notification, setNotification] = useState({ show: false, message: '' });
     const [detailModal, setDetailModal] = useState({ show: false, resource: null, projects: [] });
     const [addResourceModal, setAddResourceModal] = useState({ show: false });
+    const [addDevManModal, setAddDevManModal] = useState({ show: false });
     const [newResource, setNewResource] = useState({
         fullName: '',
         email: '',
         employeeType: '',
         joinDate: '',
         skills: []
+    });
+    const [newDevMan, setNewDevMan] = useState({
+        fullName: '',
+        email: '',
+        password: ''
     });
     const [skillInput, setSkillInput] = useState('');
 
@@ -93,8 +99,23 @@ const Resources = () => {
     };
 
     const handleAddDevMan = () => {
-        // Add DevMan functionality
-        alert('Add DevMan feature coming soon!');
+        setAddDevManModal({ show: true });
+    };
+
+    const closeAddDevManModal = () => {
+        setAddDevManModal({ show: false });
+        setNewDevMan({
+            fullName: '',
+            email: '',
+            password: ''
+        });
+    };
+
+    const handleSaveDevMan = () => {
+        // Save DevMan logic here
+        console.log('Saving DevMan:', newDevMan);
+        closeAddDevManModal();
+        showNotification('Saved Successfully! DevMan created successfully.', 'success');
     };
 
     const handleAddResource = () => {
@@ -319,12 +340,12 @@ const Resources = () => {
                     style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
                 >
                     <div 
-                        className="rounded-2xl relative flex flex-col animate-scale-in overflow-hidden"
-                        style={{ width: '500px', height: '643px', backgroundColor: '#F5F5F5' }}
+                        className="rounded-2xl relative flex flex-col animate-scale-in"
+                        style={{ width: '500px', maxHeight: '90vh', backgroundColor: '#F5F5F5' }}
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between px-8 pt-6 pb-4">
-                            <h2 className="font-bold text-black" style={{ fontSize: '30px' }}>
+                            <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
                                 Add New Resource
                             </h2>
                             <button 
@@ -341,14 +362,14 @@ const Resources = () => {
                         <div className="border-b border-gray-300 mx-0" style={{ width: '500px' }}></div>
 
                         {/* Form Content */}
-                        <div className="flex-1 px-8 py-4 overflow-y-auto">
+                        <div className="px-8 py-4">
                             {/* Identity & Contact Section */}
                             <div className="mb-6">
                                 <div className="flex items-center justify-center gap-2 mb-4">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                     </svg>
-                                    <span className="font-bold text-black" style={{ fontSize: '20px' }}>Identity & contact</span>
+                                    <span className="font-bold text-black" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>Identity & contact</span>
                                 </div>
                                 <div className="flex justify-between px-4">
                                     <div>
@@ -383,7 +404,7 @@ const Resources = () => {
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                     </svg>
-                                    <span className="font-bold text-black" style={{ fontSize: '20px' }}>Emplyoment Status</span>
+                                    <span className="font-bold text-black" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>Emplyoment Status</span>
                                 </div>
                                 <div className="flex justify-between px-4">
                                     <div>
@@ -434,7 +455,7 @@ const Resources = () => {
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    <span className="font-bold text-black" style={{ fontSize: '20px' }}>Skills & Tags</span>
+                                    <span className="font-bold text-black" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>Skills & Tags</span>
                                 </div>
                                 <div className="flex flex-col items-center">
                                     {/* Skills Tags */}
@@ -470,21 +491,123 @@ const Resources = () => {
                             </div>
                         </div>
 
+                        {/* Separator before buttons */}
+                        <div className="border-b border-gray-300 mx-0 mb-4" style={{ width: '500px' }}></div>
+
                         {/* Footer Buttons */}
                         <div className="flex items-center justify-between px-8 pb-6">
                             <button
                                 onClick={closeAddResourceModal}
                                 className="font-bold text-black bg-white hover:bg-gray-100 transition-colors"
-                                style={{ width: '76px', height: '40px', fontSize: '14px', border: '1px solid #A9A9A9', borderRadius: '8px' }}
+                                style={{ width: '76px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', border: '1px solid #A9A9A9', borderRadius: '8px' }}
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSaveResource}
                                 className="font-bold text-black hover:opacity-90 transition-colors"
-                                style={{ width: '180px', height: '40px', fontSize: '14px', backgroundColor: '#CAF0F8', borderRadius: '8px' }}
+                                style={{ width: '180px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', backgroundColor: '#CAF0F8', borderRadius: '8px' }}
                             >
                                 Save & Create Resource
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add DevMan Modal */}
+            {addDevManModal.show && (
+                <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
+                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+                >
+                    <div 
+                        className="rounded-2xl relative flex flex-col animate-scale-in"
+                        style={{ width: '500px', maxHeight: '90vh', backgroundColor: '#F5F5F5' }}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-8 pt-6 pb-4">
+                            <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
+                                Add DevMan
+                            </h2>
+                            <button 
+                                onClick={closeAddDevManModal}
+                                className="text-gray-500 hover:text-gray-700 transition-colors"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Line below title */}
+                        <div className="border-b border-gray-300 mx-0" style={{ width: '500px' }}></div>
+
+                        {/* Form Content */}
+                        <div className="px-8 py-6 mb-6">
+                            {/* Identity & Contact Section */}
+                            <div className="mb-6">
+                                <div className="flex items-center justify-center gap-2 mb-4">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    <span className="font-bold text-black" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>Identity & contact</span>
+                                </div>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Full Name</label>
+                                        <input
+                                            type="text"
+                                            value={newDevMan.fullName}
+                                            onChange={(e) => setNewDevMan(prev => ({ ...prev, fullName: e.target.value }))}
+                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                            style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                        />
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <div style={{ width: '48%' }}>
+                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Email Address</label>
+                                            <input
+                                                type="email"
+                                                value={newDevMan.email}
+                                                onChange={(e) => setNewDevMan(prev => ({ ...prev, email: e.target.value }))}
+                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                            />
+                                        </div>
+                                        <div style={{ width: '48%' }}>
+                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Password</label>
+                                            <input
+                                                type="password"
+                                                value={newDevMan.password}
+                                                onChange={(e) => setNewDevMan(prev => ({ ...prev, password: e.target.value }))}
+                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Separator before buttons */}
+                        <div className="border-b border-gray-300 mx-0 mb-4" style={{ width: '500px' }}></div>
+
+                        {/* Footer Buttons */}
+                        <div className="flex items-center justify-between px-8 pb-6">
+                            <button
+                                onClick={closeAddDevManModal}
+                                className="font-bold text-black bg-white hover:bg-gray-100 transition-colors"
+                                style={{ width: '76px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', border: '1px solid #A9A9A9', borderRadius: '8px' }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSaveDevMan}
+                                className="font-bold text-black hover:opacity-90 transition-colors"
+                                style={{ width: '180px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', backgroundColor: '#CAF0F8', borderRadius: '8px' }}
+                            >
+                                Save & Create DevMan
                             </button>
                         </div>
                     </div>
