@@ -36,6 +36,7 @@ const Resources = () => {
     });
     const [skillInput, setSkillInput] = useState('');
     const [hoveredProject, setHoveredProject] = useState(null);
+    const [projects, setProjects] = useState([]);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -44,6 +45,7 @@ const Resources = () => {
             return;
         }
         fetchResources();
+        fetchProjects();
     }, [navigate]);
 
     const fetchResources = async () => {
@@ -54,22 +56,22 @@ const Resources = () => {
             setFilteredResources(response.data);
         } catch (error) {
             console.error('Error fetching resources:', error);
-            // Use dummy data for now if API fails
-            const dummyData = generateDummyData();
-            setResources(dummyData);
-            setFilteredResources(dummyData);
+            showNotification('Failed to fetch resources', 'error');
         } finally {
             setIsLoading(false);
         }
     };
 
-    const generateDummyData = () => {
-        return Array.from({ length: 10 }, (_, i) => ({
-            resourceId: i + 1,
-            name: 'Rudi Tabuti Sugiharto',
-            status: i % 2 === 0 ? 'AVAILABLE' : 'ASSIGNED',
-        }));
+    const fetchProjects = async () => {
+        try {
+            const response = await api.get('/projects');
+            setProjects(response.data);
+        } catch (error) {
+            console.error('Error fetching projects:', error);
+        }
     };
+
+
 
     useEffect(() => {
         let result = resources;
@@ -84,7 +86,7 @@ const Resources = () => {
         // Filter by search query
         if (searchQuery) {
             result = result.filter((r) =>
-                r.name.toLowerCase().includes(searchQuery.toLowerCase())
+                r.resourceName.toLowerCase().includes(searchQuery.toLowerCase())
             );
         }
 
@@ -141,11 +143,23 @@ const Resources = () => {
         });
     };
 
-    const handleAssign = () => {
-        // Assign logic here
-        console.log('Assigning:', assignmentData);
-        closeAssignModal();
-        showNotification('Assigned Successfully!', 'success');
+    const handleAssign = async () => {
+        try {
+            const assignData = {
+                resourceId: assignModal.resource.resourceId,
+                projectId: parseInt(assignmentData.project),
+                projectRole: assignmentData.role,
+                startDate: assignmentData.startDate,
+                endDate: assignmentData.endDate
+            };
+            await api.post('/resources/assign', assignData);
+            closeAssignModal();
+            showNotification('Assigned Successfully!', 'success');
+            fetchResources(); // Refresh the list
+        } catch (error) {
+            console.error('Error assigning resource:', error);
+            showNotification(error.response?.data?.message || 'Failed to assign resource', 'error');
+        }
     };
 
     const getProjectBadgeColors = (projectCount) => {
@@ -206,25 +220,45 @@ const Resources = () => {
         }));
     };
 
-    const handleSaveResource = () => {
-        // Save resource logic here
-        console.log('Saving resource:', newResource);
-        closeAddResourceModal();
-        showNotification('Saved Successfully! Resources created successfully.', 'success');
+    const handleSaveResource = async () => {
+        try {
+            const resourceData = {
+                resourceName: newResource.fullName,
+                employeeId: newResource.employeeType,
+                email: newResource.email,
+                status: 'AVAILABLE'
+            };
+            await api.post('/resources', resourceData);
+            closeAddResourceModal();
+            showNotification('Saved Successfully! Resource created successfully.', 'success');
+            fetchResources(); // Refresh the list
+        } catch (error) {
+            console.error('Error creating resource:', error);
+            showNotification(error.response?.data?.message || 'Failed to create resource', 'error');
+        }
     };
 
-    const handleViewDetail = (resource) => {
+    const handleViewDetail = async (resource) => {
         if (resource.status === 'AVAILABLE') {
-            showNotification(`${resource.name} Currently Available for Assignment`);
+            showNotification(`${resource.resourceName} Currently Available for Assignment`);
         } else {
-            // Show modal with project details for ASSIGNED resources
-            const dummyProjects = [
-                { projectName: 'E-Commerce Web Revamp', role: 'Backend Developer', startDate: '14/09/2026', endDate: '14/10/2026' },
-                { projectName: 'E-Commerce Web Revamp', role: 'Backend Developer', startDate: '14/09/2026', endDate: '14/10/2026' },
-                { projectName: 'E-Commerce Web Revamp', role: 'Backend Developer', startDate: '14/09/2026', endDate: '14/10/2026' },
-                { projectName: 'E-Commerce Web Revamp', role: 'Backend Developer', startDate: '14/09/2026', endDate: '14/10/2026' },
-            ];
-            setDetailModal({ show: true, resource, projects: dummyProjects });
+            try {
+                const response = await api.get(`/resources/${resource.resourceId}/assignments`);
+                const assignments = response.data;
+                
+                // Format assignments for display
+                const formattedProjects = assignments.map(a => ({
+                    projectName: a.projectName,
+                    role: a.projectRole,
+                    startDate: new Date(a.startDate).toLocaleDateString('en-GB'),
+                    endDate: new Date(a.endDate).toLocaleDateString('en-GB')
+                }));
+                
+                setDetailModal({ show: true, resource, projects: formattedProjects });
+            } catch (error) {
+                console.error('Error fetching assignments:', error);
+                showNotification('Failed to fetch resource assignments', 'error');
+            }
         }
     };
 
@@ -233,6 +267,8 @@ const Resources = () => {
     };
 
     const handleViewTrackRecord = (resource) => {
+        console.log('Track Record Resource:', resource);
+        console.log('Resource Status:', resource.status);
         setTrackRecordModal({ show: true, resource });
     };
 
@@ -324,25 +360,25 @@ const Resources = () => {
                         style={{ width: '700px', height: '424px' }}
                     >
                         {/* Header with Name, Status and Close Button */}
-                        <div className="flex items-center mt-8 mb-4 px-8 w-full flex-nowrap">
-                            <h2 className="font-bold text-gray-800 whitespace-nowrap" style={{ fontSize: '30px' }}>
-                                {detailModal.resource?.name}
-                            </h2>
-                            <span 
-                                className="px-3 py-1 rounded font-bold whitespace-nowrap"
-                                style={{ 
-                                    fontSize: '12px',
-                                    color: '#0059FF',
-                                    backgroundColor: 'rgba(0, 89, 255, 0.2)',
-                                    marginLeft: '166px'
-                                }}
-                            >
-                                ACTIVE IN {detailModal.projects.length} PROJECTS
-                            </span>
+                        <div className="flex items-center justify-between mt-8 mb-4 px-8 w-full">
+                            <div className="flex items-center gap-3">
+                                <h2 className="font-bold text-gray-800 whitespace-nowrap" style={{ fontSize: '30px' }}>
+                                    {detailModal.resource?.resourceName}
+                                </h2>
+                                <span 
+                                    className="px-3 py-1 rounded font-bold whitespace-nowrap"
+                                    style={{ 
+                                        fontSize: '12px',
+                                        color: '#0059FF',
+                                        backgroundColor: 'rgba(0, 89, 255, 0.2)'
+                                    }}
+                                >
+                                    ACTIVE IN {detailModal.projects.length} PROJECTS
+                                </span>
+                            </div>
                             <button 
                                 onClick={closeDetailModal}
-                                className="text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0"
-                                style={{ marginLeft: '23px' }}
+                                className="text-gray-500 hover:text-gray-700 transition-colors"
                             >
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -705,42 +741,43 @@ const Resources = () => {
                                 </div>
                                 <div className="flex-1">
                                     <h3 className="font-bold text-black" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
-                                        Rudi Tabuti Sugiharto
+                                        {assignModal.resource?.resourceName}
                                     </h3>
                                     <div className="flex gap-2 mt-1">
                                         <span 
                                             className="px-2 py-0.5 text-xs font-medium rounded" 
                                             style={{ 
-                                                backgroundColor: getProjectBadgeColors(2).background, 
-                                                color: getProjectBadgeColors(2).text,
-                                                border: `1px solid ${getProjectBadgeColors(2).border}`,
+                                                backgroundColor: getProjectBadgeColors(assignModal.resource?.projectCount || 0).background, 
+                                                color: getProjectBadgeColors(assignModal.resource?.projectCount || 0).text,
+                                                border: `1px solid ${getProjectBadgeColors(assignModal.resource?.projectCount || 0).border}`,
                                                 fontFamily: 'SF Pro Display',
                                                 fontSize: '11px'
                                             }}
                                         >
-                                            ACTIVE IN 2 PROJECTS
+                                            ACTIVE IN {assignModal.resource?.projectCount || 0} PROJECT{assignModal.resource?.projectCount !== 1 ? 'S' : ''}
                                         </span>
-                                        <span className="px-2 py-0.5 text-xs font-medium rounded" style={{ backgroundColor: '#D1FAE5', color: '#059669', fontFamily: 'SF Pro Display', fontSize: '11px', border: '1px solid #059669' }}>
-                                            AVAILABLE
+                                        <span className="px-2 py-0.5 text-xs font-medium rounded" style={{ backgroundColor: assignModal.resource?.status === 'AVAILABLE' ? '#D1FAE5' : 'rgba(255,0,0,0.1)', color: assignModal.resource?.status === 'AVAILABLE' ? '#059669' : '#DC2626', fontFamily: 'SF Pro Display', fontSize: '11px', border: assignModal.resource?.status === 'AVAILABLE' ? '1px solid #059669' : '1px solid #DC2626' }}>
+                                            {assignModal.resource?.status}
                                         </span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Current Projects */}
-                            <div className="mb-6">
-                                <h4 className="font-bold text-black mb-3" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>
-                                    Current Project
-                                </h4>
-                                <div className="space-y-2">
-                                    <p className="text-black" style={{ fontSize: '14px', fontFamily: 'SF Pro Display' }}>
-                                        1. E-commerce Web Revamp - Ends : 1 Desember 2025
-                                    </p>
-                                    <p className="text-black" style={{ fontSize: '14px', fontFamily: 'SF Pro Display' }}>
-                                        2. E-commerce Web Revamp - Ends : 1 Desember 2025
-                                    </p>
+                            {assignModal.resource?.currentAssignments && assignModal.resource.currentAssignments.length > 0 && (
+                                <div className="mb-6">
+                                    <h4 className="font-bold text-black mb-3" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>
+                                        Current Project{assignModal.resource.currentAssignments.length > 1 ? 's' : ''}
+                                    </h4>
+                                    <div className="space-y-2">
+                                        {assignModal.resource.currentAssignments.map((assignment, index) => (
+                                            <p key={assignment.assignmentId} className="text-black" style={{ fontSize: '14px', fontFamily: 'SF Pro Display' }}>
+                                                {index + 1}. {assignment.projectName} - Ends : {new Date(assignment.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                            </p>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* Separator */}
                             <div className="border-b border-gray-300 mb-6"></div>
@@ -760,7 +797,11 @@ const Resources = () => {
                                             style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 35px 0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
                                         >
                                             <option value="">Select project</option>
-                                            <option value="ecommerce">E-commerce Web Revamp</option>
+                                            {projects.map(project => (
+                                                <option key={project.projectId} value={project.projectId}>
+                                                    {project.projectName}
+                                                </option>
+                                            ))}
                                         </select>
                                         <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -865,7 +906,7 @@ const Resources = () => {
                         {/* Header */}
                         <div className="flex items-center justify-between px-8 pt-6 pb-4">
                             <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
-                                Rudi Tabuti Sugiharto
+                                {trackRecordModal.resource?.resourceName}
                             </h2>
                             <button 
                                 onClick={closeTrackRecordModal}
@@ -885,22 +926,40 @@ const Resources = () => {
                             <div className="rounded-lg" style={{ width: '1240px', height: '588px' }}>
                                 {/* Month Headers */}
                                 <div className="grid grid-cols-9 gap-0">
-                                    {['Sep 2025', 'Oct 2025', 'Nov 2025', 'Des 2025', 'Jan 2026', 'Feb 2026', 'Mar 2026', 'Apr 2026', 'Mei 2026'].map((month, index) => (
-                                        <div 
-                                            key={month}
-                                            className="text-center py-3 font-bold border border-gray-300"
-                                            style={{ 
-                                                fontSize: '20px', 
-                                                fontFamily: 'SF Pro Display',
-                                                backgroundColor: month === 'Jan 2026' ? '#0059FF' : 'rgba(0, 180, 216, 0.2)',
-                                                color: month === 'Jan 2026' ? '#FFFFFF' : '#000000',
-                                                borderTopLeftRadius: index === 0 ? '8px' : '0',
-                                                borderTopRightRadius: index === 8 ? '8px' : '0'
-                                            }}
-                                        >
-                                            {month}
-                                        </div>
-                                    ))}
+                                    {(() => {
+                                        const now = new Date();
+                                        const currentMonth = now.getMonth(); // 0-11
+                                        const currentYear = now.getFullYear();
+                                        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+                                        
+                                        // Generate 9 months starting from 4 months ago
+                                        const months = [];
+                                        for (let i = -4; i <= 4; i++) {
+                                            const date = new Date(currentYear, currentMonth + i, 1);
+                                            const monthName = monthNames[date.getMonth()];
+                                            const year = date.getFullYear();
+                                            months.push(`${monthName} ${year}`);
+                                        }
+                                        
+                                        const currentMonthStr = `${monthNames[currentMonth]} ${currentYear}`;
+                                        
+                                        return months.map((month, index) => (
+                                            <div 
+                                                key={month}
+                                                className="text-center py-3 font-bold border border-gray-300"
+                                                style={{ 
+                                                    fontSize: '20px', 
+                                                    fontFamily: 'SF Pro Display',
+                                                    backgroundColor: month === currentMonthStr ? '#0059FF' : 'rgba(0, 180, 216, 0.2)',
+                                                    color: month === currentMonthStr ? '#FFFFFF' : '#000000',
+                                                    borderTopLeftRadius: index === 0 ? '8px' : '0',
+                                                    borderTopRightRadius: index === 8 ? '8px' : '0'
+                                                }}
+                                            >
+                                                {month}
+                                            </div>
+                                        ));
+                                    })()}
                                 </div>
 
                                 {/* Project Timeline Rows */}
@@ -1274,7 +1333,7 @@ const Resources = () => {
                                         >
                                             <td className="py-4 px-6">
                                                 <span className="font-bold text-gray-800" style={{ fontSize: '20px' }}>
-                                                    {resource.name}
+                                                    {resource.resourceName}
                                                 </span>
                                             </td>
                                             <td className="py-4 px-6">
