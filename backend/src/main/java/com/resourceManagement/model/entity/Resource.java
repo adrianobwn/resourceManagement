@@ -21,7 +21,7 @@ public class Resource {
     @Column(nullable = false)
     private String resourceName;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = true)
     private String employeeId;
 
     @Column(nullable = false, unique = true)

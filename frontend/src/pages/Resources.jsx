@@ -19,10 +19,7 @@ const Resources = () => {
     const [trackRecordModal, setTrackRecordModal] = useState({ show: false, resource: null });
     const [newResource, setNewResource] = useState({
         fullName: '',
-        email: '',
-        employeeType: '',
-        joinDate: '',
-        skills: []
+        email: ''
     });
     const [newDevMan, setNewDevMan] = useState({
         fullName: '',
@@ -52,9 +49,10 @@ const Resources = () => {
     const fetchResources = async () => {
         try {
             setIsLoading(true);
-            const response = await api.get('/resources');
+            const response = await api.get(`/resources?t=${Date.now()}`);
             setResources(response.data);
             setFilteredResources(response.data);
+            console.log('Fetched resources count:', response.data.length);
         } catch (error) {
             console.error('Error fetching resources:', error);
             showNotification('Failed to fetch resources', 'error');
@@ -190,17 +188,29 @@ const Resources = () => {
         });
     };
 
-    const handleSaveDevMan = () => {
+    const handleSaveDevMan = async () => {
         // Validation
         if (!newDevMan.fullName || !newDevMan.email || !newDevMan.password) {
             showNotification('Please fill in all fields', 'error');
             return;
         }
 
-        // Save DevMan logic here
-        console.log('Saving DevMan:', newDevMan);
-        closeAddDevManModal();
-        showNotification('Saved Successfully! DevMan created successfully.', 'success');
+        try {
+            const response = await api.post('/users/pm', {
+                name: newDevMan.fullName,
+                email: newDevMan.email,
+                password: newDevMan.password
+            });
+            console.log('DevMan API Response Status:', response.status);
+            console.log('DevMan successfully created:', response.data);
+            closeAddDevManModal();
+            showNotification('Saved Successfully! DevMan created successfully.', 'success');
+            setSearchQuery('');
+            setActiveFilter('all');
+        } catch (error) {
+            console.error('Error creating DevMan:', error);
+            showNotification(error.response?.data?.message || 'Failed to create DevMan', 'error');
+        }
     };
 
     const handleAssignToProject = (resource) => {
@@ -278,12 +288,8 @@ const Resources = () => {
         setAddResourceModal({ show: false });
         setNewResource({
             fullName: '',
-            email: '',
-            employeeType: '',
-            joinDate: '',
-            skills: []
+            email: ''
         });
-        setSkillInput('');
     };
 
     const handleAddSkill = (e) => {
@@ -308,7 +314,7 @@ const Resources = () => {
 
     const handleSaveResource = async () => {
         // Validation
-        if (!newResource.fullName || !newResource.email || !newResource.employeeType || !newResource.joinDate) {
+        if (!newResource.fullName || !newResource.email) {
             showNotification('Please fill in all fields', 'error');
             return;
         }
@@ -316,13 +322,16 @@ const Resources = () => {
         try {
             const resourceData = {
                 resourceName: newResource.fullName,
-                employeeId: newResource.employeeType,
                 email: newResource.email,
                 status: 'AVAILABLE'
             };
-            await api.post('/resources', resourceData);
+            const response = await api.post('/resources', resourceData);
+            console.log('Resource API Response Status:', response.status);
+            console.log('Resource successfully created:', response.data);
             closeAddResourceModal();
             showNotification('Saved Successfully! Resource created successfully.', 'success');
+            setSearchQuery('');
+            setActiveFilter('all');
             fetchResources(); // Refresh the list
         } catch (error) {
             console.error('Error creating resource:', error);
@@ -565,122 +574,29 @@ const Resources = () => {
                                     </svg>
                                     <span className="font-bold text-black" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>Identity & contact</span>
                                 </div>
-                                <div className="flex justify-between px-4">
+                                <div className="space-y-4 px-4">
                                     <div>
                                         <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Full Name</label>
                                         <input
                                             type="text"
                                             value={newResource.fullName}
                                             onChange={(e) => setNewResource(prev => ({ ...prev, fullName: e.target.value }))}
-                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6]"
-                                            style={{ width: '170px', height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                            style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Email Address</label>
-                                        <input
-                                            type="email"
-                                            value={newResource.email}
-                                            onChange={(e) => setNewResource(prev => ({ ...prev, email: e.target.value }))}
-                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6]"
-                                            style={{ width: '170px', height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Separator */}
-                            <div className="border-b border-gray-300 mb-6"></div>
-
-                            {/* Employment Status Section */}
-                            <div className="mb-6">
-                                <div className="flex items-center justify-center gap-2 mb-4">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                    <span className="font-bold text-black" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>Emplyoment Status</span>
-                                </div>
-                                <div className="flex justify-between px-4">
-                                    <div>
-                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Employee Type</label>
-                                        <div className="relative">
-                                            <select
-                                                value={newResource.employeeType}
-                                                onChange={(e) => setNewResource(prev => ({ ...prev, employeeType: e.target.value }))}
-                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] appearance-none cursor-pointer"
-                                                style={{ width: '170px', height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', paddingRight: '32px', fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '400' }}
-                                            >
-                                                <option value="">Select</option>
-                                                <option value="full-time">Full Time</option>
-                                                <option value="part-time">Part Time</option>
-                                                <option value="contract">Contract</option>
-                                                <option value="intern">Intern</option>
-                                            </select>
-                                            <svg
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                            </svg>
+                                    <div className="flex justify-between">
+                                        <div style={{ width: '100%' }}>
+                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Email Address</label>
+                                            <input
+                                                type="email"
+                                                value={newResource.email}
+                                                onChange={(e) => setNewResource(prev => ({ ...prev, email: e.target.value }))}
+                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                            />
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Join Date</label>
-                                        <input
-                                            type="date"
-                                            value={newResource.joinDate}
-                                            onChange={(e) => setNewResource(prev => ({ ...prev, joinDate: e.target.value }))}
-                                            placeholder="DD/MM/YYYY"
-                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6]"
-                                            style={{ width: '170px', height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '400' }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Separator */}
-                            <div className="border-b border-gray-300 mb-6"></div>
-
-                            {/* Skills Section */}
-                            <div className="mb-6">
-                                <div className="flex items-center justify-center gap-2 mb-4">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span className="font-bold text-black" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>Skills & Tags</span>
-                                </div>
-                                <div className="flex flex-col items-center">
-                                    {/* Skills Tags */}
-                                    <div className="flex flex-wrap gap-2 mb-3 justify-center">
-                                        {newResource.skills.map((skill, index) => (
-                                            <span
-                                                key={index}
-                                                className="flex items-center gap-1 px-3 py-1 rounded-md text-white"
-                                                style={{ backgroundColor: '#0059FF', fontSize: '14px' }}
-                                            >
-                                                {skill}
-                                                <button
-                                                    onClick={() => removeSkill(skill)}
-                                                    className="hover:opacity-70 ml-1"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            </span>
-                                        ))}
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={skillInput}
-                                        onChange={(e) => setSkillInput(e.target.value)}
-                                        onKeyDown={handleAddSkill}
-                                        placeholder="Type to add skills..."
-                                        className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6]"
-                                        style={{ width: '200px', height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '13px', fontFamily: 'SF Pro Display', fontWeight: '300', fontStyle: 'italic' }}
-                                    />
                                 </div>
                             </div>
                         </div>
@@ -699,7 +615,7 @@ const Resources = () => {
                             </button>
                             <button
                                 onClick={handleSaveResource}
-                                disabled={!newResource.fullName || !newResource.email || !newResource.employeeType || !newResource.joinDate}
+                                disabled={!newResource.fullName || !newResource.email}
                                 className="font-bold text-black hover:opacity-90 transition-colors"
                                 style={{
                                     width: '180px',
@@ -708,8 +624,8 @@ const Resources = () => {
                                     fontFamily: 'SF Pro Display',
                                     backgroundColor: '#CAF0F8',
                                     borderRadius: '8px',
-                                    opacity: (!newResource.fullName || !newResource.email || !newResource.employeeType || !newResource.joinDate) ? 0.5 : 1,
-                                    cursor: (!newResource.fullName || !newResource.email || !newResource.employeeType || !newResource.joinDate) ? 'not-allowed' : 'pointer'
+                                    opacity: (!newResource.fullName || !newResource.email) ? 0.5 : 1,
+                                    cursor: (!newResource.fullName || !newResource.email) ? 'not-allowed' : 'pointer'
                                 }}
                             >
                                 Save & Create Resource

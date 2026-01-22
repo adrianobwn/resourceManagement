@@ -24,117 +24,128 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ResourceService {
 
-    private final ResourceRepository resourceRepository;
-    private final ResourceAssignmentRepository assignmentRepository;
-    private final ProjectRepository projectRepository;
+        private final ResourceRepository resourceRepository;
+        private final ResourceAssignmentRepository assignmentRepository;
+        private final ProjectRepository projectRepository;
 
-    public List<ResourceResponse> getAllResources() {
-        List<Resource> resources = resourceRepository.findAll();
-        return resources.stream()
-                .map(this::mapToResourceResponse)
-                .collect(Collectors.toList());
-    }
-
-    public ResourceResponse getResourceById(Integer resourceId) {
-        Resource resource = resourceRepository.findById(resourceId)
-                .orElseThrow(() -> new RuntimeException("Resource not found with id: " + resourceId));
-        return mapToResourceResponse(resource);
-    }
-
-    @Transactional
-    public ResourceResponse createResource(CreateResourceRequest request) {
-        // Check if employee ID already exists
-        if (resourceRepository.existsByEmployeeId(request.getEmployeeId())) {
-            throw new RuntimeException("Employee ID already exists");
+        public List<ResourceResponse> getAllResources() {
+                List<Resource> resources = resourceRepository.findAll();
+                return resources.stream()
+                                .map(this::mapToResourceResponse)
+                                .collect(Collectors.toList());
         }
 
-        // Check if email already exists
-        if (resourceRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+        public ResourceResponse getResourceById(Integer resourceId) {
+                Resource resource = resourceRepository.findById(resourceId)
+                                .orElseThrow(() -> new RuntimeException("Resource not found with id: " + resourceId));
+                return mapToResourceResponse(resource);
         }
 
-        Resource resource = Resource.builder()
-                .resourceName(request.getResourceName())
-                .employeeId(request.getEmployeeId())
-                .email(request.getEmail())
-                .status(request.getStatus() != null ? request.getStatus() : ResourceStatus.AVAILABLE)
-                .build();
+        @Transactional
+        public ResourceResponse createResource(CreateResourceRequest request) {
+                System.out.println("Attempting to create resource: " + request.getResourceName() + " ("
+                                + request.getEmail() + ")");
 
-        Resource savedResource = resourceRepository.save(resource);
-        return mapToResourceResponse(savedResource);
-    }
+                // Check if email already exists
+                if (resourceRepository.existsByEmail(request.getEmail())) {
+                        System.err.println("Resource creation failed: Email already exists: " + request.getEmail());
+                        throw new RuntimeException("Email already exists");
+                }
 
-    @Transactional
-    public ResourceResponse assignResourceToProject(AssignResourceRequest request) {
-        Resource resource = resourceRepository.findById(request.getResourceId())
-                .orElseThrow(() -> new RuntimeException("Resource not found"));
+                // Generate a fallback employee ID if needed for identification, or set to null
+                String employeeId = "EMP-" + System.currentTimeMillis();
 
-        Project project = projectRepository.findById(request.getProjectId())
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                Resource resource = Resource.builder()
+                                .resourceName(request.getResourceName())
+                                .employeeId(employeeId) // Fallback for stability
+                                .email(request.getEmail())
+                                .status(request.getStatus() != null ? request.getStatus() : ResourceStatus.AVAILABLE)
+                                .build();
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate startDate = LocalDate.parse(request.getStartDate(), formatter);
-        LocalDate endDate = LocalDate.parse(request.getEndDate(), formatter);
+                try {
+                        Resource savedResource = resourceRepository.saveAndFlush(resource);
+                        long count = resourceRepository.count();
+                        System.out.println("Resource successfully saved. Total resources in DB: " + count);
+                        return mapToResourceResponse(savedResource);
+                } catch (Exception e) {
+                        System.err.println("Error saving resource to DB: " + e.getMessage());
+                        e.printStackTrace();
+                        throw new RuntimeException("DB Persistence Error: " + e.getMessage());
+                }
+        }
 
-        ResourceAssignment assignment = ResourceAssignment.builder()
-                .resource(resource)
-                .project(project)
-                .projectRole(request.getProjectRole())
-                .startDate(startDate)
-                .endDate(endDate)
-                .status(AssignmentStatus.ACTIVE)
-                .build();
+        @Transactional
+        public ResourceResponse assignResourceToProject(AssignResourceRequest request) {
+                Resource resource = resourceRepository.findById(request.getResourceId())
+                                .orElseThrow(() -> new RuntimeException("Resource not found"));
 
-        assignmentRepository.save(assignment);
+                Project project = projectRepository.findById(request.getProjectId())
+                                .orElseThrow(() -> new RuntimeException("Project not found"));
 
-        // Update resource status to ASSIGNED
-        resource.setStatus(ResourceStatus.ASSIGNED);
-        resourceRepository.save(resource);
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                LocalDate startDate = LocalDate.parse(request.getStartDate(), formatter);
+                LocalDate endDate = LocalDate.parse(request.getEndDate(), formatter);
 
-        return mapToResourceResponse(resource);
-    }
+                ResourceAssignment assignment = ResourceAssignment.builder()
+                                .resource(resource)
+                                .project(project)
+                                .projectRole(request.getProjectRole())
+                                .startDate(startDate)
+                                .endDate(endDate)
+                                .status(AssignmentStatus.ACTIVE)
+                                .build();
 
-    public List<ResourceResponse.AssignmentInfo> getResourceAssignments(Integer resourceId) {
-        List<ResourceAssignment> assignments = assignmentRepository.findByResource_ResourceId(resourceId);
-        return assignments.stream()
-                .map(this::mapToAssignmentInfo)
-                .collect(Collectors.toList());
-    }
+                assignmentRepository.save(assignment);
 
-    private ResourceResponse mapToResourceResponse(Resource resource) {
-        List<ResourceAssignment> assignments = assignmentRepository.findByResource_ResourceId(resource.getResourceId());
-        
-        // Count active assignments
-        long projectCount = assignments.stream()
-                .filter(a -> a.getStatus() == AssignmentStatus.ACTIVE)
-                .count();
+                // Update resource status to ASSIGNED
+                resource.setStatus(ResourceStatus.ASSIGNED);
+                resourceRepository.save(resource);
 
-        List<ResourceResponse.AssignmentInfo> assignmentInfos = assignments.stream()
-                .filter(a -> a.getStatus() == AssignmentStatus.ACTIVE)
-                .map(this::mapToAssignmentInfo)
-                .collect(Collectors.toList());
+                return mapToResourceResponse(resource);
+        }
 
-        return ResourceResponse.builder()
-                .resourceId(resource.getResourceId())
-                .resourceName(resource.getResourceName())
-                .employeeId(resource.getEmployeeId())
-                .email(resource.getEmail())
-                .status(resource.getStatus())
-                .projectCount((int) projectCount)
-                .currentAssignments(assignmentInfos)
-                .build();
-    }
+        public List<ResourceResponse.AssignmentInfo> getResourceAssignments(Integer resourceId) {
+                List<ResourceAssignment> assignments = assignmentRepository.findByResource_ResourceId(resourceId);
+                return assignments.stream()
+                                .map(this::mapToAssignmentInfo)
+                                .collect(Collectors.toList());
+        }
 
-    private ResourceResponse.AssignmentInfo mapToAssignmentInfo(ResourceAssignment assignment) {
-        return ResourceResponse.AssignmentInfo.builder()
-                .assignmentId(assignment.getAssignmentId())
-                .projectId(assignment.getProject().getProjectId())
-                .projectName(assignment.getProject().getProjectName())
-                .projectRole(assignment.getProjectRole())
-                .startDate(assignment.getStartDate().toString())
-                .endDate(assignment.getEndDate().toString())
-                .assignmentStatus(assignment.getStatus().name())
-                .projectStatus(assignment.getProject().getStatus().name())
-                .build();
-    }
+        private ResourceResponse mapToResourceResponse(Resource resource) {
+                List<ResourceAssignment> assignments = assignmentRepository
+                                .findByResource_ResourceId(resource.getResourceId());
+
+                // Count active assignments
+                long projectCount = assignments.stream()
+                                .filter(a -> a.getStatus() == AssignmentStatus.ACTIVE)
+                                .count();
+
+                List<ResourceResponse.AssignmentInfo> assignmentInfos = assignments.stream()
+                                .filter(a -> a.getStatus() == AssignmentStatus.ACTIVE)
+                                .map(this::mapToAssignmentInfo)
+                                .collect(Collectors.toList());
+
+                return ResourceResponse.builder()
+                                .resourceId(resource.getResourceId())
+                                .resourceName(resource.getResourceName())
+                                .employeeId(resource.getEmployeeId())
+                                .email(resource.getEmail())
+                                .status(resource.getStatus())
+                                .projectCount((int) projectCount)
+                                .currentAssignments(assignmentInfos)
+                                .build();
+        }
+
+        private ResourceResponse.AssignmentInfo mapToAssignmentInfo(ResourceAssignment assignment) {
+                return ResourceResponse.AssignmentInfo.builder()
+                                .assignmentId(assignment.getAssignmentId())
+                                .projectId(assignment.getProject().getProjectId())
+                                .projectName(assignment.getProject().getProjectName())
+                                .projectRole(assignment.getProjectRole())
+                                .startDate(assignment.getStartDate().toString())
+                                .endDate(assignment.getEndDate().toString())
+                                .assignmentStatus(assignment.getStatus().name())
+                                .projectStatus(assignment.getProject().getStatus().name())
+                                .build();
+        }
 }

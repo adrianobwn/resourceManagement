@@ -12,17 +12,14 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class CreateResourceRequest {
-    
+
     @NotBlank(message = "Resource name is required")
     private String resourceName;
-    
-    @NotBlank(message = "Employee ID is required")
-    private String employeeId;
-    
+
     @NotBlank(message = "Email is required")
     @Email(message = "Email must be valid")
     private String email;
-    
+
     @NotNull(message = "Status is required")
     private ResourceStatus status;
 }
