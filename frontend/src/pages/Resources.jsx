@@ -10,6 +10,8 @@ const Resources = () => {
     const [filteredResources, setFilteredResources] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
+    const [roleFilter, setRoleFilter] = useState('all');
+    const [dateFilter, setDateFilter] = useState({ startDate: '', endDate: '' });
     const [isLoading, setIsLoading] = useState(true);
     const [notification, setNotification] = useState({ show: false, message: '' });
     const [detailModal, setDetailModal] = useState({ show: false, resource: null, projects: [] });
@@ -70,6 +72,20 @@ const Resources = () => {
         }
     };
 
+    const handleDateFilterChange = (field, value) => {
+        if (field === 'startDate' && dateFilter.endDate && value > dateFilter.endDate) {
+            setNotification({ show: true, message: 'Start Date cannot be later than End Date' });
+            setTimeout(() => setNotification({ show: false, message: '' }), 3000);
+            return;
+        }
+        if (field === 'endDate' && dateFilter.startDate && value < dateFilter.startDate) {
+            setNotification({ show: true, message: 'End Date cannot be earlier than Start Date' });
+            setTimeout(() => setNotification({ show: false, message: '' }), 3000);
+            return;
+        }
+        setDateFilter(prev => ({ ...prev, [field]: value }));
+    };
+
 
 
     useEffect(() => {
@@ -89,8 +105,20 @@ const Resources = () => {
             );
         }
 
+        // Filter by role (based on past/current project assignments)
+        if (roleFilter !== 'all') {
+            result = result.filter((r) => {
+                if (!r.currentAssignments || r.currentAssignments.length === 0) {
+                    return false;
+                }
+                return r.currentAssignments.some(
+                    (assignment) => assignment.projectRole === roleFilter
+                );
+            });
+        }
+
         setFilteredResources(result);
-    }, [searchQuery, activeFilter, resources]);
+    }, [searchQuery, activeFilter, roleFilter, resources]);
 
     const showNotification = (message, type = 'info') => {
         setNotification({ show: true, message, type, closing: false });
@@ -1212,7 +1240,7 @@ const Resources = () => {
                 <h1 className="text-4xl font-bold text-gray-800 mb-8">Resources</h1>
 
                 {/* Toolbar */}
-                <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+                <div className="flex items-center justify-between mb-6 gap-3">
                     {/* Search Bar */}
                     <div className="relative">
                         <svg
@@ -1233,53 +1261,102 @@ const Resources = () => {
                             placeholder="Search resources..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 pr-4 py-2 w-[350px] h-[40px] border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent placeholder:italic placeholder:font-light"
+                            className="pl-10 pr-4 py-2 w-[200px] h-[40px] border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent placeholder:italic placeholder:font-light"
                             style={{ fontSize: '15px' }}
                         />
                     </div>
 
-                    {/* Filter Buttons */}
+                    {/* Status Filter Dropdown */}
+                    <div className="relative">
+                        <select
+                            value={activeFilter}
+                            onChange={(e) => setActiveFilter(e.target.value)}
+                            className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
+                            style={{ fontSize: '13px', minWidth: '120px', fontFamily: 'SF Pro Display' }}
+                        >
+                            <option value="all">Status</option>
+                            <option value="available">Available</option>
+                            <option value="assigned">Assigned</option>
+                        </select>
+                        <svg
+                            className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+
+                    {/* Date Range Pickers */}
                     <div className="flex items-center gap-2">
-                        <div className="flex rounded-lg overflow-hidden">
-                            {['all', 'available', 'assigned'].map((filter) => (
-                                <button
-                                    key={filter}
-                                    onClick={() => setActiveFilter(filter)}
-                                    className={`px-4 py-2 font-bold transition-colors ${activeFilter === filter
-                                        ? 'bg-[#CAF0F8] text-black'
-                                        : 'bg-white text-black hover:bg-[#CAF0F8]/50'
-                                        }`}
-                                    style={{ fontSize: '15px' }}
-                                >
-                                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                                </button>
-                            ))}
-                        </div>
+                        <input
+                            type="date"
+                            placeholder="Start Date"
+                            value={dateFilter.startDate}
+                            onChange={(e) => handleDateFilterChange('startDate', e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
+                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
+                        />
+                        <span className="text-gray-500 font-medium" style={{ fontFamily: 'SF Pro Display' }}>to</span>
+                        <input
+                            type="date"
+                            placeholder="End Date"
+                            value={dateFilter.endDate}
+                            onChange={(e) => handleDateFilterChange('endDate', e.target.value)}
+                            max={new Date().toISOString().split('T')[0]} // Optional: Prevent future dates if needed, but not requested
+                            className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
+                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
+                        />
+                    </div>
+
+                    {/* Role Filter Dropdown */}
+                    <div className="relative">
+                        <select
+                            value={roleFilter}
+                            onChange={(e) => setRoleFilter(e.target.value)}
+                            className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
+                            style={{ fontSize: '13px', minWidth: '150px', fontFamily: 'SF Pro Display' }}
+                        >
+                            <option value="all">All Roles</option>
+                            <option value="Team Lead">Team Lead</option>
+                            <option value="Backend Developer">Backend Developer</option>
+                            <option value="Frontend Developer">Frontend Developer</option>
+                            <option value="Quality Assurance">Quality Assurance</option>
+                        </select>
+                        <svg
+                            className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
                     </div>
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-3">
                         <button
                             onClick={handleExport}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#CAF0F8] rounded-lg text-black hover:bg-[#b8e8ef] transition-colors font-bold"
-                            style={{ fontSize: '15px' }}
+                            className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F5] rounded-lg text-black hover:bg-gray-200 transition-colors font-bold border border-gray-300"
+                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
                         >
-                            <svg className="w-5 h-5 text-[#00B4A6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                             Export
                         </button>
                         <button
                             onClick={handleAddDevMan}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#CAF0F8] rounded-lg text-black hover:bg-[#b8e8ef] transition-colors font-bold"
-                            style={{ fontSize: '15px' }}
+                            className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F5] rounded-lg text-black hover:bg-gray-200 transition-colors font-bold whitespace-nowrap border border-gray-300"
+                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
                         >
                             + Add DevMan
                         </button>
                         <button
                             onClick={handleAddResource}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#CAF0F8] text-black rounded-lg hover:bg-[#b8e8ef] transition-colors font-bold"
-                            style={{ fontSize: '15px' }}
+                            className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F5] text-black rounded-lg hover:bg-gray-200 transition-colors font-bold whitespace-nowrap border border-gray-300"
+                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
                         >
                             + Add Resource
                         </button>

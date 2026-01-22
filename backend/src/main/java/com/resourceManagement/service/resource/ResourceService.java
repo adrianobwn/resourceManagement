@@ -52,8 +52,9 @@ public class ResourceService {
                         throw new RuntimeException("Email already exists");
                 }
 
-                // Generate a fallback employee ID if needed for identification, or set to null
-                String employeeId = "EMP-" + System.currentTimeMillis();
+                // Generate sequential Employee ID (e.g., EMP001, EMP002) based on current count
+                long count = resourceRepository.count();
+                String employeeId = String.format("EMP%03d", count + 1);
 
                 Resource resource = Resource.builder()
                                 .resourceName(request.getResourceName())
@@ -64,8 +65,8 @@ public class ResourceService {
 
                 try {
                         Resource savedResource = resourceRepository.saveAndFlush(resource);
-                        long count = resourceRepository.count();
-                        System.out.println("Resource successfully saved. Total resources in DB: " + count);
+                        long totalCount = resourceRepository.count();
+                        System.out.println("Resource successfully saved. Total resources in DB: " + totalCount);
                         return mapToResourceResponse(savedResource);
                 } catch (Exception e) {
                         System.err.println("Error saving resource to DB: " + e.getMessage());
