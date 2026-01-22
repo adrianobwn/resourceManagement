@@ -191,6 +191,12 @@ const Resources = () => {
     };
 
     const handleSaveDevMan = () => {
+        // Validation
+        if (!newDevMan.fullName || !newDevMan.email || !newDevMan.password) {
+            showNotification('Please fill in all fields', 'error');
+            return;
+        }
+
         // Save DevMan logic here
         console.log('Saving DevMan:', newDevMan);
         closeAddDevManModal();
@@ -212,6 +218,18 @@ const Resources = () => {
     };
 
     const handleAssign = async () => {
+        // Validation
+        if (!assignmentData.project || !assignmentData.role || !assignmentData.startDate || !assignmentData.endDate) {
+            showNotification('Please fill in all fields', 'error');
+            return;
+        }
+
+        // Date range validation
+        if (new Date(assignmentData.endDate) < new Date(assignmentData.startDate)) {
+            showNotification('End Date cannot be before Start Date', 'error');
+            return;
+        }
+
         try {
             const assignData = {
                 resourceId: assignModal.resource.resourceId,
@@ -289,6 +307,12 @@ const Resources = () => {
     };
 
     const handleSaveResource = async () => {
+        // Validation
+        if (!newResource.fullName || !newResource.email || !newResource.employeeType || !newResource.joinDate) {
+            showNotification('Please fill in all fields', 'error');
+            return;
+        }
+
         try {
             const resourceData = {
                 resourceName: newResource.fullName,
@@ -361,8 +385,8 @@ const Resources = () => {
                         : 'opacity-100 translate-x-0 animate-slide-in'
                         }`}
                     style={{
-                        backgroundColor: notification.type === 'success' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(0, 180, 216, 0.2)',
-                        borderColor: notification.type === 'success' ? '#06D001' : '#00B4D8'
+                        backgroundColor: notification.type === 'success' ? 'rgba(6, 208, 1, 0.2)' : notification.type === 'error' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 180, 216, 0.2)',
+                        borderColor: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8'
                     }}
                 >
                     {notification.type === 'success' ? (
@@ -377,6 +401,20 @@ const Resources = () => {
                                 strokeLinejoin="round"
                                 strokeWidth="2"
                                 d="M5 13l4 4L19 7"
+                            />
+                        </svg>
+                    ) : notification.type === 'error' ? (
+                        <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="#FF0000"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                             />
                         </svg>
                     ) : (
@@ -398,7 +436,7 @@ const Resources = () => {
                     <span
                         className="font-bold"
                         style={{
-                            color: notification.type === 'success' ? '#06D001' : '#00B4D8',
+                            color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8',
                             fontSize: '14px'
                         }}
                     >
@@ -407,7 +445,7 @@ const Resources = () => {
                     <button
                         onClick={closeNotification}
                         className="ml-2 hover:opacity-70 transition-opacity"
-                        style={{ color: notification.type === 'success' ? '#06D001' : '#00B4D8' }}
+                        style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8' }}
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -433,11 +471,12 @@ const Resources = () => {
                             </h2>
                             <div className="flex items-center gap-4">
                                 <span
-                                    className="px-3 py-1 rounded font-bold whitespace-nowrap"
+                                    className="px-3 py-1 rounded-full font-bold whitespace-nowrap"
                                     style={{
                                         fontSize: '12px',
-                                        color: '#0059FF',
-                                        backgroundColor: 'rgba(0, 89, 255, 0.2)'
+                                        color: '#00B4D8',
+                                        backgroundColor: 'rgba(0, 180, 216, 0.2)',
+                                        border: '1px solid #00B4D8'
                                     }}
                                 >
                                     ACTIVE IN {detailModal.projects.length} PROJECTS
@@ -660,8 +699,18 @@ const Resources = () => {
                             </button>
                             <button
                                 onClick={handleSaveResource}
+                                disabled={!newResource.fullName || !newResource.email || !newResource.employeeType || !newResource.joinDate}
                                 className="font-bold text-black hover:opacity-90 transition-colors"
-                                style={{ width: '180px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', backgroundColor: '#CAF0F8', borderRadius: '8px' }}
+                                style={{
+                                    width: '180px',
+                                    height: '40px',
+                                    fontSize: '14px',
+                                    fontFamily: 'SF Pro Display',
+                                    backgroundColor: '#CAF0F8',
+                                    borderRadius: '8px',
+                                    opacity: (!newResource.fullName || !newResource.email || !newResource.employeeType || !newResource.joinDate) ? 0.5 : 1,
+                                    cursor: (!newResource.fullName || !newResource.email || !newResource.employeeType || !newResource.joinDate) ? 'not-allowed' : 'pointer'
+                                }}
                             >
                                 Save & Create Resource
                             </button>
@@ -759,8 +808,18 @@ const Resources = () => {
                             </button>
                             <button
                                 onClick={handleSaveDevMan}
+                                disabled={!newDevMan.fullName || !newDevMan.email || !newDevMan.password}
                                 className="font-bold text-black hover:opacity-90 transition-colors"
-                                style={{ width: '180px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', backgroundColor: '#CAF0F8', borderRadius: '8px' }}
+                                style={{
+                                    width: '180px',
+                                    height: '40px',
+                                    fontSize: '14px',
+                                    fontFamily: 'SF Pro Display',
+                                    backgroundColor: '#CAF0F8',
+                                    borderRadius: '8px',
+                                    opacity: (!newDevMan.fullName || !newDevMan.email || !newDevMan.password) ? 0.5 : 1,
+                                    cursor: (!newDevMan.fullName || !newDevMan.email || !newDevMan.password) ? 'not-allowed' : 'pointer'
+                                }}
                             >
                                 Save & Create DevMan
                             </button>
@@ -820,7 +879,7 @@ const Resources = () => {
                                 {/* Right side: Status badges */}
                                 <div className="flex items-center gap-2">
                                     <span
-                                        className="px-2 py-0.5 text-xs font-medium rounded"
+                                        className="px-2 py-0.5 text-xs font-medium rounded-full"
                                         style={{
                                             backgroundColor: getProjectBadgeColors(assignModal.resource?.projectCount || 0).background,
                                             color: getProjectBadgeColors(assignModal.resource?.projectCount || 0).text,
@@ -832,13 +891,12 @@ const Resources = () => {
                                         ACTIVE IN {assignModal.resource?.projectCount || 0} PROJECT{assignModal.resource?.projectCount !== 1 ? 'S' : ''}
                                     </span>
                                     <span
-                                        className="px-2 py-0.5 text-xs font-medium rounded"
+                                        className="px-2 py-0.5 text-xs font-bold rounded-full"
                                         style={{
-                                            backgroundColor: assignModal.resource?.status === 'AVAILABLE' ? '#D1FAE5' : 'rgba(255,0,0,0.1)',
-                                            color: assignModal.resource?.status === 'AVAILABLE' ? '#059669' : '#DC2626',
-                                            fontFamily: 'SF Pro Display',
+                                            backgroundColor: assignModal.resource?.status === 'AVAILABLE' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(255, 0, 0, 0.2)',
+                                            color: assignModal.resource?.status === 'AVAILABLE' ? '#06D001' : '#FF0000',
                                             fontSize: '11px',
-                                            border: assignModal.resource?.status === 'AVAILABLE' ? '1px solid #059669' : '1px solid #DC2626'
+                                            border: assignModal.resource?.status === 'AVAILABLE' ? '1px solid #06D001' : '1px solid #FF0000'
                                         }}
                                     >
                                         {assignModal.resource?.status}
@@ -911,9 +969,10 @@ const Resources = () => {
                                                 style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 35px 0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
                                             >
                                                 <option value="">Select role</option>
-                                                <option value="backend">Backend Developer</option>
-                                                <option value="frontend">Frontend Developer</option>
-                                                <option value="fullstack">Fullstack Developer</option>
+                                                <option value="Team Lead">Team Lead</option>
+                                                <option value="Backend Developer">Backend Developer</option>
+                                                <option value="Frontend Developer">Frontend Developer</option>
+                                                <option value="Quality Assurance">Quality Assurance</option>
                                             </select>
                                             <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -966,8 +1025,36 @@ const Resources = () => {
                             </button>
                             <button
                                 onClick={handleAssign}
+                                disabled={
+                                    !assignmentData.project ||
+                                    !assignmentData.role ||
+                                    !assignmentData.startDate ||
+                                    !assignmentData.endDate ||
+                                    new Date(assignmentData.endDate) < new Date(assignmentData.startDate)
+                                }
                                 className="font-bold text-black hover:opacity-90 transition-colors"
-                                style={{ width: '100px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', backgroundColor: '#CAF0F8', borderRadius: '8px' }}
+                                style={{
+                                    width: '100px',
+                                    height: '40px',
+                                    fontSize: '14px',
+                                    fontFamily: 'SF Pro Display',
+                                    backgroundColor: '#CAF0F8',
+                                    borderRadius: '8px',
+                                    opacity: (
+                                        !assignmentData.project ||
+                                        !assignmentData.role ||
+                                        !assignmentData.startDate ||
+                                        !assignmentData.endDate ||
+                                        new Date(assignmentData.endDate) < new Date(assignmentData.startDate)
+                                    ) ? 0.5 : 1,
+                                    cursor: (
+                                        !assignmentData.project ||
+                                        !assignmentData.role ||
+                                        !assignmentData.startDate ||
+                                        !assignmentData.endDate ||
+                                        new Date(assignmentData.endDate) < new Date(assignmentData.startDate)
+                                    ) ? 'not-allowed' : 'pointer'
+                                }}
                             >
                                 Assign
                             </button>
@@ -1184,15 +1271,15 @@ const Resources = () => {
                         {/* Legend */}
                         <div className="flex items-center justify-center gap-6 pb-6">
                             <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#06D001' }}></div>
+                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#06D001' }}></div>
                                 <span style={{ fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '500' }}>Ongoing</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#F97316' }}></div>
+                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#F97316' }}></div>
                                 <span style={{ fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '500' }}>Hold</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#FF0000' }}></div>
+                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#FF0000' }}></div>
                                 <span style={{ fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '500' }}>Closed</span>
                             </div>
                         </div>
@@ -1318,15 +1405,12 @@ const Resources = () => {
                                             </td>
                                             <td className="py-4 px-6">
                                                 <span
-                                                    className={`px-3 py-1 rounded font-semibold ${resource.status === 'AVAILABLE'
-                                                        ? 'bg-green-100 text-green-600'
-                                                        : 'bg-red-100 text-red-600'
-                                                        }`}
+                                                    className="px-3 py-1 rounded-full font-bold"
                                                     style={{
                                                         fontSize: '12px',
-                                                        border: resource.status === 'AVAILABLE'
-                                                            ? '1px solid #059669'
-                                                            : '1px solid #DC2626'
+                                                        color: resource.status === 'AVAILABLE' ? '#06D001' : '#FF0000',
+                                                        backgroundColor: resource.status === 'AVAILABLE' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(255, 0, 0, 0.2)',
+                                                        border: resource.status === 'AVAILABLE' ? '1px solid #06D001' : '1px solid #FF0000'
                                                     }}
                                                 >
                                                     {resource.status}

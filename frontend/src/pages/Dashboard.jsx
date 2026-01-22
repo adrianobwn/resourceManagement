@@ -30,7 +30,7 @@ const Dashboard = () => {
     const [activeProjects, setActiveProjects] = useState([]);
 
     // Notification state
-    const [notification, setNotification] = useState({ show: false, message: '', closing: false });
+    const [notification, setNotification] = useState({ show: false, message: '', closing: false, type: 'success' });
 
     // Decline modal state
     const [declineModal, setDeclineModal] = useState({ show: false, request: null, reason: '' });
@@ -124,17 +124,17 @@ const Dashboard = () => {
             // Here you would send the decline reason to the server
             console.log('Declined:', declineModal.request, 'Reason:', declineModal.reason);
             setDeclineModal({ show: false, request: null, reason: '' });
-            showNotification(`Request has been declined.`);
+            showNotification(`Request has been declined.`, 'error');
         }
     };
 
     // Show notification
-    const showNotification = (message) => {
-        setNotification({ show: true, message, closing: false });
+    const showNotification = (message, type = 'success') => {
+        setNotification({ show: true, message, closing: false, type });
         setTimeout(() => {
             setNotification(prev => ({ ...prev, closing: true }));
             setTimeout(() => {
-                setNotification({ show: false, message: '', closing: false });
+                setNotification({ show: false, message: '', closing: false, type: 'success' });
             }, 300);
         }, 4000);
     };
@@ -143,7 +143,7 @@ const Dashboard = () => {
     const closeNotification = () => {
         setNotification(prev => ({ ...prev, closing: true }));
         setTimeout(() => {
-            setNotification({ show: false, message: '', closing: false });
+            setNotification({ show: false, message: '', closing: false, type: 'success' });
         }, 300);
     };
 
@@ -168,27 +168,26 @@ const Dashboard = () => {
                         : 'opacity-100 translate-x-0'
                         }`}
                     style={{
-                        backgroundColor: 'rgba(6, 208, 1, 0.2)',
-                        border: '1px solid #06D001'
+                        backgroundColor: notification.type === 'error' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(6, 208, 1, 0.2)',
+                        border: `1px solid ${notification.type === 'error' ? '#FF0000' : '#06D001'}`
                     }}
                 >
                     <svg
                         className="w-5 h-5"
                         fill="none"
-                        stroke="#06D001"
+                        stroke={notification.type === 'error' ? '#FF0000' : '#06D001'}
                         viewBox="0 0 24 24"
                     >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M5 13l4 4L19 7"
-                        />
+                        {notification.type === 'error' ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                        )}
                     </svg>
                     <span
                         className="font-bold"
                         style={{
-                            color: '#06D001',
+                            color: notification.type === 'error' ? '#FF0000' : '#06D001',
                             fontSize: '14px',
                             fontFamily: 'SF Pro Display'
                         }}
@@ -198,7 +197,7 @@ const Dashboard = () => {
                     <button
                         onClick={closeNotification}
                         className="ml-2 hover:opacity-70 transition-opacity"
-                        style={{ color: '#06D001' }}
+                        style={{ color: notification.type === 'error' ? '#FF0000' : '#06D001' }}
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
