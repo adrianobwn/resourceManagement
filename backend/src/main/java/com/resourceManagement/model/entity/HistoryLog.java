@@ -4,6 +4,7 @@ import com.resourceManagement.model.enums.EntityType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,6 +27,19 @@ public class HistoryLog {
 
     @Column(nullable = false)
     private String activityType;
+
+    @Column(length = 255)
+    private String projectName;
+
+    @Column(length = 255)
+    private String resourceName;
+
+    @Column(length = 100)
+    private String resourceRole;
+
+    private LocalDate assignmentStartDate;
+
+    private LocalDate assignmentEndDate;
 
     @Column(nullable = false, length = 1000)
     private String description;

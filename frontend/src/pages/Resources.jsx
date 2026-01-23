@@ -140,7 +140,7 @@ const Resources = () => {
                 if (resource.status === 'AVAILABLE') {
                     // For AVAILABLE resources, add one row with empty project fields
                     exportData.push({
-                        'Nama': resource.resourceName,
+                        'Name': resource.resourceName,
                         'Role': '',
                         'Status': resource.status,
                         'Project': '',
@@ -152,7 +152,7 @@ const Resources = () => {
                     if (resource.currentAssignments.length === 0) {
                         // If no assignments found, add one row with empty project fields
                         exportData.push({
-                            'Nama': resource.resourceName,
+                            'Name': resource.resourceName,
                             'Role': '',
                             'Status': resource.status,
                             'Project': '',
@@ -162,7 +162,7 @@ const Resources = () => {
                     } else {
                         resource.currentAssignments.forEach((assignment) => {
                             exportData.push({
-                                'Nama': resource.resourceName,
+                                'Name': resource.resourceName,
                                 'Role': assignment.projectRole,
                                 'Status': resource.status,
                                 'Project': assignment.projectName,
@@ -181,7 +181,7 @@ const Resources = () => {
 
             // Set column widths for better readability
             const columnWidths = [
-                { wch: 30 }, // Nama
+                { wch: 30 }, // Name
                 { wch: 25 }, // Role
                 { wch: 12 }, // Status
                 { wch: 35 }, // Project

@@ -6,11 +6,15 @@ import com.resourceManagement.dto.resource.ResourceResponse;
 import com.resourceManagement.model.entity.Project;
 import com.resourceManagement.model.entity.Resource;
 import com.resourceManagement.model.entity.ResourceAssignment;
+import com.resourceManagement.model.entity.User;
 import com.resourceManagement.model.enums.AssignmentStatus;
+import com.resourceManagement.model.enums.EntityType;
 import com.resourceManagement.model.enums.ResourceStatus;
 import com.resourceManagement.repository.ProjectRepository;
 import com.resourceManagement.repository.ResourceAssignmentRepository;
 import com.resourceManagement.repository.ResourceRepository;
+import com.resourceManagement.repository.UserRepository;
+import com.resourceManagement.service.project.HistoryLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +31,8 @@ public class ResourceService {
         private final ResourceRepository resourceRepository;
         private final ResourceAssignmentRepository assignmentRepository;
         private final ProjectRepository projectRepository;
+        private final HistoryLogService historyLogService;
+        private final UserRepository userRepository;
 
         public List<ResourceResponse> getAllResources() {
                 List<Resource> resources = resourceRepository.findAll();
@@ -101,6 +107,22 @@ public class ResourceService {
                 // Update resource status to ASSIGNED
                 resource.setStatus(ResourceStatus.ASSIGNED);
                 resourceRepository.save(resource);
+
+                // Log the activity
+                User admin = userRepository.findByUserType("ADMIN").stream().findFirst().orElse(null);
+                if (admin != null) {
+                    historyLogService.logActivity(
+                        EntityType.ASSIGNMENT,
+                        "Assign Resource",
+                        project.getProjectName(),
+                        resource.getResourceName(),
+                        request.getProjectRole(),
+                        startDate,
+                        endDate,
+                        "Assigned " + resource.getResourceName() + " to project " + project.getProjectName() + " as " + request.getProjectRole(),
+                        admin
+                    );
+                }
 
                 return mapToResourceResponse(resource);
         }

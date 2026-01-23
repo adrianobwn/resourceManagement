@@ -1,10 +1,30 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import api from '../utils/api';
+import * as XLSX from 'xlsx';
 
 const Activities = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('extend');
+    const [notification, setNotification] = useState({ show: false, message: '', type: 'info', closing: false });
+
+    const showNotification = (message, type = 'info') => {
+        setNotification({ show: true, message, type, closing: false });
+        setTimeout(() => {
+            setNotification(prev => ({ ...prev, closing: true }));
+            setTimeout(() => {
+                setNotification({ show: false, message: '', type: 'info', closing: false });
+            }, 300);
+        }, 4000);
+    };
+
+    const closeNotification = () => {
+        setNotification(prev => ({ ...prev, closing: true }));
+        setTimeout(() => {
+            setNotification({ show: false, message: '', closing: false });
+        }, 300);
+    };
 
     // Dummy data for Extend
     const extendData = [
@@ -158,8 +178,113 @@ const Activities = () => {
         };
     };
 
+    const handleExportLogHistory = async () => {
+        try {
+            const response = await api.get('/history-logs');
+            const logs = response.data;
+
+            // Define headers
+            const headers = [
+                'Entity Type',
+                'Activity Type',
+                'Project',
+                'Resource',
+                'Role',
+                'Assignment Period',
+                'Description',
+                'Performed By',
+                'Timestamp'
+            ];
+
+            const exportData = logs.map(log => ({
+                'Entity Type': log.entityType || '',
+                'Activity Type': log.activityType || '',
+                'Project': log.projectName || '',
+                'Resource': log.resourceName || '',
+                'Role': log.resourceRole || '',
+                'Assignment Period': log.assignmentStartDate && log.assignmentEndDate
+                    ? `${new Date(log.assignmentStartDate).toLocaleDateString('en-GB')} - ${new Date(log.assignmentEndDate).toLocaleDateString('en-GB')}`
+                    : '',
+                'Description': log.description || '',
+                'Performed By': log.performedBy || '',
+                'Timestamp': log.timestamp ? new Date(log.timestamp).toLocaleString('en-GB') : ''
+            }));
+
+            // Create worksheet with headers even if data is empty
+            const worksheet = XLSX.utils.json_to_sheet(exportData, { header: headers });
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Activity Log');
+
+            const columnWidths = [
+                { wch: 15 }, // Entity Type
+                { wch: 20 }, // Activity Type
+                { wch: 30 }, // Project
+                { wch: 25 }, // Resource
+                { wch: 20 }, // Role
+                { wch: 25 }, // Assignment Period
+                { wch: 50 }, // Description
+                { wch: 20 }, // Performed By
+                { wch: 20 }  // Timestamp
+            ];
+            worksheet['!cols'] = columnWidths;
+
+            const fileName = `Activity_Log_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(workbook, fileName);
+            showNotification('Export successful! File downloaded.', 'success');
+        } catch (error) {
+            console.error('Error exporting log history:', error);
+            showNotification('Failed to export log history', 'error');
+        }
+    };
+
     return (
         <div className="flex min-h-screen bg-[#E6F2F1] font-['SF_Pro_Display']">
+            {/* Notification Toast */}
+            {notification.show && (
+                <div
+                    className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-300 ease-in-out ${notification.closing
+                        ? 'opacity-0 translate-x-full'
+                        : 'opacity-100 translate-x-0 animate-slide-in'
+                        }`}
+                    style={{
+                        backgroundColor: notification.type === 'success' ? 'rgba(6, 208, 1, 0.2)' : notification.type === 'error' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 180, 216, 0.2)',
+                        borderColor: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8'
+                    }}
+                >
+                    {notification.type === 'success' ? (
+                        <svg className="w-5 h-5" fill="none" stroke="#06D001" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    ) : notification.type === 'error' ? (
+                        <svg className="w-5 h-5" fill="none" stroke="#FF0000" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    ) : (
+                        <svg className="w-5 h-5" fill="none" stroke="#00B4D8" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    )}
+                    <span
+                        className="font-bold"
+                        style={{
+                            color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8',
+                            fontSize: '14px'
+                        }}
+                    >
+                        {notification.message}
+                    </span>
+                    <button
+                        onClick={closeNotification}
+                        className="ml-2 hover:opacity-70 transition-opacity"
+                        style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8' }}
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            )}
+
             {/* Sidebar */}
             <Sidebar />
 
@@ -170,56 +295,59 @@ const Activities = () => {
 
                 {/* Tab Navigation */}
                 <div className="mb-6">
-                    <div className="flex gap-2">
+                    <div className="flex items-center justify-between">
+                        <div className="flex bg-[#F5F5F5] rounded-lg p-1">
+                            <button
+                                onClick={() => setActiveTab('extend')}
+                                className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg ${activeTab === 'extend'
+                                    ? 'bg-white text-black'
+                                    : 'text-black hover:bg-gray-200'
+                                    }`}
+                            >
+                                Extend
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('release')}
+                                className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg ${activeTab === 'release'
+                                    ? 'bg-white text-black'
+                                    : 'text-black hover:bg-gray-200'
+                                    }`}
+                            >
+                                Release
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('assignment')}
+                                className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg ${activeTab === 'assignment'
+                                    ? 'bg-white text-black'
+                                    : 'text-black hover:bg-gray-200'
+                                    }`}
+                            >
+                                Assignment
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('project')}
+                                className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg ${activeTab === 'project'
+                                    ? 'bg-white text-black'
+                                    : 'text-black hover:bg-gray-200'
+                                    }`}
+                            >
+                                Project
+                            </button>
+                        </div>
                         <button
-                            onClick={() => setActiveTab('extend')}
-                            className={`px-6 py-2 rounded-t-lg font-bold transition-colors ${
-                                activeTab === 'extend'
-                                    ? 'bg-white text-gray-800 border-t-2 border-l-2 border-r-2 border-gray-300'
-                                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                            }`}
-                            style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}
+                            onClick={handleExportLogHistory}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#F5F5F5] rounded-lg text-black hover:bg-gray-200 transition-colors font-sf font-bold text-sm"
                         >
-                            Extend
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('release')}
-                            className={`px-6 py-2 rounded-t-lg font-bold transition-colors ${
-                                activeTab === 'release'
-                                    ? 'bg-white text-gray-800 border-t-2 border-l-2 border-r-2 border-gray-300'
-                                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                            }`}
-                            style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}
-                        >
-                            Release
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('assignment')}
-                            className={`px-6 py-2 rounded-t-lg font-bold transition-colors ${
-                                activeTab === 'assignment'
-                                    ? 'bg-white text-gray-800 border-t-2 border-l-2 border-r-2 border-gray-300'
-                                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                            }`}
-                            style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}
-                        >
-                            Assignment
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('project')}
-                            className={`px-6 py-2 rounded-t-lg font-bold transition-colors ${
-                                activeTab === 'project'
-                                    ? 'bg-white text-gray-800 border-t-2 border-l-2 border-r-2 border-gray-300'
-                                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                            }`}
-                            style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}
-                        >
-                            Project
+                            <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Export Log History
                         </button>
                     </div>
                 </div>
 
                 {/* Tab Content */}
-                <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div className="bg-white rounded-lg overflow-hidden">
                     {/* Extend Tab */}
                     {activeTab === 'extend' && (
                         <div className="overflow-x-auto">
