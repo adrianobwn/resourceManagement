@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import api from '../utils/api';
-import * as XLSX from 'xlsx';
 
-const Resources = () => {
+const DevmanResources = () => {
     const navigate = useNavigate();
     const [resources, setResources] = useState([]);
     const [filteredResources, setFilteredResources] = useState([]);
@@ -15,26 +14,15 @@ const Resources = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [notification, setNotification] = useState({ show: false, message: '' });
     const [detailModal, setDetailModal] = useState({ show: false, resource: null, projects: [] });
-    const [addResourceModal, setAddResourceModal] = useState({ show: false });
-    const [addDevManModal, setAddDevManModal] = useState({ show: false });
-    const [assignModal, setAssignModal] = useState({ show: false, resource: null });
-    const [trackRecordModal, setTrackRecordModal] = useState({ show: false, resource: null });
-    const [newResource, setNewResource] = useState({
-        fullName: '',
-        email: ''
-    });
-    const [newDevMan, setNewDevMan] = useState({
-        fullName: '',
-        email: '',
-        password: ''
-    });
+
     const [assignmentData, setAssignmentData] = useState({
         project: '',
         role: '',
         startDate: '',
         endDate: ''
     });
-    const [skillInput, setSkillInput] = useState('');
+    const [assignModal, setAssignModal] = useState({ show: false, resource: null });
+    const [trackRecordModal, setTrackRecordModal] = useState({ show: false, resource: null });
     const [hoveredProject, setHoveredProject] = useState(null);
     const [projects, setProjects] = useState([]);
 
@@ -131,115 +119,9 @@ const Resources = () => {
         }, 4000);
     };
 
-    const handleExport = () => {
-        try {
-            // Prepare data rows
-            const exportData = [];
 
-            resources.forEach((resource) => {
-                if (resource.status === 'AVAILABLE') {
-                    // For AVAILABLE resources, add one row with empty project fields
-                    exportData.push({
-                        'Nama': resource.resourceName,
-                        'Role': '',
-                        'Status': resource.status,
-                        'Project': '',
-                        'Start Date': '',
-                        'End Date': ''
-                    });
-                } else if (resource.status === 'ASSIGNED' && resource.currentAssignments) {
-                    // For ASSIGNED resources, add a row for each active assignment
-                    if (resource.currentAssignments.length === 0) {
-                        // If no assignments found, add one row with empty project fields
-                        exportData.push({
-                            'Nama': resource.resourceName,
-                            'Role': '',
-                            'Status': resource.status,
-                            'Project': '',
-                            'Start Date': '',
-                            'End Date': ''
-                        });
-                    } else {
-                        resource.currentAssignments.forEach((assignment) => {
-                            exportData.push({
-                                'Nama': resource.resourceName,
-                                'Role': assignment.projectRole,
-                                'Status': resource.status,
-                                'Project': assignment.projectName,
-                                'Start Date': new Date(assignment.startDate).toLocaleDateString('en-GB'),
-                                'End Date': new Date(assignment.endDate).toLocaleDateString('en-GB')
-                            });
-                        });
-                    }
-                }
-            });
 
-            // Create workbook and worksheet
-            const worksheet = XLSX.utils.json_to_sheet(exportData);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Resources');
 
-            // Set column widths for better readability
-            const columnWidths = [
-                { wch: 30 }, // Nama
-                { wch: 25 }, // Role
-                { wch: 12 }, // Status
-                { wch: 35 }, // Project
-                { wch: 15 }, // Start Date
-                { wch: 15 }  // End Date
-            ];
-            worksheet['!cols'] = columnWidths;
-
-            // Generate filename with current date
-            const fileName = `Resource_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
-
-            // Export file
-            XLSX.writeFile(workbook, fileName);
-
-            showNotification('Export successful! File downloaded.', 'success');
-        } catch (error) {
-            console.error('Export error:', error);
-            showNotification('Failed to export data', 'error');
-        }
-    };
-
-    const handleAddDevMan = () => {
-        setAddDevManModal({ show: true });
-    };
-
-    const closeAddDevManModal = () => {
-        setAddDevManModal({ show: false });
-        setNewDevMan({
-            fullName: '',
-            email: '',
-            password: ''
-        });
-    };
-
-    const handleSaveDevMan = async () => {
-        // Validation
-        if (!newDevMan.fullName || !newDevMan.email || !newDevMan.password) {
-            showNotification('Please fill in all fields', 'error');
-            return;
-        }
-
-        try {
-            const response = await api.post('/users/pm', {
-                name: newDevMan.fullName,
-                email: newDevMan.email,
-                password: newDevMan.password
-            });
-            console.log('DevMan API Response Status:', response.status);
-            console.log('DevMan successfully created:', response.data);
-            closeAddDevManModal();
-            showNotification('Saved Successfully! DevMan created successfully.', 'success');
-            setSearchQuery('');
-            setActiveFilter('all');
-        } catch (error) {
-            console.error('Error creating DevMan:', error);
-            showNotification(error.response?.data?.message || 'Failed to create DevMan', 'error');
-        }
-    };
 
     const handleAssignToProject = (resource) => {
         setAssignModal({ show: true, resource });
@@ -308,64 +190,7 @@ const Resources = () => {
         }
     };;
 
-    const handleAddResource = () => {
-        setAddResourceModal({ show: true });
-    };
 
-    const closeAddResourceModal = () => {
-        setAddResourceModal({ show: false });
-        setNewResource({
-            fullName: '',
-            email: ''
-        });
-    };
-
-    const handleAddSkill = (e) => {
-        if (e.key === 'Enter' && skillInput.trim()) {
-            e.preventDefault();
-            if (!newResource.skills.includes(skillInput.trim())) {
-                setNewResource(prev => ({
-                    ...prev,
-                    skills: [...prev.skills, skillInput.trim()]
-                }));
-            }
-            setSkillInput('');
-        }
-    };
-
-    const removeSkill = (skillToRemove) => {
-        setNewResource(prev => ({
-            ...prev,
-            skills: prev.skills.filter(skill => skill !== skillToRemove)
-        }));
-    };
-
-    const handleSaveResource = async () => {
-        // Validation
-        if (!newResource.fullName || !newResource.email) {
-            showNotification('Please fill in all fields', 'error');
-            return;
-        }
-
-        try {
-            const resourceData = {
-                resourceName: newResource.fullName,
-                email: newResource.email,
-                status: 'AVAILABLE'
-            };
-            const response = await api.post('/resources', resourceData);
-            console.log('Resource API Response Status:', response.status);
-            console.log('Resource successfully created:', response.data);
-            closeAddResourceModal();
-            showNotification('Saved Successfully! Resource created successfully.', 'success');
-            setSearchQuery('');
-            setActiveFilter('all');
-            fetchResources(); // Refresh the list
-        } catch (error) {
-            console.error('Error creating resource:', error);
-            showNotification(error.response?.data?.message || 'Failed to create resource', 'error');
-        }
-    };
 
     const handleViewDetail = async (resource) => {
         if (resource.status === 'AVAILABLE') {
@@ -559,214 +384,6 @@ const Resources = () => {
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Add Resource Modal */}
-            {addResourceModal.show && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
-                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-                >
-                    <div
-                        className="rounded-2xl relative flex flex-col animate-scale-in"
-                        style={{ width: '500px', maxHeight: '90vh', backgroundColor: '#F5F5F5' }}
-                    >
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-8 pt-6 pb-4">
-                            <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
-                                Add New Resource
-                            </h2>
-                            <button
-                                onClick={closeAddResourceModal}
-                                className="text-gray-500 hover:text-gray-700 transition-colors"
-                            >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        {/* Line below title */}
-                        <div className="border-b border-gray-300 mx-0" style={{ width: '500px' }}></div>
-
-                        {/* Form Content */}
-                        <div className="px-8 py-4">
-                            {/* Identity & Contact Section */}
-                            <div className="mb-6">
-                                <div className="flex items-center justify-center gap-2 mb-4">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                    <span className="font-bold text-black" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>Identity & contact</span>
-                                </div>
-                                <div className="space-y-4 px-4">
-                                    <div>
-                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Full Name</label>
-                                        <input
-                                            type="text"
-                                            value={newResource.fullName}
-                                            onChange={(e) => setNewResource(prev => ({ ...prev, fullName: e.target.value }))}
-                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
-                                            style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
-                                        />
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <div style={{ width: '100%' }}>
-                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Email Address</label>
-                                            <input
-                                                type="email"
-                                                value={newResource.email}
-                                                onChange={(e) => setNewResource(prev => ({ ...prev, email: e.target.value }))}
-                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
-                                                style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Separator before buttons */}
-                        <div className="border-b border-gray-300 mx-0 mb-4" style={{ width: '500px' }}></div>
-
-                        {/* Footer Buttons */}
-                        <div className="flex items-center justify-between px-8 pb-6">
-                            <button
-                                onClick={closeAddResourceModal}
-                                className="font-bold text-black bg-white hover:bg-gray-100 transition-colors"
-                                style={{ width: '76px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', border: '1px solid #A9A9A9', borderRadius: '8px' }}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSaveResource}
-                                disabled={!newResource.fullName || !newResource.email}
-                                className="font-bold text-black hover:opacity-90 transition-colors"
-                                style={{
-                                    width: '180px',
-                                    height: '40px',
-                                    fontSize: '14px',
-                                    fontFamily: 'SF Pro Display',
-                                    backgroundColor: '#CAF0F8',
-                                    borderRadius: '8px',
-                                    opacity: (!newResource.fullName || !newResource.email) ? 0.5 : 1,
-                                    cursor: (!newResource.fullName || !newResource.email) ? 'not-allowed' : 'pointer'
-                                }}
-                            >
-                                Save & Create Resource
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Add DevMan Modal */}
-            {addDevManModal.show && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
-                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-                >
-                    <div
-                        className="rounded-2xl relative flex flex-col animate-scale-in"
-                        style={{ width: '500px', maxHeight: '90vh', backgroundColor: '#F5F5F5' }}
-                    >
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-8 pt-6 pb-4">
-                            <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
-                                Add DevMan
-                            </h2>
-                            <button
-                                onClick={closeAddDevManModal}
-                                className="text-gray-500 hover:text-gray-700 transition-colors"
-                            >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        {/* Line below title */}
-                        <div className="border-b border-gray-300 mx-0" style={{ width: '500px' }}></div>
-
-                        {/* Form Content */}
-                        <div className="px-8 py-6 mb-6">
-                            {/* Identity & Contact Section */}
-                            <div className="mb-6">
-                                <div className="flex items-center justify-center gap-2 mb-4">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                    <span className="font-bold text-black" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>Identity & contact</span>
-                                </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Full Name</label>
-                                        <input
-                                            type="text"
-                                            value={newDevMan.fullName}
-                                            onChange={(e) => setNewDevMan(prev => ({ ...prev, fullName: e.target.value }))}
-                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
-                                            style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
-                                        />
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <div style={{ width: '48%' }}>
-                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Email Address</label>
-                                            <input
-                                                type="email"
-                                                value={newDevMan.email}
-                                                onChange={(e) => setNewDevMan(prev => ({ ...prev, email: e.target.value }))}
-                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
-                                                style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
-                                            />
-                                        </div>
-                                        <div style={{ width: '48%' }}>
-                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Password</label>
-                                            <input
-                                                type="password"
-                                                value={newDevMan.password}
-                                                onChange={(e) => setNewDevMan(prev => ({ ...prev, password: e.target.value }))}
-                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
-                                                style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Separator before buttons */}
-                        <div className="border-b border-gray-300 mx-0 mb-4" style={{ width: '500px' }}></div>
-
-                        {/* Footer Buttons */}
-                        <div className="flex items-center justify-between px-8 pb-6">
-                            <button
-                                onClick={closeAddDevManModal}
-                                className="font-bold text-black bg-white hover:bg-gray-100 transition-colors"
-                                style={{ width: '76px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', border: '1px solid #A9A9A9', borderRadius: '8px' }}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSaveDevMan}
-                                disabled={!newDevMan.fullName || !newDevMan.email || !newDevMan.password}
-                                className="font-bold text-black hover:opacity-90 transition-colors"
-                                style={{
-                                    width: '180px',
-                                    height: '40px',
-                                    fontSize: '14px',
-                                    fontFamily: 'SF Pro Display',
-                                    backgroundColor: '#CAF0F8',
-                                    borderRadius: '8px',
-                                    opacity: (!newDevMan.fullName || !newDevMan.email || !newDevMan.password) ? 0.5 : 1,
-                                    cursor: (!newDevMan.fullName || !newDevMan.email || !newDevMan.password) ? 'not-allowed' : 'pointer'
-                                }}
-                            >
-                                Save & Create DevMan
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -1240,7 +857,7 @@ const Resources = () => {
                 <h1 className="text-4xl font-bold text-gray-800 mb-8">Resources</h1>
 
                 {/* Toolbar */}
-                <div className="flex items-center justify-between mb-6 gap-3">
+                <div className="flex items-center justify-between mb-6">
                     {/* Search Bar */}
                     <div className="relative">
                         <svg
@@ -1266,100 +883,76 @@ const Resources = () => {
                         />
                     </div>
 
-                    {/* Status Filter Dropdown */}
-                    <div className="relative">
-                        <select
-                            value={activeFilter}
-                            onChange={(e) => setActiveFilter(e.target.value)}
-                            className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
-                            style={{ fontSize: '13px', minWidth: '120px', fontFamily: 'SF Pro Display' }}
-                        >
-                            <option value="all">Status</option>
-                            <option value="available">Available</option>
-                            <option value="assigned">Assigned</option>
-                        </select>
-                        <svg
-                            className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </div>
-
-                    {/* Date Range Pickers */}
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="date"
-                            placeholder="Start Date"
-                            value={dateFilter.startDate}
-                            onChange={(e) => handleDateFilterChange('startDate', e.target.value)}
-                            className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
-                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
-                        />
-                        <span className="text-gray-500 font-medium" style={{ fontFamily: 'SF Pro Display' }}>to</span>
-                        <input
-                            type="date"
-                            placeholder="End Date"
-                            value={dateFilter.endDate}
-                            onChange={(e) => handleDateFilterChange('endDate', e.target.value)}
-                            max={new Date().toISOString().split('T')[0]} // Optional: Prevent future dates if needed, but not requested
-                            className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
-                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
-                        />
-                    </div>
-
-                    {/* Role Filter Dropdown */}
-                    <div className="relative">
-                        <select
-                            value={roleFilter}
-                            onChange={(e) => setRoleFilter(e.target.value)}
-                            className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
-                            style={{ fontSize: '13px', minWidth: '150px', fontFamily: 'SF Pro Display' }}
-                        >
-                            <option value="all">All Roles</option>
-                            <option value="Team Lead">Team Lead</option>
-                            <option value="Backend Developer">Backend Developer</option>
-                            <option value="Frontend Developer">Frontend Developer</option>
-                            <option value="Quality Assurance">Quality Assurance</option>
-                        </select>
-                        <svg
-                            className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </div>
-
-                    {/* Action Buttons */}
                     <div className="flex items-center gap-3">
-                        <button
-                            onClick={handleExport}
-                            className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F5] rounded-lg text-black hover:bg-gray-200 transition-colors font-bold border border-gray-300"
-                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
-                        >
-                            <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        {/* Status Filter Dropdown */}
+
+                        <div className="relative">
+                            <select
+                                value={activeFilter}
+                                onChange={(e) => setActiveFilter(e.target.value)}
+                                className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
+                                style={{ fontSize: '13px', minWidth: '120px', fontFamily: 'SF Pro Display' }}
+                            >
+                                <option value="all">Status</option>
+                                <option value="available">Available</option>
+                                <option value="assigned">Assigned</option>
+                            </select>
+                            <svg
+                                className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                             </svg>
-                            Export
-                        </button>
-                        <button
-                            onClick={handleAddDevMan}
-                            className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F5] rounded-lg text-black hover:bg-gray-200 transition-colors font-bold whitespace-nowrap border border-gray-300"
-                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
-                        >
-                            + Add DevMan
-                        </button>
-                        <button
-                            onClick={handleAddResource}
-                            className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F5] text-black rounded-lg hover:bg-gray-200 transition-colors font-bold whitespace-nowrap border border-gray-300"
-                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
-                        >
-                            + Add Resource
-                        </button>
+                        </div>
+
+                        {/* Date Range Pickers */}
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="date"
+                                placeholder="Start Date"
+                                value={dateFilter.startDate}
+                                onChange={(e) => handleDateFilterChange('startDate', e.target.value)}
+                                className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
+                                style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
+                            />
+                            <span className="text-gray-500 font-medium" style={{ fontFamily: 'SF Pro Display' }}>to</span>
+                            <input
+                                type="date"
+                                placeholder="End Date"
+                                value={dateFilter.endDate}
+                                onChange={(e) => handleDateFilterChange('endDate', e.target.value)}
+                                max={new Date().toISOString().split('T')[0]} // Optional: Prevent future dates if needed, but not requested
+                                className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
+                                style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
+                            />
+                        </div>
+
+                        {/* Role Filter Dropdown */}
+                        <div className="relative">
+                            <select
+                                value={roleFilter}
+                                onChange={(e) => setRoleFilter(e.target.value)}
+                                className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
+                                style={{ fontSize: '13px', minWidth: '150px', fontFamily: 'SF Pro Display' }}
+                            >
+                                <option value="all">All Roles</option>
+                                <option value="Team Lead">Team Lead</option>
+                                <option value="Backend Developer">Backend Developer</option>
+                                <option value="Frontend Developer">Frontend Developer</option>
+                                <option value="Quality Assurance">Quality Assurance</option>
+                            </select>
+                            <svg
+                                className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+
                     </div>
                 </div>
 
@@ -1453,4 +1046,4 @@ const Resources = () => {
     );
 };
 
-export default Resources;
+export default DevmanResources;

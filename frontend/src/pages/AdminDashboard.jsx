@@ -525,7 +525,7 @@ const Dashboard = () => {
             {/* Main Content */}
             <div className="flex-1 ml-[267px] p-8">
                 {/* Page Title */}
-                <h1 className="text-4xl font-bold text-gray-800 mb-8" style={{ fontFamily: 'SF Pro Display' }}>Dashboard</h1>
+                <h1 className="text-4xl font-bold text-gray-800 mb-8" style={{ fontFamily: 'SF Pro Display' }}>Admin Dashboard</h1>
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-4 gap-4 mb-8">
@@ -558,7 +558,7 @@ const Dashboard = () => {
                         }}
                     >
                         <div className="flex justify-between items-start mb-2">
-                            <span className="text-lg font-bold" style={{ color: '#06D001' }}>Available</span>
+                            <span className="text-lg font-bold text-black">Available</span>
                             <div
                                 className="w-10 h-10 rounded-lg flex items-center justify-center"
                                 style={{ backgroundColor: 'rgba(6, 208, 1, 0.2)' }}
@@ -566,7 +566,7 @@ const Dashboard = () => {
                                 <UserPlus className="w-6 h-6" style={{ color: '#06D001' }} />
                             </div>
                         </div>
-                        <p className="text-5xl font-bold" style={{ color: '#06D001' }}>{stats.availableResources}</p>
+                        <p className="text-5xl font-bold text-black">{stats.availableResources}</p>
                     </div>
 
                     {/* Active Projects */}
@@ -578,7 +578,7 @@ const Dashboard = () => {
                         }}
                     >
                         <div className="flex justify-between items-start mb-2">
-                            <span className="text-lg font-bold" style={{ color: '#00B4D8' }}>Active Projects</span>
+                            <span className="text-lg font-bold text-black">Active Projects</span>
                             <div
                                 className="w-10 h-10 rounded-lg flex items-center justify-center"
                                 style={{ backgroundColor: 'rgba(0, 180, 216, 0.2)' }}
@@ -586,7 +586,7 @@ const Dashboard = () => {
                                 <FolderOpen className="w-6 h-6" style={{ color: '#00B4D8' }} />
                             </div>
                         </div>
-                        <p className="text-5xl font-bold" style={{ color: '#00B4D8' }}>{stats.activeProjects}</p>
+                        <p className="text-5xl font-bold text-black">{stats.activeProjects}</p>
                     </div>
 
                     {/* Pending Request */}
@@ -598,7 +598,7 @@ const Dashboard = () => {
                         }}
                     >
                         <div className="flex justify-between items-start mb-2">
-                            <span className="text-lg font-bold" style={{ color: '#FBCD3F' }}>Pending Request</span>
+                            <span className="text-lg font-bold text-black">Pending Request</span>
                             <div
                                 className="w-10 h-10 rounded-lg flex items-center justify-center"
                                 style={{ backgroundColor: 'rgba(251, 205, 63, 0.2)' }}
@@ -606,7 +606,7 @@ const Dashboard = () => {
                                 <Clock className="w-6 h-6" style={{ color: '#FBCD3F' }} />
                             </div>
                         </div>
-                        <p className="text-5xl font-bold" style={{ color: '#FBCD3F' }}>{stats.pendingRequests}</p>
+                        <p className="text-5xl font-bold text-black">{stats.pendingRequests}</p>
                     </div>
                 </div>
 
