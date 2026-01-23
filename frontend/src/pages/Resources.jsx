@@ -10,6 +10,8 @@ const Resources = () => {
     const [filteredResources, setFilteredResources] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
+    const [roleFilter, setRoleFilter] = useState('all');
+    const [dateFilter, setDateFilter] = useState({ startDate: '', endDate: '' });
     const [isLoading, setIsLoading] = useState(true);
     const [notification, setNotification] = useState({ show: false, message: '' });
     const [detailModal, setDetailModal] = useState({ show: false, resource: null, projects: [] });
@@ -19,10 +21,7 @@ const Resources = () => {
     const [trackRecordModal, setTrackRecordModal] = useState({ show: false, resource: null });
     const [newResource, setNewResource] = useState({
         fullName: '',
-        email: '',
-        employeeType: '',
-        joinDate: '',
-        skills: []
+        email: ''
     });
     const [newDevMan, setNewDevMan] = useState({
         fullName: '',
@@ -52,9 +51,10 @@ const Resources = () => {
     const fetchResources = async () => {
         try {
             setIsLoading(true);
-            const response = await api.get('/resources');
+            const response = await api.get(`/resources?t=${Date.now()}`);
             setResources(response.data);
             setFilteredResources(response.data);
+            console.log('Fetched resources count:', response.data.length);
         } catch (error) {
             console.error('Error fetching resources:', error);
             showNotification('Failed to fetch resources', 'error');
@@ -70,6 +70,20 @@ const Resources = () => {
         } catch (error) {
             console.error('Error fetching projects:', error);
         }
+    };
+
+    const handleDateFilterChange = (field, value) => {
+        if (field === 'startDate' && dateFilter.endDate && value > dateFilter.endDate) {
+            setNotification({ show: true, message: 'Start Date cannot be later than End Date' });
+            setTimeout(() => setNotification({ show: false, message: '' }), 3000);
+            return;
+        }
+        if (field === 'endDate' && dateFilter.startDate && value < dateFilter.startDate) {
+            setNotification({ show: true, message: 'End Date cannot be earlier than Start Date' });
+            setTimeout(() => setNotification({ show: false, message: '' }), 3000);
+            return;
+        }
+        setDateFilter(prev => ({ ...prev, [field]: value }));
     };
 
 
@@ -91,8 +105,20 @@ const Resources = () => {
             );
         }
 
+        // Filter by role (based on past/current project assignments)
+        if (roleFilter !== 'all') {
+            result = result.filter((r) => {
+                if (!r.currentAssignments || r.currentAssignments.length === 0) {
+                    return false;
+                }
+                return r.currentAssignments.some(
+                    (assignment) => assignment.projectRole === roleFilter
+                );
+            });
+        }
+
         setFilteredResources(result);
-    }, [searchQuery, activeFilter, resources]);
+    }, [searchQuery, activeFilter, roleFilter, resources]);
 
     const showNotification = (message, type = 'info') => {
         setNotification({ show: true, message, type, closing: false });
@@ -109,7 +135,7 @@ const Resources = () => {
         try {
             // Prepare data rows
             const exportData = [];
-            
+
             resources.forEach((resource) => {
                 if (resource.status === 'AVAILABLE') {
                     // For AVAILABLE resources, add one row with empty project fields
@@ -190,11 +216,29 @@ const Resources = () => {
         });
     };
 
-    const handleSaveDevMan = () => {
-        // Save DevMan logic here
-        console.log('Saving DevMan:', newDevMan);
-        closeAddDevManModal();
-        showNotification('Saved Successfully! DevMan created successfully.', 'success');
+    const handleSaveDevMan = async () => {
+        // Validation
+        if (!newDevMan.fullName || !newDevMan.email || !newDevMan.password) {
+            showNotification('Please fill in all fields', 'error');
+            return;
+        }
+
+        try {
+            const response = await api.post('/users/pm', {
+                name: newDevMan.fullName,
+                email: newDevMan.email,
+                password: newDevMan.password
+            });
+            console.log('DevMan API Response Status:', response.status);
+            console.log('DevMan successfully created:', response.data);
+            closeAddDevManModal();
+            showNotification('Saved Successfully! DevMan created successfully.', 'success');
+            setSearchQuery('');
+            setActiveFilter('all');
+        } catch (error) {
+            console.error('Error creating DevMan:', error);
+            showNotification(error.response?.data?.message || 'Failed to create DevMan', 'error');
+        }
     };
 
     const handleAssignToProject = (resource) => {
@@ -212,6 +256,18 @@ const Resources = () => {
     };
 
     const handleAssign = async () => {
+        // Validation
+        if (!assignmentData.project || !assignmentData.role || !assignmentData.startDate || !assignmentData.endDate) {
+            showNotification('Please fill in all fields', 'error');
+            return;
+        }
+
+        // Date range validation
+        if (new Date(assignmentData.endDate) < new Date(assignmentData.startDate)) {
+            showNotification('End Date cannot be before Start Date', 'error');
+            return;
+        }
+
         try {
             const assignData = {
                 resourceId: assignModal.resource.resourceId,
@@ -260,12 +316,8 @@ const Resources = () => {
         setAddResourceModal({ show: false });
         setNewResource({
             fullName: '',
-            email: '',
-            employeeType: '',
-            joinDate: '',
-            skills: []
+            email: ''
         });
-        setSkillInput('');
     };
 
     const handleAddSkill = (e) => {
@@ -289,16 +341,25 @@ const Resources = () => {
     };
 
     const handleSaveResource = async () => {
+        // Validation
+        if (!newResource.fullName || !newResource.email) {
+            showNotification('Please fill in all fields', 'error');
+            return;
+        }
+
         try {
             const resourceData = {
                 resourceName: newResource.fullName,
-                employeeId: newResource.employeeType,
                 email: newResource.email,
                 status: 'AVAILABLE'
             };
-            await api.post('/resources', resourceData);
+            const response = await api.post('/resources', resourceData);
+            console.log('Resource API Response Status:', response.status);
+            console.log('Resource successfully created:', response.data);
             closeAddResourceModal();
             showNotification('Saved Successfully! Resource created successfully.', 'success');
+            setSearchQuery('');
+            setActiveFilter('all');
             fetchResources(); // Refresh the list
         } catch (error) {
             console.error('Error creating resource:', error);
@@ -313,7 +374,7 @@ const Resources = () => {
             try {
                 const response = await api.get(`/resources/${resource.resourceId}/assignments`);
                 const assignments = response.data;
-                
+
                 // Format assignments for display
                 const formattedProjects = assignments.map(a => ({
                     projectName: a.projectName,
@@ -321,7 +382,7 @@ const Resources = () => {
                     startDate: new Date(a.startDate).toLocaleDateString('en-GB'),
                     endDate: new Date(a.endDate).toLocaleDateString('en-GB')
                 }));
-                
+
                 setDetailModal({ show: true, resource, projects: formattedProjects });
             } catch (error) {
                 console.error('Error fetching assignments:', error);
@@ -355,60 +416,73 @@ const Resources = () => {
         <div className="flex min-h-screen bg-[#E6F2F1] font-['SF_Pro_Display']">
             {/* Notification */}
             {notification.show && (
-                <div 
-                    className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-300 ease-in-out ${
-                        notification.closing 
-                            ? 'opacity-0 translate-x-full' 
-                            : 'opacity-100 translate-x-0 animate-slide-in'
-                    }`}
-                    style={{ 
-                        backgroundColor: notification.type === 'success' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(0, 180, 216, 0.2)',
-                        borderColor: notification.type === 'success' ? '#06D001' : '#00B4D8'
+                <div
+                    className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-300 ease-in-out ${notification.closing
+                        ? 'opacity-0 translate-x-full'
+                        : 'opacity-100 translate-x-0 animate-slide-in'
+                        }`}
+                    style={{
+                        backgroundColor: notification.type === 'success' ? 'rgba(6, 208, 1, 0.2)' : notification.type === 'error' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 180, 216, 0.2)',
+                        borderColor: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8'
                     }}
                 >
                     {notification.type === 'success' ? (
-                        <svg 
-                            className="w-5 h-5" 
-                            fill="none" 
-                            stroke="#06D001" 
+                        <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="#06D001"
                             viewBox="0 0 24 24"
                         >
-                            <path 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round" 
-                                strokeWidth="2" 
-                                d="M5 13l4 4L19 7" 
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M5 13l4 4L19 7"
+                            />
+                        </svg>
+                    ) : notification.type === 'error' ? (
+                        <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="#FF0000"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                             />
                         </svg>
                     ) : (
-                        <svg 
-                            className="w-5 h-5" 
-                            fill="none" 
-                            stroke="#00B4D8" 
+                        <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="#00B4D8"
                             viewBox="0 0 24 24"
                             style={{ color: '#00B4D8' }}
                         >
-                            <path 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round" 
-                                strokeWidth="2" 
-                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                             />
                         </svg>
                     )}
-                    <span 
-                        className="font-bold" 
-                        style={{ 
-                            color: notification.type === 'success' ? '#06D001' : '#00B4D8', 
-                            fontSize: '14px' 
+                    <span
+                        className="font-bold"
+                        style={{
+                            color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8',
+                            fontSize: '14px'
                         }}
                     >
                         {notification.message}
                     </span>
-                    <button 
+                    <button
                         onClick={closeNotification}
                         className="ml-2 hover:opacity-70 transition-opacity"
-                        style={{ color: notification.type === 'success' ? '#06D001' : '#00B4D8' }}
+                        style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8' }}
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -419,46 +493,47 @@ const Resources = () => {
 
             {/* Detail Modal for ASSIGNED resources */}
             {detailModal.show && (
-                <div 
+                <div
                     className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
                     style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
                 >
-                    <div 
+                    <div
                         className="bg-white rounded-2xl relative flex flex-col items-center animate-scale-in"
                         style={{ width: '700px', height: '424px' }}
                     >
                         {/* Header with Name, Status and Close Button */}
                         <div className="flex items-center justify-between mt-8 mb-4 px-8 w-full">
-                            <div className="flex items-center gap-3">
-                                <h2 className="font-bold text-gray-800 whitespace-nowrap" style={{ fontSize: '30px' }}>
-                                    {detailModal.resource?.resourceName}
-                                </h2>
-                                <span 
-                                    className="px-3 py-1 rounded font-bold whitespace-nowrap"
-                                    style={{ 
+                            <h2 className="font-bold text-gray-800 whitespace-nowrap" style={{ fontSize: '30px' }}>
+                                {detailModal.resource?.resourceName}
+                            </h2>
+                            <div className="flex items-center gap-4">
+                                <span
+                                    className="px-3 py-1 rounded-full font-bold whitespace-nowrap"
+                                    style={{
                                         fontSize: '12px',
-                                        color: '#0059FF',
-                                        backgroundColor: 'rgba(0, 89, 255, 0.2)'
+                                        color: '#00B4D8',
+                                        backgroundColor: 'rgba(0, 180, 216, 0.2)',
+                                        border: '1px solid #00B4D8'
                                     }}
                                 >
                                     ACTIVE IN {detailModal.projects.length} PROJECTS
                                 </span>
+                                <button
+                                    onClick={closeDetailModal}
+                                    className="text-gray-500 hover:text-gray-700 transition-colors"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
                             </div>
-                            <button 
-                                onClick={closeDetailModal}
-                                className="text-gray-500 hover:text-gray-700 transition-colors"
-                            >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
                         </div>
 
                         {/* Separator Line */}
                         <div className="w-[600px] border-b border-gray-200 mb-4"></div>
 
                         {/* Projects Table */}
-                        <div 
+                        <div
                             className="overflow-hidden rounded-lg border border-gray-200"
                             style={{ width: '600px', height: '234px' }}
                         >
@@ -474,7 +549,7 @@ const Resources = () => {
                                     </thead>
                                     <tbody>
                                         {detailModal.projects.map((project, index) => (
-                                            <tr key={index} className={`hover:bg-gray-50 ${index < detailModal.projects.length - 1 ? 'border-b border-gray-200' : ''}`}>
+                                            <tr key={index} className="hover:bg-gray-50 border-b border-gray-200">
                                                 <td className="py-3 px-4 font-bold text-gray-800 border-r border-gray-200 truncate text-center" style={{ fontSize: '14px' }}>{project.projectName}</td>
                                                 <td className="py-3 px-4 font-bold text-gray-600 border-r border-gray-200 truncate text-center" style={{ fontSize: '14px' }}>{project.role}</td>
                                                 <td className="py-3 px-4 font-bold text-gray-600 border-r border-gray-200 text-center" style={{ fontSize: '14px' }}>{project.startDate}</td>
@@ -491,11 +566,11 @@ const Resources = () => {
 
             {/* Add Resource Modal */}
             {addResourceModal.show && (
-                <div 
+                <div
                     className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
                     style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
                 >
-                    <div 
+                    <div
                         className="rounded-2xl relative flex flex-col animate-scale-in"
                         style={{ width: '500px', maxHeight: '90vh', backgroundColor: '#F5F5F5' }}
                     >
@@ -504,7 +579,7 @@ const Resources = () => {
                             <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
                                 Add New Resource
                             </h2>
-                            <button 
+                            <button
                                 onClick={closeAddResourceModal}
                                 className="text-gray-500 hover:text-gray-700 transition-colors"
                             >
@@ -527,122 +602,29 @@ const Resources = () => {
                                     </svg>
                                     <span className="font-bold text-black" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>Identity & contact</span>
                                 </div>
-                                <div className="flex justify-between px-4">
+                                <div className="space-y-4 px-4">
                                     <div>
                                         <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Full Name</label>
                                         <input
                                             type="text"
                                             value={newResource.fullName}
                                             onChange={(e) => setNewResource(prev => ({ ...prev, fullName: e.target.value }))}
-                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6]"
-                                            style={{ width: '170px', height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                            style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Email Address</label>
-                                        <input
-                                            type="email"
-                                            value={newResource.email}
-                                            onChange={(e) => setNewResource(prev => ({ ...prev, email: e.target.value }))}
-                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6]"
-                                            style={{ width: '170px', height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Separator */}
-                            <div className="border-b border-gray-300 mb-6"></div>
-
-                            {/* Employment Status Section */}
-                            <div className="mb-6">
-                                <div className="flex items-center justify-center gap-2 mb-4">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                    <span className="font-bold text-black" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>Emplyoment Status</span>
-                                </div>
-                                <div className="flex justify-between px-4">
-                                    <div>
-                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Employee Type</label>
-                                        <div className="relative">
-                                            <select
-                                                value={newResource.employeeType}
-                                                onChange={(e) => setNewResource(prev => ({ ...prev, employeeType: e.target.value }))}
-                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] appearance-none cursor-pointer"
-                                                style={{ width: '170px', height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', paddingRight: '32px', fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '400' }}
-                                            >
-                                                <option value="">Select</option>
-                                                <option value="full-time">Full Time</option>
-                                                <option value="part-time">Part Time</option>
-                                                <option value="contract">Contract</option>
-                                                <option value="intern">Intern</option>
-                                            </select>
-                                            <svg 
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500" 
-                                                fill="none" 
-                                                stroke="currentColor" 
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                            </svg>
+                                    <div className="flex justify-between">
+                                        <div style={{ width: '100%' }}>
+                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Email Address</label>
+                                            <input
+                                                type="email"
+                                                value={newResource.email}
+                                                onChange={(e) => setNewResource(prev => ({ ...prev, email: e.target.value }))}
+                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                            />
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Join Date</label>
-                                        <input
-                                            type="date"
-                                            value={newResource.joinDate}
-                                            onChange={(e) => setNewResource(prev => ({ ...prev, joinDate: e.target.value }))}
-                                            placeholder="DD/MM/YYYY"
-                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6]"
-                                            style={{ width: '170px', height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '400' }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Separator */}
-                            <div className="border-b border-gray-300 mb-6"></div>
-
-                            {/* Skills Section */}
-                            <div className="mb-6">
-                                <div className="flex items-center justify-center gap-2 mb-4">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span className="font-bold text-black" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>Skills & Tags</span>
-                                </div>
-                                <div className="flex flex-col items-center">
-                                    {/* Skills Tags */}
-                                    <div className="flex flex-wrap gap-2 mb-3 justify-center">
-                                        {newResource.skills.map((skill, index) => (
-                                            <span 
-                                                key={index} 
-                                                className="flex items-center gap-1 px-3 py-1 rounded-md text-white"
-                                                style={{ backgroundColor: '#0059FF', fontSize: '14px' }}
-                                            >
-                                                {skill}
-                                                <button 
-                                                    onClick={() => removeSkill(skill)}
-                                                    className="hover:opacity-70 ml-1"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            </span>
-                                        ))}
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={skillInput}
-                                        onChange={(e) => setSkillInput(e.target.value)}
-                                        onKeyDown={handleAddSkill}
-                                        placeholder="Type to add skills..."
-                                        className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6]"
-                                        style={{ width: '200px', height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '13px', fontFamily: 'SF Pro Display', fontWeight: '300', fontStyle: 'italic' }}
-                                    />
                                 </div>
                             </div>
                         </div>
@@ -661,8 +643,18 @@ const Resources = () => {
                             </button>
                             <button
                                 onClick={handleSaveResource}
+                                disabled={!newResource.fullName || !newResource.email}
                                 className="font-bold text-black hover:opacity-90 transition-colors"
-                                style={{ width: '180px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', backgroundColor: '#CAF0F8', borderRadius: '8px' }}
+                                style={{
+                                    width: '180px',
+                                    height: '40px',
+                                    fontSize: '14px',
+                                    fontFamily: 'SF Pro Display',
+                                    backgroundColor: '#CAF0F8',
+                                    borderRadius: '8px',
+                                    opacity: (!newResource.fullName || !newResource.email) ? 0.5 : 1,
+                                    cursor: (!newResource.fullName || !newResource.email) ? 'not-allowed' : 'pointer'
+                                }}
                             >
                                 Save & Create Resource
                             </button>
@@ -673,11 +665,11 @@ const Resources = () => {
 
             {/* Add DevMan Modal */}
             {addDevManModal.show && (
-                <div 
+                <div
                     className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
                     style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
                 >
-                    <div 
+                    <div
                         className="rounded-2xl relative flex flex-col animate-scale-in"
                         style={{ width: '500px', maxHeight: '90vh', backgroundColor: '#F5F5F5' }}
                     >
@@ -686,7 +678,7 @@ const Resources = () => {
                             <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
                                 Add DevMan
                             </h2>
-                            <button 
+                            <button
                                 onClick={closeAddDevManModal}
                                 className="text-gray-500 hover:text-gray-700 transition-colors"
                             >
@@ -760,8 +752,18 @@ const Resources = () => {
                             </button>
                             <button
                                 onClick={handleSaveDevMan}
+                                disabled={!newDevMan.fullName || !newDevMan.email || !newDevMan.password}
                                 className="font-bold text-black hover:opacity-90 transition-colors"
-                                style={{ width: '180px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', backgroundColor: '#CAF0F8', borderRadius: '8px' }}
+                                style={{
+                                    width: '180px',
+                                    height: '40px',
+                                    fontSize: '14px',
+                                    fontFamily: 'SF Pro Display',
+                                    backgroundColor: '#CAF0F8',
+                                    borderRadius: '8px',
+                                    opacity: (!newDevMan.fullName || !newDevMan.email || !newDevMan.password) ? 0.5 : 1,
+                                    cursor: (!newDevMan.fullName || !newDevMan.email || !newDevMan.password) ? 'not-allowed' : 'pointer'
+                                }}
                             >
                                 Save & Create DevMan
                             </button>
@@ -772,11 +774,11 @@ const Resources = () => {
 
             {/* Assign to Project Modal */}
             {assignModal.show && (
-                <div 
+                <div
                     className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
                     style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
                 >
-                    <div 
+                    <div
                         className="rounded-2xl relative flex flex-col animate-scale-in bg-white"
                         style={{ width: '620px', height: '580px' }}
                     >
@@ -785,7 +787,7 @@ const Resources = () => {
                             <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
                                 Assign to a Project
                             </h2>
-                            <button 
+                            <button
                                 onClick={closeAssignModal}
                                 className="text-gray-500 hover:text-gray-700 transition-colors"
                             >
@@ -800,34 +802,49 @@ const Resources = () => {
 
                         {/* Form Content */}
                         <div className="px-8 py-6 flex-1 overflow-y-auto">
-                            {/* User Info */}
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 rounded-full bg-[#00B4D8] flex items-center justify-center">
-                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                </div>
-                                <div className="flex-1">
+                            {/* User Info - Layout matching reference image */}
+                            <div
+                                className="flex items-center justify-between mb-6 px-4 py-3 rounded-lg"
+                                style={{
+                                    backgroundColor: 'rgba(200, 200, 200, 0.3)'
+                                }}
+                            >
+                                {/* Left side: Profile picture and name */}
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-[#00B4D8] flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                    </div>
                                     <h3 className="font-bold text-black" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
                                         {assignModal.resource?.resourceName}
                                     </h3>
-                                    <div className="flex gap-2 mt-1">
-                                        <span 
-                                            className="px-2 py-0.5 text-xs font-medium rounded" 
-                                            style={{ 
-                                                backgroundColor: getProjectBadgeColors(assignModal.resource?.projectCount || 0).background, 
-                                                color: getProjectBadgeColors(assignModal.resource?.projectCount || 0).text,
-                                                border: `1px solid ${getProjectBadgeColors(assignModal.resource?.projectCount || 0).border}`,
-                                                fontFamily: 'SF Pro Display',
-                                                fontSize: '11px'
-                                            }}
-                                        >
-                                            ACTIVE IN {assignModal.resource?.projectCount || 0} PROJECT{assignModal.resource?.projectCount !== 1 ? 'S' : ''}
-                                        </span>
-                                        <span className="px-2 py-0.5 text-xs font-medium rounded" style={{ backgroundColor: assignModal.resource?.status === 'AVAILABLE' ? '#D1FAE5' : 'rgba(255,0,0,0.1)', color: assignModal.resource?.status === 'AVAILABLE' ? '#059669' : '#DC2626', fontFamily: 'SF Pro Display', fontSize: '11px', border: assignModal.resource?.status === 'AVAILABLE' ? '1px solid #059669' : '1px solid #DC2626' }}>
-                                            {assignModal.resource?.status}
-                                        </span>
-                                    </div>
+                                </div>
+                                {/* Right side: Status badges */}
+                                <div className="flex items-center gap-2">
+                                    <span
+                                        className="px-2 py-0.5 text-xs font-medium rounded-full"
+                                        style={{
+                                            backgroundColor: getProjectBadgeColors(assignModal.resource?.projectCount || 0).background,
+                                            color: getProjectBadgeColors(assignModal.resource?.projectCount || 0).text,
+                                            border: `1px solid ${getProjectBadgeColors(assignModal.resource?.projectCount || 0).border}`,
+                                            fontFamily: 'SF Pro Display',
+                                            fontSize: '11px'
+                                        }}
+                                    >
+                                        ACTIVE IN {assignModal.resource?.projectCount || 0} PROJECT{assignModal.resource?.projectCount !== 1 ? 'S' : ''}
+                                    </span>
+                                    <span
+                                        className="px-2 py-0.5 text-xs font-bold rounded-full"
+                                        style={{
+                                            backgroundColor: assignModal.resource?.status === 'AVAILABLE' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(255, 0, 0, 0.2)',
+                                            color: assignModal.resource?.status === 'AVAILABLE' ? '#06D001' : '#FF0000',
+                                            fontSize: '11px',
+                                            border: assignModal.resource?.status === 'AVAILABLE' ? '1px solid #06D001' : '1px solid #FF0000'
+                                        }}
+                                    >
+                                        {assignModal.resource?.status}
+                                    </span>
                                 </div>
                             </div>
 
@@ -882,7 +899,7 @@ const Resources = () => {
                                     <label className="block mb-3 font-bold text-black" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
                                         2. Select Project
                                     </label>
-                                    
+
                                     {/* Project Role */}
                                     <div className="mb-4">
                                         <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>
@@ -896,9 +913,10 @@ const Resources = () => {
                                                 style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 35px 0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
                                             >
                                                 <option value="">Select role</option>
-                                                <option value="backend">Backend Developer</option>
-                                                <option value="frontend">Frontend Developer</option>
-                                                <option value="fullstack">Fullstack Developer</option>
+                                                <option value="Team Lead">Team Lead</option>
+                                                <option value="Backend Developer">Backend Developer</option>
+                                                <option value="Frontend Developer">Frontend Developer</option>
+                                                <option value="Quality Assurance">Quality Assurance</option>
                                             </select>
                                             <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -951,8 +969,36 @@ const Resources = () => {
                             </button>
                             <button
                                 onClick={handleAssign}
+                                disabled={
+                                    !assignmentData.project ||
+                                    !assignmentData.role ||
+                                    !assignmentData.startDate ||
+                                    !assignmentData.endDate ||
+                                    new Date(assignmentData.endDate) < new Date(assignmentData.startDate)
+                                }
                                 className="font-bold text-black hover:opacity-90 transition-colors"
-                                style={{ width: '100px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', backgroundColor: '#CAF0F8', borderRadius: '8px' }}
+                                style={{
+                                    width: '100px',
+                                    height: '40px',
+                                    fontSize: '14px',
+                                    fontFamily: 'SF Pro Display',
+                                    backgroundColor: '#CAF0F8',
+                                    borderRadius: '8px',
+                                    opacity: (
+                                        !assignmentData.project ||
+                                        !assignmentData.role ||
+                                        !assignmentData.startDate ||
+                                        !assignmentData.endDate ||
+                                        new Date(assignmentData.endDate) < new Date(assignmentData.startDate)
+                                    ) ? 0.5 : 1,
+                                    cursor: (
+                                        !assignmentData.project ||
+                                        !assignmentData.role ||
+                                        !assignmentData.startDate ||
+                                        !assignmentData.endDate ||
+                                        new Date(assignmentData.endDate) < new Date(assignmentData.startDate)
+                                    ) ? 'not-allowed' : 'pointer'
+                                }}
                             >
                                 Assign
                             </button>
@@ -963,11 +1009,11 @@ const Resources = () => {
 
             {/* Track Record Modal */}
             {trackRecordModal.show && (
-                <div 
+                <div
                     className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
                     style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
                 >
-                    <div 
+                    <div
                         className="rounded-2xl relative flex flex-col animate-scale-in bg-white"
                         style={{ width: '1300px', height: '771px' }}
                     >
@@ -976,7 +1022,7 @@ const Resources = () => {
                             <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
                                 {trackRecordModal.resource?.resourceName}
                             </h2>
-                            <button 
+                            <button
                                 onClick={closeTrackRecordModal}
                                 className="text-gray-500 hover:text-gray-700 transition-colors"
                             >
@@ -999,7 +1045,7 @@ const Resources = () => {
                                         const currentMonth = now.getMonth(); // 0-11
                                         const currentYear = now.getFullYear();
                                         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
-                                        
+
                                         // Generate 9 months starting from 4 months ago
                                         const months = [];
                                         for (let i = -4; i <= 4; i++) {
@@ -1008,15 +1054,15 @@ const Resources = () => {
                                             const year = date.getFullYear();
                                             months.push(`${monthName} ${year}`);
                                         }
-                                        
+
                                         const currentMonthStr = `${monthNames[currentMonth]} ${currentYear}`;
-                                        
+
                                         return months.map((month, index) => (
-                                            <div 
+                                            <div
                                                 key={month}
                                                 className="text-center py-3 font-bold border border-gray-300"
-                                                style={{ 
-                                                    fontSize: '20px', 
+                                                style={{
+                                                    fontSize: '20px',
                                                     fontFamily: 'SF Pro Display',
                                                     backgroundColor: month === currentMonthStr ? '#0059FF' : 'rgba(0, 180, 216, 0.2)',
                                                     color: month === currentMonthStr ? '#FFFFFF' : '#000000',
@@ -1032,238 +1078,136 @@ const Resources = () => {
 
                                 {/* Project Timeline Rows */}
                                 <div className="space-y-0">
-                                    {trackRecordModal.resource && trackRecordModal.resource.status === 'AVAILABLE' ? (
-                                        // Empty rows for available resources
-                                        <>
-                                            {Array.from({ length: 4 }).map((_, rowIndex) => (
-                                                <div key={rowIndex} className="relative" style={{ height: '117.6px' }}>
-                                                    <div className="grid grid-cols-9 h-full">
-                                                        {Array.from({ length: 9 }).map((_, index) => (
-                                                            <div 
-                                                                key={index} 
-                                                                className="border-r border-b border-l border-gray-300"
-                                                                style={{
-                                                                    borderBottomLeftRadius: rowIndex === 3 && index === 0 ? '8px' : '0',
-                                                                    borderBottomRightRadius: rowIndex === 3 && index === 8 ? '8px' : '0'
-                                                                }}
-                                                            ></div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </>
-                                    ) : (
-                                        // Project rows for assigned resources
-                                        <>
-                                            {/* Row 1 - Closed (Red) - Sep to Jan */}
-                                            <div className="relative" style={{ height: '117.6px' }}>
-                                                <div className="grid grid-cols-9 h-full">
-                                                    {Array.from({ length: 9 }).map((_, index) => (
-                                                        <div key={index} className="border-r border-b border-l border-gray-300"></div>
-                                                    ))}
-                                                </div>
-                                                <div 
-                                                    className="absolute flex items-center justify-center rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                                    style={{ 
-                                                        left: '0%', 
-                                                        width: '44.4%', 
-                                                        height: '60px',
-                                                top: '50%',
-                                                transform: 'translateY(-50%)',
-                                                backgroundColor: '#FF0000'
-                                            }}
-                                            onMouseEnter={() => setHoveredProject('project1')}
-                                            onMouseLeave={() => setHoveredProject(null)}
-                                        >
-                                            <span className="font-bold text-white text-center px-4" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>
-                                                E-Commerce Web Revamp • Backend Develop
-                                            </span>
-                                            
-                                            {/* Tooltip */}
-                                            {hoveredProject === 'project1' && (
-                                                <div 
-                                                    className="absolute z-10 bg-white rounded-lg shadow-xl p-4 border border-gray-200"
-                                                    style={{ 
-                                                        top: '-120px',
-                                                        left: '50%',
-                                                        transform: 'translateX(-50%)',
-                                                        width: '300px',
-                                                        fontFamily: 'SF Pro Display'
-                                                    }}
-                                                >
-                                                    <div className="space-y-2">
-                                                        <h4 className="font-bold text-black" style={{ fontSize: '16px' }}>E-Commerce Web Revamp</h4>
-                                                        <div className="text-sm text-gray-700">
-                                                            <p><span className="font-semibold">Role:</span> Backend Developer</p>
-                                                            <p><span className="font-semibold">Start:</span> Sep 2025</p>
-                                                            <p><span className="font-semibold">End:</span> Jan 2026</p>
-                                                            <p><span className="font-semibold">Status:</span> <span className="text-red-600 font-bold">Closed</span></p>
-                                                        </div>
-                                                    </div>
-                                                    {/* Arrow */}
-                                                    <div 
-                                                        className="absolute"
-                                                        style={{
-                                                            bottom: '-8px',
-                                                            left: '50%',
-                                                            transform: 'translateX(-50%)',
-                                                            width: '0',
-                                                            height: '0',
-                                                            borderLeft: '8px solid transparent',
-                                                            borderRight: '8px solid transparent',
-                                                            borderTop: '8px solid white'
-                                                        }}
-                                                    ></div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
+                                    {(() => {
+                                        const now = new Date();
+                                        const currentMonth = now.getMonth();
+                                        const currentYear = now.getFullYear();
+                                        const startDate = new Date(currentYear, currentMonth - 4, 1);
+                                        const assignments = trackRecordModal.resource?.currentAssignments || [];
 
-                                    {/* Row 2 - Ongoing (Green) - Feb to Apr */}
-                                    <div className="relative" style={{ height: '117.6px' }}>
-                                        <div className="grid grid-cols-9 h-full">
-                                            {Array.from({ length: 9 }).map((_, index) => (
-                                                <div key={index} className="border-r border-b border-l border-gray-300"></div>
-                                            ))}
-                                        </div>
-                                        <div 
-                                            className="absolute flex items-center justify-center rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                            style={{ 
-                                                left: '55.5%', 
-                                                width: '33.3%', 
-                                                height: '60px',
-                                                top: '50%',
-                                                transform: 'translateY(-50%)',
-                                                backgroundColor: '#06D001'
-                                            }}
-                                            onMouseEnter={() => setHoveredProject('project2')}
-                                            onMouseLeave={() => setHoveredProject(null)}
-                                        >
-                                            <span className="font-bold text-white text-center px-4" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>
-                                                E-Commerce Web Revamp • Backend Develop
-                                            </span>
-                                            
-                                            {/* Tooltip */}
-                                            {hoveredProject === 'project2' && (
-                                                <div 
-                                                    className="absolute z-10 bg-white rounded-lg shadow-xl p-4 border border-gray-200"
-                                                    style={{ 
-                                                        top: '-120px',
-                                                        left: '50%',
-                                                        transform: 'translateX(-50%)',
-                                                        width: '300px',
-                                                        fontFamily: 'SF Pro Display'
-                                                    }}
-                                                >
-                                                    <div className="space-y-2">
-                                                        <h4 className="font-bold text-black" style={{ fontSize: '16px' }}>E-Commerce Web Revamp</h4>
-                                                        <div className="text-sm text-gray-700">
-                                                            <p><span className="font-semibold">Role:</span> Backend Developer</p>
-                                                            <p><span className="font-semibold">Start:</span> Feb 2026</p>
-                                                            <p><span className="font-semibold">End:</span> Apr 2026</p>
-                                                            <p><span className="font-semibold">Status:</span> <span className="text-green-600 font-bold">Ongoing</span></p>
-                                                        </div>
-                                                    </div>
-                                                    {/* Arrow */}
-                                                    <div 
-                                                        className="absolute"
-                                                        style={{
-                                                            bottom: '-8px',
-                                                            left: '50%',
-                                                            transform: 'translateX(-50%)',
-                                                            width: '0',
-                                                            height: '0',
-                                                            borderLeft: '8px solid transparent',
-                                                            borderRight: '8px solid transparent',
-                                                            borderTop: '8px solid white'
-                                                        }}
-                                                    ></div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
+                                        // Function to calculate position based on date
+                                        const getMonthPosition = (date) => {
+                                            const d = new Date(date);
+                                            const monthDiff = (d.getFullYear() - startDate.getFullYear()) * 12 + (d.getMonth() - startDate.getMonth());
+                                            return Math.max(0, Math.min(9, monthDiff));
+                                        };
 
-                                    {/* Row 3 - Hold (Orange) - Oct to Feb */}
-                                    <div className="relative" style={{ height: '117.6px' }}>
-                                        <div className="grid grid-cols-9 h-full">
-                                            {Array.from({ length: 9 }).map((_, index) => (
-                                                <div key={index} className="border-r border-b border-l border-gray-300"></div>
-                                            ))}
-                                        </div>
-                                        <div 
-                                            className="absolute flex items-center justify-center rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                            style={{ 
-                                                left: '11.1%', 
-                                                width: '44.4%', 
-                                                height: '60px',
-                                                top: '50%',
-                                                transform: 'translateY(-50%)',
-                                                backgroundColor: '#F97316'
-                                            }}
-                                            onMouseEnter={() => setHoveredProject('project3')}
-                                            onMouseLeave={() => setHoveredProject(null)}
-                                        >
-                                            <span className="font-bold text-white text-center px-4" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>
-                                                E-Commerce Web Revamp • Backend Develop
-                                            </span>
-                                            
-                                            {/* Tooltip */}
-                                            {hoveredProject === 'project3' && (
-                                                <div 
-                                                    className="absolute z-10 bg-white rounded-lg shadow-xl p-4 border border-gray-200"
-                                                    style={{ 
-                                                        top: '-120px',
-                                                        left: '50%',
-                                                        transform: 'translateX(-50%)',
-                                                        width: '300px',
-                                                        fontFamily: 'SF Pro Display'
-                                                    }}
-                                                >
-                                                    <div className="space-y-2">
-                                                        <h4 className="font-bold text-black" style={{ fontSize: '16px' }}>E-Commerce Web Revamp</h4>
-                                                        <div className="text-sm text-gray-700">
-                                                            <p><span className="font-semibold">Role:</span> Backend Developer</p>
-                                                            <p><span className="font-semibold">Start:</span> Oct 2025</p>
-                                                            <p><span className="font-semibold">End:</span> Feb 2026</p>
-                                                            <p><span className="font-semibold">Status:</span> <span className="text-orange-600 font-bold">Hold</span></p>
-                                                        </div>
-                                                    </div>
-                                                    {/* Arrow */}
-                                                    <div 
-                                                        className="absolute"
-                                                        style={{
-                                                            bottom: '-8px',
-                                                            left: '50%',
-                                                            transform: 'translateX(-50%)',
-                                                            width: '0',
-                                                            height: '0',
-                                                            borderLeft: '8px solid transparent',
-                                                            borderRight: '8px solid transparent',
-                                                            borderTop: '8px solid white'
-                                                        }}
-                                                    ></div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
+                                        // Function to get project color based on status or if project ended
+                                        const getProjectColor = (assignment) => {
+                                            const endDate = new Date(assignment.endDate);
+                                            if (endDate < now) {
+                                                return '#FF0000'; // Closed (past)
+                                            }
+                                            return '#06D001'; // Ongoing (current/future)
+                                        };
 
-                                            {/* Row 4 - Empty */}
-                                            <div className="relative" style={{ height: '117.6px' }}>
-                                                <div className="grid grid-cols-9 h-full">
-                                                    {Array.from({ length: 9 }).map((_, index) => (
-                                                        <div 
-                                                            key={index} 
-                                                            className="border-r border-b border-l border-gray-300"
+                                        // Create 4 rows - fill with assignments first, then empty rows
+                                        const rows = [];
+                                        for (let i = 0; i < 4; i++) {
+                                            const assignment = assignments[i];
+                                            if (assignment) {
+                                                const startPos = getMonthPosition(assignment.startDate);
+                                                const endPos = getMonthPosition(assignment.endDate) + 1;
+                                                const width = ((endPos - startPos) / 9) * 100;
+                                                const left = (startPos / 9) * 100;
+                                                const color = getProjectColor(assignment);
+                                                const startDateObj = new Date(assignment.startDate);
+                                                const endDateObj = new Date(assignment.endDate);
+                                                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+                                                rows.push(
+                                                    <div key={i} className="relative" style={{ height: '117.6px' }}>
+                                                        <div className="grid grid-cols-9 h-full">
+                                                            {Array.from({ length: 9 }).map((_, index) => (
+                                                                <div
+                                                                    key={index}
+                                                                    className="border-r border-b border-l border-gray-300"
+                                                                    style={{
+                                                                        borderBottomLeftRadius: i === 3 && index === 0 ? '8px' : '0',
+                                                                        borderBottomRightRadius: i === 3 && index === 8 ? '8px' : '0'
+                                                                    }}
+                                                                ></div>
+                                                            ))}
+                                                        </div>
+                                                        <div
+                                                            className="absolute flex items-center justify-center rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                                                             style={{
-                                                                borderBottomLeftRadius: index === 0 ? '8px' : '0',
-                                                                borderBottomRightRadius: index === 8 ? '8px' : '0'
+                                                                left: `${left}%`,
+                                                                width: `${Math.min(width, 100 - left)}%`,
+                                                                height: '60px',
+                                                                top: '50%',
+                                                                transform: 'translateY(-50%)',
+                                                                backgroundColor: color
                                                             }}
-                                                        ></div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </>
-                                    )}
+                                                            onMouseEnter={() => setHoveredProject(`project${i}`)}
+                                                            onMouseLeave={() => setHoveredProject(null)}
+                                                        >
+                                                            <span className="font-bold text-white text-center px-4 truncate" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
+                                                                {assignment.projectName} • {assignment.projectRole}
+                                                            </span>
+
+                                                            {/* Tooltip */}
+                                                            {hoveredProject === `project${i}` && (
+                                                                <div
+                                                                    className="absolute z-10 bg-white rounded-lg shadow-xl p-4 border border-gray-200"
+                                                                    style={{
+                                                                        top: '-120px',
+                                                                        left: '50%',
+                                                                        transform: 'translateX(-50%)',
+                                                                        width: '300px',
+                                                                        fontFamily: 'SF Pro Display'
+                                                                    }}
+                                                                >
+                                                                    <div className="space-y-2">
+                                                                        <h4 className="font-bold text-black" style={{ fontSize: '16px' }}>{assignment.projectName}</h4>
+                                                                        <div className="text-sm text-gray-700">
+                                                                            <p><span className="font-semibold">Role:</span> {assignment.projectRole}</p>
+                                                                            <p><span className="font-semibold">Start:</span> {monthNames[startDateObj.getMonth()]} {startDateObj.getFullYear()}</p>
+                                                                            <p><span className="font-semibold">End:</span> {monthNames[endDateObj.getMonth()]} {endDateObj.getFullYear()}</p>
+                                                                            <p><span className="font-semibold">Status:</span> <span className={endDateObj < now ? 'text-red-600 font-bold' : 'text-green-600 font-bold'}>{endDateObj < now ? 'Closed' : 'Ongoing'}</span></p>
+                                                                        </div>
+                                                                    </div>
+                                                                    {/* Arrow */}
+                                                                    <div
+                                                                        className="absolute"
+                                                                        style={{
+                                                                            bottom: '-8px',
+                                                                            left: '50%',
+                                                                            transform: 'translateX(-50%)',
+                                                                            width: '0',
+                                                                            height: '0',
+                                                                            borderLeft: '8px solid transparent',
+                                                                            borderRight: '8px solid transparent',
+                                                                            borderTop: '8px solid white'
+                                                                        }}
+                                                                    ></div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            } else {
+                                                // Empty row
+                                                rows.push(
+                                                    <div key={i} className="relative" style={{ height: '117.6px' }}>
+                                                        <div className="grid grid-cols-9 h-full">
+                                                            {Array.from({ length: 9 }).map((_, index) => (
+                                                                <div
+                                                                    key={index}
+                                                                    className="border-r border-b border-l border-gray-300"
+                                                                    style={{
+                                                                        borderBottomLeftRadius: i === 3 && index === 0 ? '8px' : '0',
+                                                                        borderBottomRightRadius: i === 3 && index === 8 ? '8px' : '0'
+                                                                    }}
+                                                                ></div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                        }
+                                        return rows;
+                                    })()}
                                 </div>
                             </div>
                         </div>
@@ -1271,15 +1215,15 @@ const Resources = () => {
                         {/* Legend */}
                         <div className="flex items-center justify-center gap-6 pb-6">
                             <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#06D001' }}></div>
+                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#06D001' }}></div>
                                 <span style={{ fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '500' }}>Ongoing</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#F97316' }}></div>
+                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#F97316' }}></div>
                                 <span style={{ fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '500' }}>Hold</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#FF0000' }}></div>
+                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#FF0000' }}></div>
                                 <span style={{ fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '500' }}>Closed</span>
                             </div>
                         </div>
@@ -1296,7 +1240,7 @@ const Resources = () => {
                 <h1 className="text-4xl font-bold text-gray-800 mb-8">Resources</h1>
 
                 {/* Toolbar */}
-                <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+                <div className="flex items-center justify-between mb-6 gap-3">
                     {/* Search Bar */}
                     <div className="relative">
                         <svg
@@ -1317,54 +1261,102 @@ const Resources = () => {
                             placeholder="Search resources..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 pr-4 py-2 w-[350px] h-[40px] border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent placeholder:italic placeholder:font-light"
+                            className="pl-10 pr-4 py-2 w-[200px] h-[40px] border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent placeholder:italic placeholder:font-light"
                             style={{ fontSize: '15px' }}
                         />
                     </div>
 
-                    {/* Filter Buttons */}
+                    {/* Status Filter Dropdown */}
+                    <div className="relative">
+                        <select
+                            value={activeFilter}
+                            onChange={(e) => setActiveFilter(e.target.value)}
+                            className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
+                            style={{ fontSize: '13px', minWidth: '120px', fontFamily: 'SF Pro Display' }}
+                        >
+                            <option value="all">Status</option>
+                            <option value="available">Available</option>
+                            <option value="assigned">Assigned</option>
+                        </select>
+                        <svg
+                            className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+
+                    {/* Date Range Pickers */}
                     <div className="flex items-center gap-2">
-                        <div className="flex rounded-lg overflow-hidden">
-                            {['all', 'available', 'assigned'].map((filter) => (
-                                <button
-                                    key={filter}
-                                    onClick={() => setActiveFilter(filter)}
-                                    className={`px-4 py-2 font-bold transition-colors ${
-                                        activeFilter === filter
-                                            ? 'bg-[#CAF0F8] text-black'
-                                            : 'bg-white text-black hover:bg-[#CAF0F8]/50'
-                                    }`}
-                                    style={{ fontSize: '15px' }}
-                                >
-                                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                                </button>
-                            ))}
-                        </div>
+                        <input
+                            type="date"
+                            placeholder="Start Date"
+                            value={dateFilter.startDate}
+                            onChange={(e) => handleDateFilterChange('startDate', e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
+                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
+                        />
+                        <span className="text-gray-500 font-medium" style={{ fontFamily: 'SF Pro Display' }}>to</span>
+                        <input
+                            type="date"
+                            placeholder="End Date"
+                            value={dateFilter.endDate}
+                            onChange={(e) => handleDateFilterChange('endDate', e.target.value)}
+                            max={new Date().toISOString().split('T')[0]} // Optional: Prevent future dates if needed, but not requested
+                            className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
+                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
+                        />
+                    </div>
+
+                    {/* Role Filter Dropdown */}
+                    <div className="relative">
+                        <select
+                            value={roleFilter}
+                            onChange={(e) => setRoleFilter(e.target.value)}
+                            className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
+                            style={{ fontSize: '13px', minWidth: '150px', fontFamily: 'SF Pro Display' }}
+                        >
+                            <option value="all">All Roles</option>
+                            <option value="Team Lead">Team Lead</option>
+                            <option value="Backend Developer">Backend Developer</option>
+                            <option value="Frontend Developer">Frontend Developer</option>
+                            <option value="Quality Assurance">Quality Assurance</option>
+                        </select>
+                        <svg
+                            className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
                     </div>
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-3">
                         <button
                             onClick={handleExport}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#CAF0F8] rounded-lg text-black hover:bg-[#b8e8ef] transition-colors font-bold"
-                            style={{ fontSize: '15px' }}
+                            className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F5] rounded-lg text-black hover:bg-gray-200 transition-colors font-bold border border-gray-300"
+                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
                         >
-                            <svg className="w-5 h-5 text-[#00B4A6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                             Export
                         </button>
                         <button
                             onClick={handleAddDevMan}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#CAF0F8] rounded-lg text-black hover:bg-[#b8e8ef] transition-colors font-bold"
-                            style={{ fontSize: '15px' }}
+                            className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F5] rounded-lg text-black hover:bg-gray-200 transition-colors font-bold whitespace-nowrap border border-gray-300"
+                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
                         >
                             + Add DevMan
                         </button>
                         <button
                             onClick={handleAddResource}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#CAF0F8] text-black rounded-lg hover:bg-[#b8e8ef] transition-colors font-bold"
-                            style={{ fontSize: '15px' }}
+                            className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F5] text-black rounded-lg hover:bg-gray-200 transition-colors font-bold whitespace-nowrap border border-gray-300"
+                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
                         >
                             + Add Resource
                         </button>
@@ -1406,16 +1398,12 @@ const Resources = () => {
                                             </td>
                                             <td className="py-4 px-6">
                                                 <span
-                                                    className={`px-3 py-1 rounded font-semibold ${
-                                                        resource.status === 'AVAILABLE'
-                                                            ? 'bg-green-100 text-green-600'
-                                                            : 'bg-red-100 text-red-600'
-                                                    }`}
-                                                    style={{ 
+                                                    className="px-3 py-1 rounded-full font-bold"
+                                                    style={{
                                                         fontSize: '12px',
-                                                        border: resource.status === 'AVAILABLE' 
-                                                            ? '1px solid #059669' 
-                                                            : '1px solid #DC2626'
+                                                        color: resource.status === 'AVAILABLE' ? '#06D001' : '#FF0000',
+                                                        backgroundColor: resource.status === 'AVAILABLE' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(255, 0, 0, 0.2)',
+                                                        border: resource.status === 'AVAILABLE' ? '1px solid #06D001' : '1px solid #FF0000'
                                                     }}
                                                 >
                                                     {resource.status}
@@ -1435,7 +1423,7 @@ const Resources = () => {
                                             </td>
                                             <td className="py-4 px-6 text-center">
                                                 <button
-                                                    onClick={() => handleViewTrackRecord(resource.resourceId)}
+                                                    onClick={() => handleViewTrackRecord(resource)}
                                                     className="inline-flex items-center gap-1 text-gray-600 hover:text-[#0059FF] transition-colors"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1446,7 +1434,7 @@ const Resources = () => {
                                             </td>
                                             <td className="py-4 px-6 text-right">
                                                 <button
-                                                    onClick={() => handleAssignToProject(resource.resourceId)}
+                                                    onClick={() => handleAssignToProject(resource)}
                                                     className="px-4 py-2 bg-[#CAF0F8] text-black rounded-lg hover:bg-[#b8e8ef] transition-colors font-bold"
                                                     style={{ fontSize: '15px' }}
                                                 >
