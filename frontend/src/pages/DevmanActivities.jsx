@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import api from '../utils/api';
@@ -6,7 +6,41 @@ import api from '../utils/api';
 const DevmanActivities = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('extend');
+    const [activities, setActivities] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [notification, setNotification] = useState({ show: false, message: '', type: 'info', closing: false });
+
+    useEffect(() => {
+        fetchActivities();
+    }, []);
+
+    const fetchActivities = async () => {
+        try {
+            setLoading(true);
+            console.log('Fetching Devman activities...');
+            const response = await api.get('/requests/history');
+            console.log('Devman Activities API Response:', response.data);
+
+            // Ensure response.data is an array
+            if (Array.isArray(response.data)) {
+                setActivities(response.data);
+            } else {
+                console.warn('API returned non-array data for Devman activities:', response.data);
+                setActivities([]);
+            }
+        } catch (error) {
+            console.error('Error fetching Devman activities:', error);
+            showNotification('Failed to fetch activities', 'error');
+            setActivities([]); // Fallback to empty array on error
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleDateString('en-GB');
+    };
 
     const showNotification = (message, type = 'info') => {
         setNotification({ show: true, message, type, closing: false });
@@ -24,137 +58,6 @@ const DevmanActivities = () => {
             setNotification({ show: false, message: '', closing: false });
         }, 300);
     };
-
-    // Dummy data for Extend
-    const extendData = [
-        {
-            id: 1,
-            requester: 'Rudi Tabuti Sugiharto',
-            project: 'E-Commerce Web Revamp',
-            resourceName: 'Rudi Tabuti Sugiharto',
-            role: 'Backend Developer',
-            oldEndDate: '14/06/2026',
-            newEndDate: '14/08/2026',
-            description: '"Extend rul tukul, karena belum selesa"',
-            status: 'APPROVED'
-        },
-        {
-            id: 2,
-            requester: 'Rudi Tabuti Sugiharto',
-            project: 'E-Commerce Web Revamp',
-            resourceName: 'Rudi Tabuti Sugiharto',
-            role: 'Backend Developer',
-            oldEndDate: '14/06/2026',
-            newEndDate: '14/04/2026',
-            description: '"Release rul tukul, karena sudah selesa"',
-            status: 'REJECTED'
-        },
-        {
-            id: 3,
-            requester: 'Rudi Tabuti Sugiharto',
-            project: 'E-Commerce Web Revamp',
-            resourceName: 'Rudi Tabuti Sugiharto',
-            role: 'Backend Developer',
-            oldEndDate: '14/06/2026',
-            newEndDate: '14/08/2026',
-            description: '"Extend rul tukul, karena belum selesa"',
-            status: 'APPROVED'
-        },
-        {
-            id: 4,
-            requester: 'Rudi Tabuti Sugiharto',
-            project: 'E-Commerce Web Revamp',
-            resourceName: 'Rudi Tabuti Sugiharto',
-            role: 'Backend Developer',
-            oldEndDate: '14/06/2026',
-            newEndDate: '14/04/2026',
-            description: '"Release rul tukul, karena sudah selesa"',
-            status: 'APPROVED'
-        }
-    ];
-
-    // Dummy data for Release (same structure as Extend)
-    const releaseData = extendData;
-
-    // Dummy data for Assignment
-    const assignmentData = [
-        {
-            id: 1,
-            requester: 'Rudi Tabuti Sugiharto',
-            project: 'E-Commerce Web Revamp',
-            resourceName: 'Rudi Tabuti Sugiharto',
-            role: 'Backend Developer',
-            startDate: '14/06/2026',
-            endDate: '14/08/2026',
-            status: 'APPROVED'
-        },
-        {
-            id: 2,
-            requester: 'Rudi Tabuti Sugiharto',
-            project: 'E-Commerce Web Revamp',
-            resourceName: 'Rudi Tabuti Sugiharto',
-            role: 'Backend Developer',
-            startDate: '14/06/2026',
-            endDate: '14/08/2026',
-            status: 'REJECTED'
-        },
-        {
-            id: 3,
-            requester: 'Rudi Tabuti Sugiharto',
-            project: 'E-Commerce Web Revamp',
-            resourceName: 'Rudi Tabuti Sugiharto',
-            role: 'Backend Developer',
-            startDate: '14/06/2026',
-            endDate: '14/08/2026',
-            status: 'APPROVED'
-        },
-        {
-            id: 4,
-            requester: 'Rudi Tabuti Sugiharto',
-            project: 'E-Commerce Web Revamp',
-            resourceName: 'Rudi Tabuti Sugiharto',
-            role: 'Backend Developer',
-            startDate: '14/06/2026',
-            endDate: '14/08/2026',
-            status: 'APPROVED'
-        }
-    ];
-
-    // Dummy data for Project
-    const projectData = [
-        {
-            id: 1,
-            requester: 'Rudi Tabuti Sugiharto',
-            projectName: 'E-Commerce Web Revamp',
-            clientName: 'PT Teleopedia',
-            description: '"Lorem ipsum odiusdsdf sdsdsddsvsvsvsnsn snspsosronsispsnnagsngspsn snsgsipsdsosogsdngjsgsn gnsospjedsojgadsngjsn"',
-            status: 'APPROVED'
-        },
-        {
-            id: 2,
-            requester: 'Rudi Tabuti Sugiharto',
-            projectName: 'E-Commerce Web Revamp',
-            clientName: 'PT Teleopedia',
-            description: '"Kebutugan neosusemfinml xinhuglshngudl sdsnslxksnglsingsisn sdnsmlakmlsdkfndkjfngfnk"',
-            status: 'REJECTED'
-        },
-        {
-            id: 3,
-            requester: 'Rudi Tabuti Sugiharto',
-            projectName: 'E-Commerce Web Revamp',
-            clientName: 'PT Teleopedia',
-            description: '"Lorem ipsum odiusdsdf sdsdsddsvsvsvsnsn snspsosronsispsnnagsngspsn snsgsipsdsosogsdngjsgsn gnsospjedsojgadsngjsn"',
-            status: 'APPROVED'
-        },
-        {
-            id: 4,
-            requester: 'Rudi Tabuti Sugiharto',
-            projectName: 'E-Commerce Web Revamp',
-            clientName: 'PT Teleopedia',
-            description: '"Kebutugan neosusemfinml xinhuglshngudl sdsnslxksnglsingsisn sdnsmlakmlsdkfndkjfngfnk"',
-            status: 'REJECTED'
-        }
-    ];
 
     const getStatusColor = (status) => {
         if (status === 'APPROVED') {
@@ -177,8 +80,6 @@ const DevmanActivities = () => {
         };
     };
 
-
-
     return (
         <div className="flex min-h-screen bg-[#E6F2F1] font-['SF_Pro_Display']">
             {/* Notification Toast */}
@@ -194,35 +95,17 @@ const DevmanActivities = () => {
                     }}
                 >
                     {notification.type === 'success' ? (
-                        <svg className="w-5 h-5" fill="none" stroke="#06D001" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                        </svg>
+                        <svg className="w-5 h-5" fill="none" stroke="#06D001" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
                     ) : notification.type === 'error' ? (
-                        <svg className="w-5 h-5" fill="none" stroke="#FF0000" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <svg className="w-5 h-5" fill="none" stroke="#FF0000" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     ) : (
-                        <svg className="w-5 h-5" fill="none" stroke="#00B4D8" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <svg className="w-5 h-5" fill="none" stroke="#00B4D8" style={{ color: '#00B4D8' }} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     )}
-                    <span
-                        className="font-bold"
-                        style={{
-                            color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8',
-                            fontSize: '14px'
-                        }}
-                    >
+                    <span className="font-bold" style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8', fontSize: '14px' }}>
                         {notification.message}
                     </span>
-                    <button
-                        onClick={closeNotification}
-                        className="ml-2 hover:opacity-70 transition-opacity"
-                        style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8' }}
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                    <button onClick={closeNotification} className="ml-2 hover:opacity-70 transition-opacity" style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8' }}>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
             )}
@@ -299,46 +182,52 @@ const DevmanActivities = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {extendData.map((item) => (
-                                        <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.project}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.resourceName}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.role}</span>
-                                            </td>
-                                            <td className="py-4 px-6 text-center">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.oldEndDate}</span>
-                                            </td>
-                                            <td className="py-4 px-6 text-center">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.newEndDate}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.description}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <div className="flex justify-center">
-                                                    <span
-                                                        className="px-3 py-1 rounded font-semibold"
-                                                        style={{
-                                                            fontSize: '12px',
-                                                            backgroundColor: getStatusColor(item.status).bg,
-                                                            color: getStatusColor(item.status).text,
-                                                            border: `1px solid ${getStatusColor(item.status).border}`
-                                                        }}
-                                                    >
-                                                        {item.status}
-                                                    </span>
-                                                </div>
-                                            </td>
+                                    {activities.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="8" className="text-center py-4 text-gray-500">No activities found</td>
                                         </tr>
-                                    ))}
+                                    ) : (
+                                        activities.filter(a => a.type === 'EXTEND').map((item) => (
+                                            <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.project}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.resource}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.role}</span>
+                                                </td>
+                                                <td className="py-4 px-6 text-center">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.currentEndDate)}</span>
+                                                </td>
+                                                <td className="py-4 px-6 text-center">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.newEndDate)}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.reason}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <div className="flex justify-center">
+                                                        <span
+                                                            className="px-3 py-1 rounded-full font-semibold"
+                                                            style={{
+                                                                fontSize: '12px',
+                                                                backgroundColor: getStatusColor(item.status).bg,
+                                                                color: getStatusColor(item.status).text,
+                                                                border: `1px solid ${getStatusColor(item.status).border}`
+                                                            }}
+                                                        >
+                                                            {item.status}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -361,46 +250,52 @@ const DevmanActivities = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {releaseData.map((item) => (
-                                        <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.project}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.resourceName}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.role}</span>
-                                            </td>
-                                            <td className="py-4 px-6 text-center">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.oldEndDate}</span>
-                                            </td>
-                                            <td className="py-4 px-6 text-center">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.newEndDate}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.description}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <div className="flex justify-center">
-                                                    <span
-                                                        className="px-3 py-1 rounded font-semibold"
-                                                        style={{
-                                                            fontSize: '12px',
-                                                            backgroundColor: getStatusColor(item.status).bg,
-                                                            color: getStatusColor(item.status).text,
-                                                            border: `1px solid ${getStatusColor(item.status).border}`
-                                                        }}
-                                                    >
-                                                        {item.status}
-                                                    </span>
-                                                </div>
-                                            </td>
+                                    {activities.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="8" className="text-center py-4 text-gray-500">No activities found</td>
                                         </tr>
-                                    ))}
+                                    ) : (
+                                        activities.filter(a => a.type === 'RELEASE').map((item) => (
+                                            <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.project}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.resource}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.role}</span>
+                                                </td>
+                                                <td className="py-4 px-6 text-center">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.currentEndDate)}</span>
+                                                </td>
+                                                <td className="py-4 px-6 text-center">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.newEndDate)}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.reason}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <div className="flex justify-center">
+                                                        <span
+                                                            className="px-3 py-1 rounded-full font-semibold"
+                                                            style={{
+                                                                fontSize: '12px',
+                                                                backgroundColor: getStatusColor(item.status).bg,
+                                                                color: getStatusColor(item.status).text,
+                                                                border: `1px solid ${getStatusColor(item.status).border}`
+                                                            }}
+                                                        >
+                                                            {item.status}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -422,43 +317,49 @@ const DevmanActivities = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {assignmentData.map((item) => (
-                                        <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.project}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.resourceName}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.role}</span>
-                                            </td>
-                                            <td className="py-4 px-6 text-center">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.startDate}</span>
-                                            </td>
-                                            <td className="py-4 px-6 text-center">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.endDate}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <div className="flex justify-center">
-                                                    <span
-                                                        className="px-3 py-1 rounded font-semibold"
-                                                        style={{
-                                                            fontSize: '12px',
-                                                            backgroundColor: getStatusColor(item.status).bg,
-                                                            color: getStatusColor(item.status).text,
-                                                            border: `1px solid ${getStatusColor(item.status).border}`
-                                                        }}
-                                                    >
-                                                        {item.status}
-                                                    </span>
-                                                </div>
-                                            </td>
+                                    {activities.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="7" className="text-center py-4 text-gray-500">No activities found</td>
                                         </tr>
-                                    ))}
+                                    ) : (
+                                        activities.filter(a => a.type === 'ASSIGN').map((item) => (
+                                            <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.project}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.resource}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.role}</span>
+                                                </td>
+                                                <td className="py-4 px-6 text-center">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.startDate)}</span>
+                                                </td>
+                                                <td className="py-4 px-6 text-center">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.newEndDate)}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <div className="flex justify-center">
+                                                        <span
+                                                            className="px-3 py-1 rounded-full font-semibold"
+                                                            style={{
+                                                                fontSize: '12px',
+                                                                backgroundColor: getStatusColor(item.status).bg,
+                                                                color: getStatusColor(item.status).text,
+                                                                border: `1px solid ${getStatusColor(item.status).border}`
+                                                            }}
+                                                        >
+                                                            {item.status}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -478,37 +379,43 @@ const DevmanActivities = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {projectData.map((item) => (
-                                        <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.projectName}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.clientName}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.description}</span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <div className="flex justify-center">
-                                                    <span
-                                                        className="px-3 py-1 rounded font-semibold"
-                                                        style={{
-                                                            fontSize: '12px',
-                                                            backgroundColor: getStatusColor(item.status).bg,
-                                                            color: getStatusColor(item.status).text,
-                                                            border: `1px solid ${getStatusColor(item.status).border}`
-                                                        }}
-                                                    >
-                                                        {item.status}
-                                                    </span>
-                                                </div>
-                                            </td>
+                                    {activities.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="5" className="text-center py-4 text-gray-500">No activities found</td>
                                         </tr>
-                                    ))}
+                                    ) : (
+                                        activities.filter(a => a.type === 'PROJECT').map((item) => (
+                                            <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.projectName}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.clientName}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.description}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <div className="flex justify-center">
+                                                        <span
+                                                            className="px-3 py-1 rounded-full font-semibold"
+                                                            style={{
+                                                                fontSize: '12px',
+                                                                backgroundColor: getStatusColor(item.status).bg,
+                                                                color: getStatusColor(item.status).text,
+                                                                border: `1px solid ${getStatusColor(item.status).border}`
+                                                            }}
+                                                        >
+                                                            {item.status}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>

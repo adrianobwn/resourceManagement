@@ -40,25 +40,7 @@ const DevmanDashboard = () => {
     const [viewDetailModal, setViewDetailModal] = useState({ show: false, request: null });
 
     // Mock data for pending requests (since we don't have request entity yet)
-    const pendingRequests = [
-        { id: 1, type: 'EXTEND', resource: 'Rudi Tabuti Sugiharto', project: 'E-Commerce Platform', role: 'Backend Developer', currentEndDate: '31 Dec 2026', newEndDate: '28 Feb 2027', extensionMonths: 2, reason: 'Development fase 2 mundur karena revisi client. Butuh Rudi stay sampai UAT selesai.', status: 'PENDING' },
-        { id: 2, type: 'RELEASE', resource: 'Rudi Tabuti Sugiharto', project: 'E-Commerce Platform', role: 'Backend Developer', originalEndDate: '31 Dec 2026', requestedEndDate: '29 Dec 2026', earlyReleaseMonths: 1, reason: 'Semua task backend untuk fitur utama sudah selesai (Done) dan sudah serah terima. Rudi bisa dialokasikan ke project lain.', status: 'PENDING' },
-        {
-            id: 3, type: 'PROJECT', requester: 'Rudi Tabuti Sugiharto', submittedDate: '15/12/2026', projectName: 'GayakuID Mobile App Revamp', clientName: 'PT. Gayaku Mode Indonesia', description: 'Revamp total aplikasi mobile menggunakan Flutter. Integrasi dengan Payment Gateway Midtrans dan fitur Augmented Reality (AR) fitting.', resourcePlan: [
-                { name: 'Rudi Tabuti Sugiharto', role: 'Backend Developer', startDate: '14/03/2026', endDate: '14/05/2026' },
-                { name: 'Rudi Tabuti Sugiharto', role: 'Backend Developer', startDate: '14/03/2026', endDate: '14/05/2026' },
-                { name: 'Rudi Tabuti Sugiharto', role: 'Backend Developer', startDate: '14/03/2026', endDate: '14/05/2026' }
-            ], status: 'PENDING'
-        },
-        { id: 4, type: 'EXTEND', resource: 'Rudi Tabuti Sugiharto', project: 'E-Commerce Platform', role: 'Quality Assurance', currentEndDate: '31 Dec 2026', newEndDate: '28 Feb 2027', extensionMonths: 2, reason: 'Development fase 2 mundur karena revisi client. Butuh Rudi stay sampai UAT selesai.', status: 'PENDING' },
-        { id: 5, type: 'RELEASE', resource: 'Rudi Tabuti Sugiharto', project: 'E-Commerce Platform', role: 'Frontend Developer', originalEndDate: '31 Dec 2026', requestedEndDate: '29 Dec 2026', earlyReleaseMonths: 1, reason: 'Resource dipindahkan ke project lain karena sudah selesai tugasnya.', status: 'PENDING' },
-        {
-            id: 6, type: 'PROJECT', requester: 'Rudi Tabuti Sugiharto', submittedDate: '15/12/2026', projectName: 'New Backend System', clientName: 'PT. Tech Indonesia', description: 'Pembangunan sistem backend baru untuk mendukung operasional perusahaan.', resourcePlan: [
-                { name: 'Rudi Tabuti Sugiharto', role: 'Team Lead', startDate: '01/04/2026', endDate: '30/06/2026' },
-                { name: 'Rudi Tabuti Sugiharto', role: 'Backend Developer', startDate: '01/04/2026', endDate: '30/06/2026' }
-            ], status: 'PENDING'
-        },
-    ];
+    const [pendingRequests, setPendingRequests] = useState([]);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
@@ -88,6 +70,10 @@ const DevmanDashboard = () => {
             // Fetch active projects
             const projectsRes = await api.get('/dashboard/active-projects');
             setActiveProjects(projectsRes.data);
+
+            // Fetch pending requests
+            const requestsRes = await api.get('/requests');
+            setPendingRequests(requestsRes.data);
 
         } catch (error) {
             console.error('Error fetching dashboard data:', error);

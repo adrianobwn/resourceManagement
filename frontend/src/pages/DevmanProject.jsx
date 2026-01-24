@@ -266,14 +266,28 @@ const DevmanProject = () => {
             {/* Notification */}
             {notification.show && (
                 <div
-                    className={`fixed top-4 right-4 z-[100] flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-300 ${notification.closing ? 'opacity-0 translate-x-full' : 'opacity-100 translate-x-0'}`}
+                    className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-300 ease-in-out ${notification.closing
+                        ? 'opacity-0 translate-x-full'
+                        : 'opacity-100 translate-x-0 animate-slide-in'
+                        }`}
                     style={{
-                        backgroundColor: notification.type === 'error' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(6, 208, 1, 0.2)',
-                        border: `1px solid ${notification.type === 'error' ? '#FF0000' : '#06D001'}`
+                        backgroundColor: notification.type === 'success' ? 'rgba(6, 208, 1, 0.2)' : notification.type === 'error' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 180, 216, 0.2)',
+                        borderColor: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8'
                     }}
                 >
-                    <span className="font-bold" style={{ color: notification.type === 'error' ? '#FF0000' : '#06D001' }}>{notification.message}</span>
-                    <button onClick={closeNotification} className="ml-2"><X className="w-4 h-4" style={{ color: notification.type === 'error' ? '#FF0000' : '#06D001' }} /></button>
+                    {notification.type === 'success' ? (
+                        <svg className="w-5 h-5" fill="none" stroke="#06D001" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                    ) : notification.type === 'error' ? (
+                        <svg className="w-5 h-5" fill="none" stroke="#FF0000" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    ) : (
+                        <svg className="w-5 h-5" fill="none" stroke="#00B4D8" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    )}
+                    <span className="font-bold" style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8', fontSize: '14px' }}>
+                        {notification.message}
+                    </span>
+                    <button onClick={closeNotification} className="ml-2 hover:opacity-70 transition-opacity" style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8' }}>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
                 </div>
             )}
 
@@ -281,8 +295,7 @@ const DevmanProject = () => {
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-4xl font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Projects</h1>
                     <div className="flex items-center gap-4">
-                        <button onClick={handleExport} className="px-6 py-2 bg-white text-gray-700 rounded-lg font-bold border border-gray-200" style={{ fontFamily: 'SF Pro Display' }}>Export</button>
-                        <button onClick={() => setShowNewProjectModal(true)} className="px-6 py-2 bg-[#00B4D8] text-white rounded-lg font-bold" style={{ fontFamily: 'SF Pro Display' }}>+ Propose Project</button>
+                        {/* Empty header actions */}
                     </div>
                 </div>
 
@@ -290,12 +303,22 @@ const DevmanProject = () => {
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex bg-white rounded-lg p-1 shadow-sm border border-gray-100">
                         {filterTabs.map(tab => (
-                            <button key={tab} onClick={() => setActiveFilter(tab)} className={`px-6 py-2 rounded-md font-bold ${activeFilter === tab ? 'bg-[#00B4D8] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`} style={{ fontFamily: 'SF Pro Display' }}>{tab}</button>
+                            <button key={tab} onClick={() => setActiveFilter(tab)} className={`px-6 py-2 rounded-md font-bold transition-all ${activeFilter === tab ? 'bg-[#00B4D8] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`} style={{ fontFamily: 'SF Pro Display' }}>{tab}</button>
                         ))}
                     </div>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input type="text" placeholder="Find projects..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 pr-4 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B4D8]" style={{ fontFamily: 'SF Pro Display' }} />
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <input type="text" placeholder="Find projects..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-4 pr-10 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B4D8] font-medium" style={{ fontFamily: 'SF Pro Display' }} />
+                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        </div>
+                        <button onClick={handleExport} className="px-4 py-2 bg-white text-gray-700 rounded-lg font-bold border border-gray-200 hover:bg-gray-50 flex items-center gap-2" style={{ fontFamily: 'SF Pro Display' }}>
+                            <svg className="w-5 h-5 text-[#00B4D8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            Export
+                        </button>
+                        <button onClick={() => setShowNewProjectModal(true)} className="px-6 py-2 bg-[#00B4D8] text-white rounded-lg font-bold transition-all shadow-md shadow-cyan-100 hover:opacity-90 flex items-center gap-2" style={{ fontFamily: 'SF Pro Display' }}>
+                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                            Propose Project
+                        </button>
                     </div>
                 </div>
 
@@ -368,15 +391,17 @@ const DevmanProject = () => {
                                             <td className="px-6 py-6 font-bold text-gray-800">{res.resourceName}</td>
                                             <td className="px-6 py-6 text-center font-bold text-gray-800">{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
                                             <td className="px-6 py-6 text-center">
-                                                <span className="px-4 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-600">
+                                                <span className={`px-4 py-1 rounded-full text-[10px] font-bold ${(res.status === 'RELEASED' || res.status === 'EXPIRED') ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
                                                     {res.status}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-6 text-center">
-                                                <div className="flex justify-center gap-2">
-                                                    <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] hover:bg-[#F97316]/20">EXTEND</button>
-                                                    <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] hover:bg-[#FF0000]/20">RELEASE</button>
-                                                </div>
+                                                {(res.status !== 'RELEASED' && res.status !== 'EXPIRED') && (
+                                                    <div className="flex justify-center gap-2">
+                                                        <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] hover:bg-[#F97316]/20">EXTEND</button>
+                                                        <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] hover:bg-[#FF0000]/20">RELEASE</button>
+                                                    </div>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}

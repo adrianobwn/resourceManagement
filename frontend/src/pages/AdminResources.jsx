@@ -882,7 +882,7 @@ const AdminResources = () => {
                                             style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 35px 0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
                                         >
                                             <option value="">Select project</option>
-                                            {projects.map(project => (
+                                            {projects.filter(p => p.status !== 'CLOSED').map(project => (
                                                 <option key={project.projectId} value={project.projectId}>
                                                     {project.projectName}
                                                 </option>
