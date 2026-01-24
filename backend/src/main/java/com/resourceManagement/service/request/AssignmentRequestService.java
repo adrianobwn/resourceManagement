@@ -10,6 +10,7 @@ import com.resourceManagement.repository.*;
 import com.resourceManagement.service.assignment.ResourceAssignmentService;
 import com.resourceManagement.service.resource.ResourceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,11 @@ public class AssignmentRequestService {
     private final ResourceAssignmentService resourceAssignmentService;
     private final ProjectRepository projectRepository;
     private final ResourceRepository resourceRepository;
+    private final com.resourceManagement.service.project.HistoryLogService historyLogService;
+
+    private void logToHistory(User performedBy, EntityType entityType, String activityType, String description, Project project, Resource resource, String role) {
+        historyLogService.logActivity(entityType, activityType, description, performedBy, project, resource, role);
+    }
 
     @Transactional
     public void createExtendRequest(String requesterEmail, ExtendAssignmentRequest dto) {
@@ -136,7 +142,22 @@ public class AssignmentRequestService {
         if (user.getUserType() == UserType.ADMIN) {
             return requestRepository.findByStatus(RequestStatus.PENDING);
         } else {
+            // Re-use current behavior: only show what they requested? 
+            // Actually, if we want them to see what's pending for their project (maybe requested by others?), we'd use OR.
+            // But usually only one PM per project. 
+            // Let's stick to the user's specific requirement: "berhubungan dengan pm tersebut".
             return requestRepository.findByRequester_UserIdAndStatus(user.getUserId(), RequestStatus.PENDING);
+        }
+    }
+
+    public List<AssignmentRequest> getAllRequests(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getUserType() == UserType.ADMIN) {
+            return requestRepository.findAll();
+        } else {
+            return requestRepository.findByRequester_UserIdOrProject_Pm_UserId(user.getUserId(), user.getUserId());
         }
     }
 
@@ -209,14 +230,42 @@ public class AssignmentRequestService {
          
          req.setStatus(RequestStatus.APPROVED);
          requestRepository.save(req);
+
+         // Log to History
+         String desc = String.format("Approved %s request by %s", req.getRequestType(), req.getRequester().getName());
+         logToHistory(getCurrentUser(), EntityType.REQUEST, "APPROVE", desc, req.getProject(), req.getResource(), req.getRole());
+    }
+
+    private User getCurrentUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Logged in user not found"));
     }
 
     @Transactional
-    public void rejectRequest(Integer requestId) {
+    public void rejectRequest(Integer requestId, String reason) {
         AssignmentRequest req = requestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
         
         req.setStatus(RequestStatus.REJECTED);
+        req.setRejectionReason(reason);
         requestRepository.save(req);
+
+        // Log to History
+        String desc = String.format("Rejected %s request by %s", req.getRequestType(), req.getRequester().getName());
+        logToHistory(getCurrentUser(), EntityType.REQUEST, "REJECT", desc, req.getProject(), req.getResource(), req.getRole());
+    }
+
+    @Transactional
+    public void recordDirectAction(User performedBy, RequestType type, AssignmentRequest details) {
+        details.setRequestType(type);
+        details.setStatus(RequestStatus.APPROVED);
+        details.setRequester(performedBy);
+        // createdAt handled by @PrePersist
+        requestRepository.save(details);
+
+        // Log to History
+        String desc = String.format("Admin directly performed %s: %s", type, details.getReason() != null ? details.getReason() : "");
+        logToHistory(performedBy, EntityType.ASSIGNMENT, type.name(), desc, details.getProject(), details.getResource(), details.getRole());
     }
 }

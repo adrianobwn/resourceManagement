@@ -178,7 +178,7 @@ const DevmanDashboard = () => {
             {/* Toast Notification */}
             {notification.show && (
                 <div
-                    className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-300 ease-in-out ${notification.closing
+                    className={`fixed top-4 right-4 z-[100] flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-300 ease-in-out ${notification.closing
                         ? 'opacity-0 translate-x-full'
                         : 'opacity-100 translate-x-0'
                         }`}
@@ -328,9 +328,9 @@ const DevmanDashboard = () => {
                                         <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Proposed Changes</span>
                                     </div>
                                     <div className="ml-8 space-y-1" style={{ fontFamily: 'SF Pro Display' }}>
-                                        <p className="text-gray-600">Current End Date : {viewDetailModal.request.currentEndDate}</p>
+                                        <p className="text-gray-600">Current End Date : {formatDate(viewDetailModal.request.currentEndDate)}</p>
                                         <p className="text-gray-600">
-                                            Requested New End : {viewDetailModal.request.newEndDate}
+                                            Requested New End : {formatDate(viewDetailModal.request.newEndDate)}
                                             {getMonthDiff(viewDetailModal.request.currentEndDate, viewDetailModal.request.newEndDate) > 0 && (
                                                 <span className="text-red-500 font-medium"> (+ {getMonthDiff(viewDetailModal.request.currentEndDate, viewDetailModal.request.newEndDate)} Months)</span>
                                             )}
@@ -387,9 +387,9 @@ const DevmanDashboard = () => {
                                         <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Proposed Changes</span>
                                     </div>
                                     <div className="ml-8 space-y-1" style={{ fontFamily: 'SF Pro Display' }}>
-                                        <p className="text-gray-600">Original End Date : {viewDetailModal.request.originalEndDate}</p>
+                                        <p className="text-gray-600">Original End Date : {formatDate(viewDetailModal.request.currentEndDate)}</p>
                                         <p className="text-gray-600">
-                                            Requested New End : {viewDetailModal.request.requestedEndDate}
+                                            Requested New End : {formatDate(viewDetailModal.request.newEndDate)}
                                             {getMonthDiff(viewDetailModal.request.newEndDate, viewDetailModal.request.currentEndDate) > 0 && (
                                                 <span className="text-red-500 font-medium"> (Early Release by {getMonthDiff(viewDetailModal.request.newEndDate, viewDetailModal.request.currentEndDate)} Month)</span>
                                             )}
@@ -467,7 +467,7 @@ const DevmanDashboard = () => {
                                     <div className="flex items-center gap-3">
                                         <Calendar className="w-5 h-5 text-gray-500" />
                                         <span style={{ fontFamily: 'SF Pro Display' }}>
-                                            Submitted : <span className="font-bold">{viewDetailModal.request.submittedDate}</span>
+                                            Submitted : <span className="font-bold">{formatDate(viewDetailModal.request.submittedDate)}</span>
                                         </span>
                                     </div>
                                 </div>
@@ -551,86 +551,23 @@ const DevmanDashboard = () => {
                 <h1 className="text-4xl font-bold text-gray-800 mb-8" style={{ fontFamily: 'SF Pro Display' }}>Dashboard</h1>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-4 gap-4 mb-8">
-                    {/* Total Resources */}
-                    <div
-                        className="rounded-xl p-5"
-                        style={{
-                            backgroundColor: '#F5F5F5',
-                            border: '1px solid rgba(0, 0, 0, 0.5)'
-                        }}
-                    >
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-lg font-bold text-black">Total Resources</span>
-                            <div
-                                className="w-10 h-10 rounded-lg flex items-center justify-center"
-                                style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}
-                            >
-                                <Users className="w-6 h-6 text-black" />
+                <div className="grid grid-cols-4 gap-6 mb-8">
+                    {[
+                        { label: 'Total Resources', value: stats.totalResources, icon: Users, bg: 'bg-white', color: 'text-gray-800', iconBg: 'bg-blue-50', iconColor: 'text-blue-500' },
+                        { label: 'Active Assignment', value: stats.totalResources - stats.availableResources, icon: UserPlus, bg: 'bg-white', color: 'text-gray-800', iconBg: 'bg-green-50', iconColor: 'text-green-500' },
+                        { label: 'Total Projects', value: stats.activeProjects, icon: FolderOpen, bg: 'bg-white', color: 'text-gray-800', iconBg: 'bg-cyan-50', iconColor: 'text-cyan-500' },
+                        { label: 'Pending Request', value: stats.pendingRequests, icon: Clock, bg: 'bg-white', color: 'text-gray-800', iconBg: 'bg-yellow-50', iconColor: 'text-yellow-500' }
+                    ].map((card, i) => (
+                        <div key={i} className={`${card.bg} rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow`}>
+                            <div className="flex justify-between items-start mb-4">
+                                <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">{card.label}</span>
+                                <div className={`w-12 h-12 ${card.iconBg} rounded-xl flex items-center justify-center`}>
+                                    <card.icon className={`w-6 h-6 ${card.iconColor}`} />
+                                </div>
                             </div>
+                            <p className={`text-4xl font-bold ${card.color}`}>{card.value}</p>
                         </div>
-                        <p className="text-5xl font-bold text-black">{stats.totalResources}</p>
-                    </div>
-
-                    {/* Active Assignment */}
-                    <div
-                        className="rounded-xl p-5"
-                        style={{
-                            backgroundColor: 'rgba(6, 208, 1, 0.2)',
-                            border: '1px solid #06D001'
-                        }}
-                    >
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-lg font-bold text-black">Active Assignment</span>
-                            <div
-                                className="w-10 h-10 rounded-lg flex items-center justify-center"
-                                style={{ backgroundColor: 'rgba(6, 208, 1, 0.2)' }}
-                            >
-                                <UserPlus className="w-6 h-6" style={{ color: '#06D001' }} />
-                            </div>
-                        </div>
-                        <p className="text-5xl font-bold text-black">{stats.totalResources - stats.availableResources}</p>
-                    </div>
-
-                    {/* Total Projects */}
-                    <div
-                        className="rounded-xl p-5"
-                        style={{
-                            backgroundColor: 'rgba(0, 180, 216, 0.2)',
-                            border: '1px solid #00B4D8'
-                        }}
-                    >
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-lg font-bold text-black">Total Projects</span>
-                            <div
-                                className="w-10 h-10 rounded-lg flex items-center justify-center"
-                                style={{ backgroundColor: 'rgba(0, 180, 216, 0.2)' }}
-                            >
-                                <FolderOpen className="w-6 h-6" style={{ color: '#00B4D8' }} />
-                            </div>
-                        </div>
-                        <p className="text-5xl font-bold text-black">{stats.activeProjects}</p>
-                    </div>
-
-                    {/* Pending Request */}
-                    <div
-                        className="rounded-xl p-5"
-                        style={{
-                            backgroundColor: 'rgba(251, 205, 63, 0.2)',
-                            border: '1px solid #FBCD3F'
-                        }}
-                    >
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-lg font-bold text-black">Pending Request</span>
-                            <div
-                                className="w-10 h-10 rounded-lg flex items-center justify-center"
-                                style={{ backgroundColor: 'rgba(251, 205, 63, 0.2)' }}
-                            >
-                                <Clock className="w-6 h-6" style={{ color: '#FBCD3F' }} />
-                            </div>
-                        </div>
-                        <p className="text-5xl font-bold text-black">{stats.pendingRequests}</p>
-                    </div>
+                    ))}
                 </div>
 
                 {/* Pending Request Title */}

@@ -30,6 +30,16 @@ public class RequestController {
         return ResponseEntity.ok(responses);
     }
 
+    @GetMapping("/history")
+    public ResponseEntity<List<AssignmentRequestResponse>> getRequestHistory() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<AssignmentRequestResponse> responses = requestService.getAllRequests(email)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
+    }
+
     @PostMapping("/project")
     public ResponseEntity<String> submitProjectProposal(@RequestBody ProjectProposalRequest request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -51,8 +61,9 @@ public class RequestController {
     }
 
     @PostMapping("/{id}/reject")
-    public ResponseEntity<String> rejectRequest(@PathVariable Integer id) {
-        requestService.rejectRequest(id);
+    public ResponseEntity<String> rejectRequest(@PathVariable Integer id, @RequestBody java.util.Map<String, String> body) {
+        String reason = body.get("reason");
+        requestService.rejectRequest(id, reason);
         return ResponseEntity.ok("Request rejected successfully");
     }
 
@@ -78,7 +89,8 @@ public class RequestController {
                 .newEndDate(req.getRequestType() == RequestType.ASSIGN ? req.getEndDate() : req.getNewEndDate())
                 .projectName(req.getProjectName())
                 .clientName(req.getClientName())
-                .description(req.getDescription());
+                .description(req.getDescription())
+                .rejectionReason(req.getRejectionReason());
 
         if (req.getResourcePlan() != null) {
             List<AssignmentRequestResponse.ResourcePlanItem> plan = req.getResourcePlan().stream()

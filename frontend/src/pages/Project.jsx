@@ -829,10 +829,10 @@ const Project = () => {
                                                             className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#5D5FEF]"
                                                         >
                                                             <option value="">-- Select Role --</option>
-                                                            <option value="Team Lead">Team Lead</option>
-                                                            <option value="Backend Developer">Backend Developer</option>
-                                                            <option value="Frontend Developer">Frontend Developer</option>
-                                                            <option value="Quality Assurance">Quality Assurance</option>
+                                                            <option value="TEAM LEAD">TEAM LEAD</option>
+                                                            <option value="BACKEND DEVELOPER">BACKEND DEVELOPER</option>
+                                                            <option value="FRONTEND DEVELOPER">FRONTEND DEVELOPER</option>
+                                                            <option value="QUALITY ASSURANCE">QUALITY ASSURANCE</option>
                                                         </select>
                                                         <input
                                                             type="date"
@@ -890,32 +890,44 @@ const Project = () => {
                 {/* Page Title */}
                 <h1 className="text-4xl font-bold text-gray-800 mb-8" style={{ fontFamily: 'SF Pro Display' }}>Projects</h1>
 
-                {/* Search, Filters and Actions */}
-                <div className="flex items-center justify-between mb-6">
-                    {/* Search Bar */}
+                {/* Toolbar */}
+                <div className="flex items-center justify-between mb-8">
+                    {/* Left: Search Bar */}
                     <div className="relative">
-                        <Search className="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <svg
+                            className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                            />
+                        </svg>
                         <input
                             type="text"
-                            placeholder="Search projects..."
+                            placeholder="Find projects..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B4D8] bg-white"
-                            style={{ width: '300px', fontFamily: 'SF Pro Display' }}
+                            className="pl-12 pr-4 py-3 w-[300px] border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#00B4D8] focus:border-transparent transition-all shadow-sm font-medium"
+                            style={{ fontFamily: 'SF Pro Display' }}
                         />
                     </div>
 
-                    {/* Filter Tabs & Actions */}
+                    {/* Right: Filters & Actions */}
                     <div className="flex items-center gap-4">
                         {/* Filter Tabs */}
-                        <div className="flex bg-white rounded-lg p-1 border border-gray-200">
+                        <div className="flex bg-white rounded-xl p-1 border border-gray-200 shadow-sm">
                             {filterTabs.map((tab) => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveFilter(tab)}
-                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeFilter === tab
-                                        ? 'bg-[#025D66] text-white'
-                                        : 'text-gray-600 hover:bg-gray-100'
+                                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeFilter === tab
+                                        ? 'bg-[#025D66] text-white shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                                         }`}
                                     style={{ fontFamily: 'SF Pro Display' }}
                                 >
@@ -924,22 +936,24 @@ const Project = () => {
                             ))}
                         </div>
 
+                        {/* Divider */}
+                        <div className="h-10 w-px bg-gray-200 mx-1"></div>
+
                         {/* Export Button */}
                         <button
                             onClick={handleExport}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#FBCD3F] text-black rounded-lg hover:opacity-90 transition-colors font-medium"
-                            style={{ fontFamily: 'SF Pro Display' }}
+                            className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-all shadow-sm group"
+                            title="Export to Excel"
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            <svg className="w-5 h-5 text-[#00B4D8] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                            Export
                         </button>
 
                         {/* Propose/New Project Button */}
                         <button
                             onClick={() => setShowNewProjectModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                            className="bg-[#00B4D8] text-white px-5 py-2.5 rounded-xl font-bold text-xs hover:opacity-90 transition-all shadow-md shadow-cyan-100 whitespace-nowrap"
                             style={{ fontFamily: 'SF Pro Display' }}
                         >
                             {user.userType === 'ADMIN' ? '+ New Project' : '+ Propose Project'}

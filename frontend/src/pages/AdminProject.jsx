@@ -69,6 +69,69 @@ const AdminProject = () => {
     const [projectResources, setProjectResources] = useState([]);
     const [loadingResources, setLoadingResources] = useState(false);
 
+    // Extend/Release Action states (for direct Admin actions)
+    const [showExtendModal, setShowExtendModal] = useState(false);
+    const [showReleaseModal, setShowReleaseModal] = useState(false);
+    const [selectedResourceForAction, setSelectedResourceForAction] = useState(null);
+    const [actionDate, setActionDate] = useState('');
+    const [actionReason, setActionReason] = useState('');
+
+    const handleOpenExtendModal = (resource) => {
+        setSelectedResourceForAction(resource);
+        setActionDate('');
+        setActionReason('');
+        setShowReleaseModal(false);
+        setShowExtendModal(true);
+    };
+
+    const handleOpenReleaseModal = (resource) => {
+        setSelectedResourceForAction(resource);
+        setActionDate(new Date().toISOString().split('T')[0]);
+        setActionReason('');
+        setShowExtendModal(false);
+        setShowReleaseModal(true);
+    };
+
+    const handleExtendSubmit = async () => {
+        if (!actionDate || !actionReason) {
+            showNotification('Please fill all fields', 'error');
+            return;
+        }
+        try {
+            await api.post('/assignments/extend', {
+                assignmentId: selectedResourceForAction.assignmentId,
+                newEndDate: actionDate,
+                reason: actionReason
+            });
+            showNotification('Assignment extended successfully!', 'success');
+            setShowExtendModal(false);
+            fetchProjectResources(selectedProject.projectId);
+        } catch (error) {
+            console.error('Error extending assignment:', error);
+            showNotification('Failed to extend assignment', 'error');
+        }
+    };
+
+    const handleReleaseSubmit = async () => {
+        if (!actionReason) {
+            showNotification('Please provide a reason', 'error');
+            return;
+        }
+        try {
+            await api.post('/assignments/release', {
+                assignmentId: selectedResourceForAction.assignmentId,
+                releaseDate: actionDate,
+                reason: actionReason
+            });
+            showNotification('Resource released successfully!', 'success');
+            setShowReleaseModal(false);
+            fetchProjectResources(selectedProject.projectId);
+        } catch (error) {
+            console.error('Error releasing assignment:', error);
+            showNotification('Failed to release resource', 'error');
+        }
+    };
+
     const fetchProjectResources = async (projectId) => {
         try {
             setLoadingResources(true);
@@ -318,42 +381,82 @@ const AdminProject = () => {
             {/* Detail Modal */}
             {showDetailModal && selectedProject && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
-                    <div className="bg-white rounded-2xl p-8 w-[800px] relative">
+                    <div className={`bg-white rounded-2xl p-8 w-[800px] relative transition-transform duration-300 ${showExtendModal || showReleaseModal ? '-translate-x-[20%]' : ''}`}>
                         <button onClick={() => setShowDetailModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
                             <X className="w-6 h-6" />
                         </button>
-                        <div className="mb-6">
-                            <h2 className="text-3xl font-bold text-gray-800 mb-2">{selectedProject.projectName}</h2>
-                            <p className="text-gray-500 font-medium">Client: {selectedProject.clientName} • PM: {selectedProject.pmName}</p>
+
+                        <div className="flex items-center gap-4 mb-2">
+                            <h2 className="text-3xl font-bold text-gray-800">{selectedProject.projectName}</h2>
+                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-600">
+                                {selectedProject.status === 'ON_GOING' ? 'ONGOING' : selectedProject.status}
+                            </span>
                         </div>
+
+                        <div className="flex gap-8 mb-6">
+                            <div className="text-sm font-medium text-gray-500">Client Name : <span className="text-gray-800 font-bold">{selectedProject.clientName}</span></div>
+                            <div className="text-sm font-medium text-gray-500">DevMan : <span className="text-gray-800 font-bold">{selectedProject.pmName}</span></div>
+                        </div>
+
                         <div className="border-t border-gray-100 my-6"></div>
-                        <h3 className="text-xl font-bold text-gray-800 mb-4">Project Resources</h3>
+
+                        <h3 className="text-xl font-bold text-gray-800 mb-4">Assigned Resources</h3>
+
                         {loadingResources ? (
                             <p className="text-center py-8 text-gray-500 font-bold">Loading resources...</p>
                         ) : projectResources.length === 0 ? (
                             <p className="text-center py-8 text-gray-500 font-bold">No resources assigned.</p>
                         ) : (
-                            <div className="bg-gray-50 rounded-xl overflow-hidden">
+                            <div className="bg-[#F8FBFC] rounded-xl overflow-hidden">
                                 <table className="w-full">
-                                    <thead>
-                                        <tr className="text-left bg-gray-100">
-                                            <th className="px-6 py-4 font-bold text-gray-700">Name</th>
-                                            <th className="px-6 py-4 font-bold text-gray-700">Role</th>
+                                    <thead className="border-b border-gray-200 text-left">
+                                        <tr>
+                                            <th className="px-6 py-4 font-bold text-gray-700 text-center">Name</th>
                                             <th className="px-6 py-4 font-bold text-center text-gray-700">Period</th>
+                                            <th className="px-6 py-4 font-bold text-center text-gray-700">Status</th>
+                                            <th className="px-6 py-4 font-bold text-center text-gray-100">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white">
                                         {projectResources.map((res, idx) => (
-                                            <tr key={idx} className="border-b border-gray-100 last:border-none">
-                                                <td className="px-6 py-4 font-bold text-gray-800">{res.resourceName}</td>
-                                                <td className="px-6 py-4 text-gray-600 font-medium">{res.role}</td>
-                                                <td className="px-6 py-4 text-center text-gray-600 font-medium">{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
+                                            <tr key={idx} className="border-b border-gray-50 last:border-none">
+                                                <td className="px-6 py-6 font-bold text-gray-800">{res.resourceName}</td>
+                                                <td className="px-6 py-6 text-center font-bold text-gray-800">{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
+                                                <td className="px-6 py-6 text-center">
+                                                    <span className="px-4 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-600">
+                                                        {res.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-6 text-center">
+                                                    <div className="flex justify-center gap-2">
+                                                        <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] hover:bg-[#F97316]/20">EXTEND</button>
+                                                        <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] hover:bg-[#FF0000]/20">RELEASE</button>
+                                                    </div>
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             </div>
                         )}
+                    </div>
+
+                    {/* Extend Sidebar */}
+                    <div className={`fixed top-0 right-0 h-full w-[400px] bg-white shadow-2xl z-60 transform transition-transform duration-300 rounded-l-2xl p-8 ${showExtendModal ? 'translate-x-0' : 'translate-x-full'}`}>
+                        <h3 className="text-xl font-bold mb-6">Extend Assignment</h3>
+                        <div className="space-y-4">
+                            <div><label className="block text-sm font-bold mb-2">New End Date</label><input type="date" value={actionDate} onChange={(e) => setActionDate(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#00B4D8] outline-none" /></div>
+                            <div><label className="block text-sm font-bold mb-2">Reason</label><textarea rows="4" value={actionReason} onChange={(e) => setActionReason(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#00B4D8] outline-none" placeholder="Enter reason..."></textarea></div>
+                        </div>
+                        <div className="flex gap-3 mt-8"><button onClick={() => setShowExtendModal(false)} className="flex-1 py-2 bg-gray-100 rounded-lg font-bold">Cancel</button><button onClick={handleExtendSubmit} className="flex-1 py-2 bg-[#0057FF] text-white rounded-lg font-bold">Confirm</button></div>
+                    </div>
+
+                    {/* Release Sidebar */}
+                    <div className={`fixed top-0 right-0 h-full w-[400px] bg-white shadow-2xl z-60 transform transition-transform duration-300 rounded-l-2xl p-8 ${showReleaseModal ? 'translate-x-0' : 'translate-x-full'}`}>
+                        <h3 className="text-xl font-bold mb-6">Release Assignment</h3>
+                        <div className="p-4 bg-yellow-50 text-yellow-800 text-sm mb-6 rounded-lg font-medium">Release effective today ({new Date().toLocaleDateString('id-ID')}).</div>
+                        <div><label className="block text-sm font-bold mb-2">Reason</label><textarea rows="4" value={actionReason} onChange={(e) => setActionReason(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#00B4D8] outline-none" placeholder="Reason for early release..."></textarea></div>
+                        <div className="flex gap-3 mt-8"><button onClick={() => setShowReleaseModal(false)} className="flex-1 py-2 bg-gray-100 rounded-lg font-bold">Cancel</button><button onClick={handleReleaseSubmit} className="flex-1 py-2 bg-[#FF0000] text-white rounded-lg font-bold">Confirm</button></div>
                     </div>
                 </div>
             )}

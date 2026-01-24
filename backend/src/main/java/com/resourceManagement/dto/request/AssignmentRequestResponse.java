@@ -32,6 +32,7 @@ public class AssignmentRequestResponse {
     private String description;
     
     private String reason;
+    private String rejectionReason;
     private LocalDateTime submittedDate;
     
     private java.util.List<ResourcePlanItem> resourcePlan;

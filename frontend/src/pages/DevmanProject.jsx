@@ -332,26 +332,50 @@ const DevmanProject = () => {
             {showDetailModal && selectedProject && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <div className={`bg-white rounded-2xl p-8 w-[800px] relative transition-transform duration-300 ${showExtendModal || showReleaseModal ? '-translate-x-[20%]' : ''}`}>
-                        <button onClick={() => setShowDetailModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
-                        <h2 className="text-3xl font-bold text-gray-800 mb-6">{selectedProject.projectName}</h2>
-                        <div className="bg-gray-50 rounded-xl overflow-hidden">
+                        <button onClick={() => setShowDetailModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
+                            <X className="w-6 h-6" />
+                        </button>
+
+                        <div className="flex items-center gap-4 mb-2">
+                            <h2 className="text-3xl font-bold text-gray-800">{selectedProject.projectName}</h2>
+                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-600">
+                                {selectedProject.status === 'ON_GOING' ? 'ONGOING' : selectedProject.status}
+                            </span>
+                        </div>
+
+                        <div className="flex gap-8 mb-6">
+                            <div className="text-sm font-medium text-gray-500">Client Name : <span className="text-gray-800 font-bold">{selectedProject.clientName}</span></div>
+                            <div className="text-sm font-medium text-gray-500">DevMan : <span className="text-gray-800 font-bold">{selectedProject.pmName}</span></div>
+                        </div>
+
+                        <div className="border-t border-gray-100 my-6"></div>
+
+                        <h3 className="text-xl font-bold text-gray-800 mb-4">Assigned Resources</h3>
+
+                        <div className="bg-[#F8FBFC] rounded-xl overflow-hidden">
                             <table className="w-full">
-                                <thead className="bg-gray-100 text-left">
+                                <thead className="border-b border-gray-200 text-left">
                                     <tr>
-                                        <th className="px-6 py-4 font-bold">Resource</th>
-                                        <th className="px-6 py-4 font-bold text-center">Period</th>
-                                        <th className="px-6 py-4 font-bold text-center">Action</th>
+                                        <th className="px-6 py-4 font-bold text-gray-700 text-center">Name</th>
+                                        <th className="px-6 py-4 font-bold text-center text-gray-700">Period</th>
+                                        <th className="px-6 py-4 font-bold text-center text-gray-700">Status</th>
+                                        <th className="px-6 py-4 font-bold text-center text-gray-700">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {projectResources.map((res, idx) => (
-                                        <tr key={idx} className="border-t border-gray-100">
-                                            <td className="px-6 py-4 font-bold">{res.resourceName}</td>
-                                            <td className="px-6 py-4 text-center text-sm">{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
-                                            <td className="px-6 py-4 text-center">
+                                        <tr key={idx} className="border-b border-gray-50 last:border-none">
+                                            <td className="px-6 py-6 font-bold text-gray-800">{res.resourceName}</td>
+                                            <td className="px-6 py-6 text-center font-bold text-gray-800">{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
+                                            <td className="px-6 py-6 text-center">
+                                                <span className="px-4 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-600">
+                                                    {res.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-6 text-center">
                                                 <div className="flex justify-center gap-2">
-                                                    <button onClick={() => handleOpenExtendModal(res)} className="px-3 py-1 rounded bg-yellow-100 text-yellow-600 font-bold text-xs">EXTEND</button>
-                                                    <button onClick={() => handleOpenReleaseModal(res)} className="px-3 py-1 rounded bg-red-100 text-red-600 font-bold text-xs">RELEASE</button>
+                                                    <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] hover:bg-[#F97316]/20">EXTEND</button>
+                                                    <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] hover:bg-[#FF0000]/20">RELEASE</button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -404,7 +428,17 @@ const DevmanProject = () => {
                                     </div>
                                     <div className="flex-1">
                                         <label className="block text-xs font-bold mb-1">Role</label>
-                                        <input type="text" value={item.role} onChange={(e) => updateResourcePlanItem(idx, 'role', e.target.value)} className="w-full p-2 border rounded-lg" placeholder="Role" />
+                                        <select
+                                            value={item.role}
+                                            onChange={(e) => updateResourcePlanItem(idx, 'role', e.target.value)}
+                                            className="w-full p-2 border rounded-lg bg-white"
+                                        >
+                                            <option value="">Select Role</option>
+                                            <option value="TEAM LEAD">TEAM LEAD</option>
+                                            <option value="BACKEND DEVELOPER">BACKEND DEVELOPER</option>
+                                            <option value="FRONTEND DEVELOPER">FRONTEND DEVELOPER</option>
+                                            <option value="QUALITY ASSURANCE">QUALITY ASSURANCE</option>
+                                        </select>
                                     </div>
                                     <div className="w-32"><label className="block text-xs font-bold mb-1">Start</label><input type="date" value={item.startDate} onChange={(e) => updateResourcePlanItem(idx, 'startDate', e.target.value)} className="w-full p-2 border rounded-lg" /></div>
                                     <div className="w-32"><label className="block text-xs font-bold mb-1">End</label><input type="date" value={item.endDate} onChange={(e) => updateResourcePlanItem(idx, 'endDate', e.target.value)} className="w-full p-2 border rounded-lg" /></div>

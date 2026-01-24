@@ -16,6 +16,11 @@ import java.util.stream.Collectors;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.resourceManagement.model.enums.UserType;
+import com.resourceManagement.repository.AssignmentRequestRepository;
+import com.resourceManagement.model.entity.AssignmentRequest;
+import com.resourceManagement.model.enums.RequestType;
+import com.resourceManagement.model.enums.RequestStatus;
+import com.resourceManagement.model.enums.EntityType;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +29,19 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final ResourceAssignmentRepository resourceAssignmentRepository;
+    private final AssignmentRequestRepository requestRepository;
+    private final HistoryLogService historyLogService;
+
+    private void recordDirectAction(User performedBy, RequestType type, AssignmentRequest details) {
+        details.setRequestType(type);
+        details.setStatus(RequestStatus.APPROVED);
+        details.setRequester(performedBy);
+        requestRepository.save(details);
+
+        // Log to History
+        String desc = String.format("Admin directly performed %s: %s", type, details.getReason() != null ? details.getReason() : "");
+        historyLogService.logActivity(EntityType.ASSIGNMENT, type.name(), desc, performedBy, details.getProject(), details.getResource(), details.getRole());
+    }
 
     public List<ProjectListResponse> getAllProjects() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -55,6 +73,21 @@ public class ProjectService {
                 .build();
 
         Project savedProject = projectRepository.save(project);
+
+        // Record Activity
+        AssignmentRequest details = AssignmentRequest.builder()
+                .project(savedProject)
+                .projectName(savedProject.getProjectName())
+                .clientName(savedProject.getClientName())
+                .description("Project created directly by Admin")
+                .build();
+        
+        // Find current admin user
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User admin = userRepository.findByEmail(email).orElseThrow();
+        
+        recordDirectAction(admin, RequestType.PROJECT, details);
+
         return mapToProjectListResponse(savedProject);
     }
 

@@ -923,10 +923,10 @@ const AdminResources = () => {
                                                 style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 35px 0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
                                             >
                                                 <option value="">Select role</option>
-                                                <option value="Team Lead">Team Lead</option>
-                                                <option value="Backend Developer">Backend Developer</option>
-                                                <option value="Frontend Developer">Frontend Developer</option>
-                                                <option value="Quality Assurance">Quality Assurance</option>
+                                                <option value="TEAM LEAD">TEAM LEAD</option>
+                                                <option value="BACKEND DEVELOPER">BACKEND DEVELOPER</option>
+                                                <option value="FRONTEND DEVELOPER">FRONTEND DEVELOPER</option>
+                                                <option value="QUALITY ASSURANCE">QUALITY ASSURANCE</option>
                                             </select>
                                             <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -1250,11 +1250,11 @@ const AdminResources = () => {
                 <h1 className="text-4xl font-bold text-gray-800 mb-8">Resources</h1>
 
                 {/* Toolbar */}
-                <div className="flex items-center justify-between mb-6 gap-3">
-                    {/* Search Bar */}
+                <div className="flex items-center justify-between mb-8">
+                    {/* Left: Search Bar */}
                     <div className="relative">
                         <svg
-                            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                            className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -1268,107 +1268,98 @@ const AdminResources = () => {
                         </svg>
                         <input
                             type="text"
-                            placeholder="Search resources..."
+                            placeholder="Find resources..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 pr-4 py-2 w-[200px] h-[40px] border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent placeholder:italic placeholder:font-light"
-                            style={{ fontSize: '15px' }}
+                            className="pl-12 pr-4 py-3 w-[300px] border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#00B4D8] focus:border-transparent transition-all shadow-sm font-medium"
+                            style={{ fontFamily: 'SF Pro Display' }}
                         />
                     </div>
 
-                    {/* Status Filter Dropdown */}
-                    <div className="relative">
-                        <select
-                            value={activeFilter}
-                            onChange={(e) => setActiveFilter(e.target.value)}
-                            className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
-                            style={{ fontSize: '13px', minWidth: '120px', fontFamily: 'SF Pro Display' }}
-                        >
-                            <option value="all">Status</option>
-                            <option value="available">Available</option>
-                            <option value="assigned">Assigned</option>
-                        </select>
-                        <svg
-                            className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </div>
+                    {/* Right: Filters & Actions */}
+                    <div className="flex items-center gap-4">
+                        {/* Status Filter */}
+                        <div className="relative group">
+                            <select
+                                value={activeFilter}
+                                onChange={(e) => setActiveFilter(e.target.value)}
+                                className="pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B4D8] appearance-none cursor-pointer font-bold text-gray-700 shadow-sm transition-all hover:border-gray-300 text-xs"
+                                style={{ minWidth: '130px', fontFamily: 'SF Pro Display' }}
+                            >
+                                <option value="all">Statuses</option>
+                                <option value="available">Available</option>
+                                <option value="assigned">Assigned</option>
+                            </select>
+                            <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
 
-                    {/* Date Range Pickers */}
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="date"
-                            placeholder="Start Date"
-                            value={dateFilter.startDate}
-                            onChange={(e) => handleDateFilterChange('startDate', e.target.value)}
-                            className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
-                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
-                        />
-                        <span className="text-gray-500 font-medium" style={{ fontFamily: 'SF Pro Display' }}>to</span>
-                        <input
-                            type="date"
-                            placeholder="End Date"
-                            value={dateFilter.endDate}
-                            onChange={(e) => handleDateFilterChange('endDate', e.target.value)}
-                            max={new Date().toISOString().split('T')[0]} // Optional: Prevent future dates if needed, but not requested
-                            className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
-                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
-                        />
-                    </div>
+                        {/* Date Filters */}
+                        <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-gray-200 shadow-sm">
+                            <input
+                                type="date"
+                                value={dateFilter.startDate}
+                                onChange={(e) => handleDateFilterChange('startDate', e.target.value)}
+                                className="px-3 py-1.5 border-none bg-transparent focus:ring-0 font-bold text-xs"
+                                style={{ fontFamily: 'SF Pro Display' }}
+                            />
+                            <span className="text-gray-400 font-bold text-xs italic">to</span>
+                            <input
+                                type="date"
+                                value={dateFilter.endDate}
+                                onChange={(e) => handleDateFilterChange('endDate', e.target.value)}
+                                className="px-3 py-1.5 border-none bg-transparent focus:ring-0 font-bold text-xs"
+                                style={{ fontFamily: 'SF Pro Display' }}
+                            />
+                        </div>
 
-                    {/* Role Filter Dropdown */}
-                    <div className="relative">
-                        <select
-                            value={roleFilter}
-                            onChange={(e) => setRoleFilter(e.target.value)}
-                            className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
-                            style={{ fontSize: '13px', minWidth: '150px', fontFamily: 'SF Pro Display' }}
-                        >
-                            <option value="all">All Roles</option>
-                            <option value="Team Lead">Team Lead</option>
-                            <option value="Backend Developer">Backend Developer</option>
-                            <option value="Frontend Developer">Frontend Developer</option>
-                            <option value="Quality Assurance">Quality Assurance</option>
-                        </select>
-                        <svg
-                            className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </div>
+                        {/* Role Filter */}
+                        <div className="relative group">
+                            <select
+                                value={roleFilter}
+                                onChange={(e) => setRoleFilter(e.target.value)}
+                                className="pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B4D8] appearance-none cursor-pointer font-bold text-gray-700 shadow-sm transition-all hover:border-gray-300 text-xs"
+                                style={{ minWidth: '160px', fontFamily: 'SF Pro Display' }}
+                            >
+                                <option value="all">Role Categories</option>
+                                <option value="TEAM LEAD">TEAM LEAD</option>
+                                <option value="BACKEND DEVELOPER">BACKEND DEVELOPER</option>
+                                <option value="FRONTEND DEVELOPER">FRONTEND DEVELOPER</option>
+                                <option value="QUALITY ASSURANCE">QUALITY ASSURANCE</option>
+                            </select>
+                            <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-3">
+                        {/* Main Actions */}
+                        <div className="h-10 w-px bg-gray-200 mx-2"></div>
+
                         <button
                             onClick={handleExport}
-                            className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F5] rounded-lg text-black hover:bg-gray-200 transition-colors font-bold border border-gray-300"
-                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
+                            className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-all shadow-sm group"
+                            title="Export to Excel"
                         >
-                            <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 text-[#00B4D8] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                            Export
                         </button>
+
                         <button
                             onClick={handleAddDevMan}
-                            className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F5] rounded-lg text-black hover:bg-gray-200 transition-colors font-bold whitespace-nowrap border border-gray-300"
-                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
+                            className="bg-[#CAF0F8] text-[#00B4D8] px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-[#b8e8ef] transition-all shadow-sm whitespace-nowrap"
+                            style={{ fontFamily: 'SF Pro Display' }}
                         >
-                            + Add DevMan
+                            + DevMan
                         </button>
+
                         <button
                             onClick={handleAddResource}
-                            className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F5] text-black rounded-lg hover:bg-gray-200 transition-colors font-bold whitespace-nowrap border border-gray-300"
-                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
+                            className="bg-[#00B4D8] text-white px-4 py-2.5 rounded-xl font-bold text-xs hover:opacity-90 transition-all shadow-md shadow-cyan-100 whitespace-nowrap"
+                            style={{ fontFamily: 'SF Pro Display' }}
                         >
-                            + Add Resource
+                            + Resource
                         </button>
                     </div>
                 </div>

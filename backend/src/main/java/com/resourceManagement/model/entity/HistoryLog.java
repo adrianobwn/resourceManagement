@@ -34,6 +34,17 @@ public class HistoryLog {
     @JoinColumn(name = "performed_by", nullable = false)
     private User performedBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id", nullable = true)
+    private Project project;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "resource_id", nullable = true)
+    private Resource resource;
+
+    @Column(nullable = true)
+    private String resourceRole;
+
     @Column(nullable = false)
     private LocalDateTime timestamp;
 }

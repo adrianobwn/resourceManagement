@@ -146,9 +146,10 @@ const Dashboard = () => {
     const submitDecline = async () => {
         if (declineModal.reason || true) {
             try {
-                await api.post(`/requests/${declineModal.request.id}/reject`);
+                await api.post(`/requests/${declineModal.request.id}/reject`, { reason: declineModal.reason });
                 setDeclineModal({ show: false, request: null, reason: '' });
-                showNotification(`Request has been declined.`, 'error');
+                setViewDetailModal({ show: false, request: null });
+                showNotification(`Request has been rejected successfully.`, 'success');
                 fetchDashboardData();
             } catch (error) {
                 console.error(error);
@@ -192,7 +193,7 @@ const Dashboard = () => {
             {/* Toast Notification */}
             {notification.show && (
                 <div
-                    className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-300 ease-in-out ${notification.closing
+                    className={`fixed top-4 right-4 z-[100] flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-300 ease-in-out ${notification.closing
                         ? 'opacity-0 translate-x-full'
                         : 'opacity-100 translate-x-0'
                         }`}
@@ -235,48 +236,55 @@ const Dashboard = () => {
                 </div>
             )}
 
-            {/* Decline Reason Modal */}
-            {declineModal.show && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center"
-                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-                >
-                    <div
-                        className="bg-white rounded-2xl p-6"
-                        style={{ width: '450px' }}
+            {/* Reject Reason Sidebar */}
+            <div
+                className={`fixed inset-0 z-[60] bg-transparent transition-opacity duration-300 ${declineModal.show ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                onClick={() => setDeclineModal({ show: false, request: null, reason: '' })}
+            ></div>
+            <div
+                className={`fixed top-0 right-0 h-full w-[450px] bg-white shadow-2xl z-[70] transform transition-transform duration-300 rounded-l-2xl p-8 ${declineModal.show ? 'translate-x-0' : 'translate-x-full'}`}
+            >
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="font-bold text-2xl" style={{ fontFamily: 'SF Pro Display' }}>
+                        Reject Request
+                    </h2>
+                    <button
+                        onClick={() => setDeclineModal({ show: false, request: null, reason: '' })}
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
                     >
-                        <h2 className="font-bold text-xl mb-4" style={{ fontFamily: 'SF Pro Display' }}>
-                            Decline Request
-                        </h2>
-                        <p className="text-gray-600 mb-4" style={{ fontFamily: 'SF Pro Display' }}>
-                            Please provide a reason for declining this request:
-                        </p>
-                        <textarea
-                            value={declineModal.reason}
-                            onChange={(e) => setDeclineModal(prev => ({ ...prev, reason: e.target.value }))}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B4D8] resize-none"
-                            style={{ height: '120px', fontFamily: 'SF Pro Display' }}
-                            placeholder="Enter reason for declining..."
-                        />
-                        <div className="flex justify-end gap-3 mt-4">
-                            <button
-                                onClick={() => setDeclineModal({ show: false, request: null, reason: '' })}
-                                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-bold"
-                                style={{ fontFamily: 'SF Pro Display' }}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={submitDecline}
-                                className="px-4 py-2 text-white rounded-lg hover:opacity-90 transition-colors font-bold"
-                                style={{ backgroundColor: '#FF0000', fontFamily: 'SF Pro Display' }}
-                            >
-                                Decline
-                            </button>
-                        </div>
-                    </div>
+                        <X className="w-6 h-6" />
+                    </button>
                 </div>
-            )}
+
+                <p className="text-gray-600 mb-6" style={{ fontFamily: 'SF Pro Display' }}>
+                    Please provide a reason for rejecting this request for <span className="font-bold text-gray-800">{declineModal.request?.type === 'PROJECT' ? declineModal.request?.projectName : declineModal.request?.resource}</span>:
+                </p>
+
+                <textarea
+                    value={declineModal.reason}
+                    onChange={(e) => setDeclineModal(prev => ({ ...prev, reason: e.target.value }))}
+                    className="w-full p-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B4D8] resize-none bg-gray-50 font-medium"
+                    style={{ height: '200px', fontFamily: 'SF Pro Display' }}
+                    placeholder="Enter rejection reason..."
+                />
+
+                <div className="flex gap-4 mt-8">
+                    <button
+                        onClick={() => setDeclineModal({ show: false, request: null, reason: '' })}
+                        className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-bold"
+                        style={{ fontFamily: 'SF Pro Display' }}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={submitDecline}
+                        className="flex-1 py-3 text-white rounded-xl hover:opacity-90 transition-colors font-bold shadow-lg"
+                        style={{ backgroundColor: '#FF0000', fontFamily: 'SF Pro Display' }}
+                    >
+                        Reject Request
+                    </button>
+                </div>
+            </div>
 
             {/* View Detail Modal */}
             {viewDetailModal.show && viewDetailModal.request && (
@@ -285,7 +293,7 @@ const Dashboard = () => {
                     style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
                 >
                     <div
-                        className="rounded-2xl p-6 relative"
+                        className={`rounded-2xl p-6 relative transition-transform duration-300 ${declineModal.show ? '-translate-x-[20%]' : ''}`}
                         style={{ width: '620px', backgroundColor: '#F5F5F5' }}
                     >
                         {/* Header */}
@@ -342,9 +350,9 @@ const Dashboard = () => {
                                         <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Proposed Changes</span>
                                     </div>
                                     <div className="ml-8 space-y-1" style={{ fontFamily: 'SF Pro Display' }}>
-                                        <p className="text-gray-600">Current End Date : {viewDetailModal.request.currentEndDate}</p>
+                                        <p className="text-gray-600">Current End Date : {formatDate(viewDetailModal.request.currentEndDate)}</p>
                                         <p className="text-gray-600">
-                                            Requested New End : {viewDetailModal.request.newEndDate}
+                                            Requested New End : {formatDate(viewDetailModal.request.newEndDate)}
                                             {getMonthDiff(viewDetailModal.request.currentEndDate, viewDetailModal.request.newEndDate) > 0 && (
                                                 <span className="text-red-500 font-medium"> (+ {getMonthDiff(viewDetailModal.request.currentEndDate, viewDetailModal.request.newEndDate)} Months)</span>
                                             )}
@@ -401,9 +409,9 @@ const Dashboard = () => {
                                         <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Proposed Changes</span>
                                     </div>
                                     <div className="ml-8 space-y-1" style={{ fontFamily: 'SF Pro Display' }}>
-                                        <p className="text-gray-600">Original End Date : {viewDetailModal.request.originalEndDate}</p>
+                                        <p className="text-gray-600">Original End Date : {formatDate(viewDetailModal.request.currentEndDate)}</p>
                                         <p className="text-gray-600">
-                                            Requested New End : {viewDetailModal.request.requestedEndDate}
+                                            Requested New End : {formatDate(viewDetailModal.request.newEndDate)}
                                             {getMonthDiff(viewDetailModal.request.newEndDate, viewDetailModal.request.currentEndDate) > 0 && (
                                                 <span className="text-red-500 font-medium"> (Early Release by {getMonthDiff(viewDetailModal.request.newEndDate, viewDetailModal.request.currentEndDate)} Month)</span>
                                             )}
@@ -481,7 +489,7 @@ const Dashboard = () => {
                                     <div className="flex items-center gap-3">
                                         <Calendar className="w-5 h-5 text-gray-500" />
                                         <span style={{ fontFamily: 'SF Pro Display' }}>
-                                            Submitted : <span className="font-bold">{viewDetailModal.request.submittedDate}</span>
+                                            Submitted : <span className="font-bold">{formatDate(viewDetailModal.request.submittedDate)}</span>
                                         </span>
                                     </div>
                                 </div>
@@ -586,86 +594,23 @@ const Dashboard = () => {
                 <h1 className="text-4xl font-bold text-gray-800 mb-8" style={{ fontFamily: 'SF Pro Display' }}>Admin Dashboard</h1>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-4 gap-4 mb-8">
-                    {/* Total Resources */}
-                    <div
-                        className="rounded-xl p-5"
-                        style={{
-                            backgroundColor: '#F5F5F5',
-                            border: '1px solid rgba(0, 0, 0, 0.5)'
-                        }}
-                    >
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-lg font-bold text-black">Total Resources</span>
-                            <div
-                                className="w-10 h-10 rounded-lg flex items-center justify-center"
-                                style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}
-                            >
-                                <Users className="w-6 h-6 text-black" />
+                <div className="grid grid-cols-4 gap-6 mb-8">
+                    {[
+                        { label: 'Total Resources', value: stats.totalResources, icon: Users, bg: 'bg-white', color: 'text-gray-800', iconBg: 'bg-blue-50', iconColor: 'text-blue-500' },
+                        { label: 'Available', value: stats.availableResources, icon: UserPlus, bg: 'bg-white', color: 'text-gray-800', iconBg: 'bg-green-50', iconColor: 'text-green-500' },
+                        { label: 'Active Projects', value: stats.activeProjects, icon: FolderOpen, bg: 'bg-white', color: 'text-gray-800', iconBg: 'bg-cyan-50', iconColor: 'text-cyan-500' },
+                        { label: 'Pending Request', value: stats.pendingRequests, icon: Clock, bg: 'bg-white', color: 'text-gray-800', iconBg: 'bg-yellow-50', iconColor: 'text-yellow-500' }
+                    ].map((card, i) => (
+                        <div key={i} className={`${card.bg} rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow`}>
+                            <div className="flex justify-between items-start mb-4">
+                                <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">{card.label}</span>
+                                <div className={`w-12 h-12 ${card.iconBg} rounded-xl flex items-center justify-center`}>
+                                    <card.icon className={`w-6 h-6 ${card.iconColor}`} />
+                                </div>
                             </div>
+                            <p className={`text-4xl font-bold ${card.color}`}>{card.value}</p>
                         </div>
-                        <p className="text-5xl font-bold text-black">{stats.totalResources}</p>
-                    </div>
-
-                    {/* Available */}
-                    <div
-                        className="rounded-xl p-5"
-                        style={{
-                            backgroundColor: 'rgba(6, 208, 1, 0.2)',
-                            border: '1px solid #06D001'
-                        }}
-                    >
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-lg font-bold text-black">Available</span>
-                            <div
-                                className="w-10 h-10 rounded-lg flex items-center justify-center"
-                                style={{ backgroundColor: 'rgba(6, 208, 1, 0.2)' }}
-                            >
-                                <UserPlus className="w-6 h-6" style={{ color: '#06D001' }} />
-                            </div>
-                        </div>
-                        <p className="text-5xl font-bold text-black">{stats.availableResources}</p>
-                    </div>
-
-                    {/* Active Projects */}
-                    <div
-                        className="rounded-xl p-5"
-                        style={{
-                            backgroundColor: 'rgba(0, 180, 216, 0.2)',
-                            border: '1px solid #00B4D8'
-                        }}
-                    >
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-lg font-bold text-black">Active Projects</span>
-                            <div
-                                className="w-10 h-10 rounded-lg flex items-center justify-center"
-                                style={{ backgroundColor: 'rgba(0, 180, 216, 0.2)' }}
-                            >
-                                <FolderOpen className="w-6 h-6" style={{ color: '#00B4D8' }} />
-                            </div>
-                        </div>
-                        <p className="text-5xl font-bold text-black">{stats.activeProjects}</p>
-                    </div>
-
-                    {/* Pending Request */}
-                    <div
-                        className="rounded-xl p-5"
-                        style={{
-                            backgroundColor: 'rgba(251, 205, 63, 0.2)',
-                            border: '1px solid #FBCD3F'
-                        }}
-                    >
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-lg font-bold text-black">Pending Request</span>
-                            <div
-                                className="w-10 h-10 rounded-lg flex items-center justify-center"
-                                style={{ backgroundColor: 'rgba(251, 205, 63, 0.2)' }}
-                            >
-                                <Clock className="w-6 h-6" style={{ color: '#FBCD3F' }} />
-                            </div>
-                        </div>
-                        <p className="text-5xl font-bold text-black">{stats.pendingRequests}</p>
-                    </div>
+                    ))}
                 </div>
 
                 {/* Pending Request Title */}
