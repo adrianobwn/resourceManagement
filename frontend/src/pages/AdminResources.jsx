@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar';
 import api from '../utils/api';
 import * as XLSX from 'xlsx';
 
-const Resources = () => {
+const AdminResources = () => {
     const navigate = useNavigate();
     const [resources, setResources] = useState([]);
     const [filteredResources, setFilteredResources] = useState([]);
@@ -1463,4 +1463,4 @@ const Resources = () => {
     );
 };
 
-export default Resources;
+export default AdminResources;

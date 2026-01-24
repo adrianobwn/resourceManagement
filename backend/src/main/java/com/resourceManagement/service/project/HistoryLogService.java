@@ -34,4 +34,8 @@ public class HistoryLogService {
     public List<HistoryLog> getLogsByEntityType(String entityType) {
         return historyLogRepository.findByEntityTypeOrderByTimestampDesc(entityType);
     }
+
+    public List<HistoryLog> getAllLogs() {
+        return historyLogRepository.findAll();
+    }
 }
