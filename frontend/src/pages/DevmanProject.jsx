@@ -279,10 +279,10 @@ const DevmanProject = () => {
 
             <div className="flex-1 p-8 ml-[267px]">
                 <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-4xl font-bold text-gray-800">Projects</h1>
+                    <h1 className="text-4xl font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Projects</h1>
                     <div className="flex items-center gap-4">
-                        <button onClick={handleExport} className="px-6 py-2 bg-white text-gray-700 rounded-lg font-bold border border-gray-200">Export</button>
-                        <button onClick={() => setShowNewProjectModal(true)} className="px-6 py-2 bg-[#00B4D8] text-white rounded-lg font-bold">+ Propose Project</button>
+                        <button onClick={handleExport} className="px-6 py-2 bg-white text-gray-700 rounded-lg font-bold border border-gray-200" style={{ fontFamily: 'SF Pro Display' }}>Export</button>
+                        <button onClick={() => setShowNewProjectModal(true)} className="px-6 py-2 bg-[#00B4D8] text-white rounded-lg font-bold" style={{ fontFamily: 'SF Pro Display' }}>+ Propose Project</button>
                     </div>
                 </div>
 
@@ -290,12 +290,12 @@ const DevmanProject = () => {
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex bg-white rounded-lg p-1 shadow-sm border border-gray-100">
                         {filterTabs.map(tab => (
-                            <button key={tab} onClick={() => setActiveFilter(tab)} className={`px-6 py-2 rounded-md font-bold ${activeFilter === tab ? 'bg-[#00B4D8] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}>{tab}</button>
+                            <button key={tab} onClick={() => setActiveFilter(tab)} className={`px-6 py-2 rounded-md font-bold ${activeFilter === tab ? 'bg-[#00B4D8] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`} style={{ fontFamily: 'SF Pro Display' }}>{tab}</button>
                         ))}
                     </div>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input type="text" placeholder="Find projects..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 pr-4 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B4D8]" />
+                        <input type="text" placeholder="Find projects..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 pr-4 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B4D8]" style={{ fontFamily: 'SF Pro Display' }} />
                     </div>
                 </div>
 
@@ -320,7 +320,7 @@ const DevmanProject = () => {
                                         <span className="text-xs px-3 py-1 rounded-full font-bold" style={getStatusBadgeStyle(project.status)}>{project.status}</span>
                                         <p className="text-gray-400 text-sm mt-2 font-medium">{project.memberCount} Members</p>
                                     </div>
-                                    <button onClick={() => handleViewDetail(project)} className="px-6 py-2 bg-[#E6F2F1] text-[#00B4D8] rounded-lg font-bold hover:bg-[#CAF0F8]">View Detail</button>
+                                    <button onClick={() => handleViewDetail(project)} className="px-6 py-2 bg-[#E6F2F1] text-[#00B4D8] rounded-lg font-bold hover:bg-[#CAF0F8]" style={{ fontFamily: 'SF Pro Display' }}>View Detail</button>
                                 </div>
                             </div>
                         ))

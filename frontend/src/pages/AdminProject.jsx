@@ -298,17 +298,19 @@ const AdminProject = () => {
             {/* Main Content */}
             <div className="flex-1 p-8 ml-[267px]">
                 <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-4xl font-bold text-gray-800">Admin Projects</h1>
+                    <h1 className="text-4xl font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Admin Projects</h1>
                     <div className="flex items-center gap-4">
                         <button
                             onClick={handleExport}
                             className="px-6 py-2 bg-white text-gray-700 rounded-lg font-bold border border-gray-200 hover:bg-gray-50"
+                            style={{ fontFamily: 'SF Pro Display' }}
                         >
                             Export
                         </button>
                         <button
                             onClick={() => setShowNewProjectModal(true)}
                             className="px-6 py-2 bg-[#00B4D8] text-white rounded-lg font-bold hover:opacity-90"
+                            style={{ fontFamily: 'SF Pro Display' }}
                         >
                             + New Project
                         </button>
@@ -323,6 +325,7 @@ const AdminProject = () => {
                                 key={tab}
                                 onClick={() => setActiveFilter(tab)}
                                 className={`px-6 py-2 rounded-md font-bold transition-all ${activeFilter === tab ? 'bg-[#00B4D8] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+                                style={{ fontFamily: 'SF Pro Display' }}
                             >
                                 {tab}
                             </button>
@@ -336,6 +339,7 @@ const AdminProject = () => {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-10 pr-4 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B4D8] font-medium"
+                            style={{ fontFamily: 'SF Pro Display' }}
                         />
                     </div>
                 </div>
@@ -368,6 +372,7 @@ const AdminProject = () => {
                                     <button
                                         onClick={() => handleViewDetail(project)}
                                         className="px-6 py-2 bg-[#E6F2F1] text-[#00B4D8] rounded-lg font-bold hover:bg-[#CAF0F8] transition-colors"
+                                        style={{ fontFamily: 'SF Pro Display' }}
                                     >
                                         View Detail
                                     </button>
