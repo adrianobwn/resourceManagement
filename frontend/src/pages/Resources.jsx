@@ -37,13 +37,16 @@ const Resources = () => {
     const [skillInput, setSkillInput] = useState('');
     const [hoveredProject, setHoveredProject] = useState(null);
     const [projects, setProjects] = useState([]);
+    const [user, setUser] = useState(null);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
-        if (!token) {
+        const storedUser = localStorage.getItem('user');
+        if (!token || !storedUser) {
             navigate('/');
             return;
         }
+        setUser(JSON.parse(storedUser));
         fetchResources();
         fetchProjects();
     }, [navigate]);
@@ -276,9 +279,16 @@ const Resources = () => {
                 startDate: assignmentData.startDate,
                 endDate: assignmentData.endDate
             };
-            await api.post('/resources/assign', assignData);
+
+            if (user.userType === 'ADMIN') {
+                await api.post('/resources/assign', assignData);
+                showNotification('Assigned Successfully!', 'success');
+            } else {
+                await api.post('/requests/assign', assignData);
+                showNotification('Assignment request submitted for approval!', 'success');
+            }
+
             closeAssignModal();
-            showNotification('Assigned Successfully!', 'success');
             fetchResources(); // Refresh the list
         } catch (error) {
             console.error('Error assigning resource:', error);

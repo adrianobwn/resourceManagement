@@ -1,6 +1,7 @@
 package com.resourceManagement.service.user;
 
 import com.resourceManagement.dto.user.CreatePmRequest;
+import com.resourceManagement.dto.user.PmListResponse;
 import com.resourceManagement.model.entity.User;
 import com.resourceManagement.model.enums.AccountStatus;
 import com.resourceManagement.model.enums.UserType;
@@ -8,6 +9,9 @@ import com.resourceManagement.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,5 +44,16 @@ public class UserService {
             e.printStackTrace();
             throw new RuntimeException("DB Persistence Error: " + e.getMessage());
         }
+    }
+
+    public List<PmListResponse> getAllPms() {
+        List<User> pms = userRepository.findByUserType(UserType.PM);
+        return pms.stream()
+                .map(pm -> PmListResponse.builder()
+                        .userId(pm.getUserId())
+                        .name(pm.getName())
+                        .email(pm.getEmail())
+                        .build())
+                .collect(Collectors.toList());
     }
 }

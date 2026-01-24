@@ -39,7 +39,7 @@ public class DataInitializer implements CommandLineRunner {
                     .userType(UserType.ADMIN)
                     .accountStatus(AccountStatus.ACTIVE)
                     .build();
-            userRepository.save(admin);
+            admin = userRepository.save(admin);
 
             // 2. Seed PM
             User pm = User.builder()
@@ -49,7 +49,7 @@ public class DataInitializer implements CommandLineRunner {
                     .userType(UserType.PM)
                     .accountStatus(AccountStatus.ACTIVE)
                     .build();
-            userRepository.save(pm);
+            pm = userRepository.save(pm);
 
             // 3. Seed Resources (AVAILABLE)
             Resource res1 = Resource.builder()
@@ -66,8 +66,8 @@ public class DataInitializer implements CommandLineRunner {
                     .status(ResourceStatus.AVAILABLE)
                     .build();
 
-            resourceRepository.save(res1);
-            resourceRepository.save(res2);
+            res1 = resourceRepository.save(res1);
+            res2 = resourceRepository.save(res2);
 
             // 4. Seed Project (Dihapus .description-nya agar tidak error)
             Project project = Project.builder()
@@ -76,7 +76,7 @@ public class DataInitializer implements CommandLineRunner {
                     .pm(pm)
                     .status(ProjectStatus.ON_GOING)
                     .build();
-            projectRepository.save(project);
+            project = projectRepository.save(project);
 
             // 5. Seed Assignment
             // Sekaligus mengubah status John Doe menjadi ASSIGNED
