@@ -11,5 +11,7 @@ public class ProjectListResponse {
     private Integer projectId;
     private String projectName;
     private String clientName;
+    private String pmName;
+    private Integer memberCount;
     private String status;
 }

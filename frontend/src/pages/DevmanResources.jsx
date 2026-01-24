@@ -158,9 +158,9 @@ const DevmanResources = () => {
                 startDate: assignmentData.startDate,
                 endDate: assignmentData.endDate
             };
-            await api.post('/resources/assign', assignData);
+            await api.post('/requests/assign', assignData);
             closeAssignModal();
-            showNotification('Assigned Successfully!', 'success');
+            showNotification('Assignment request submitted for approval!', 'success');
             fetchResources(); // Refresh the list
         } catch (error) {
             console.error('Error assigning resource:', error);
@@ -530,10 +530,10 @@ const DevmanResources = () => {
                                                 style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 35px 0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
                                             >
                                                 <option value="">Select role</option>
-                                                <option value="Team Lead">Team Lead</option>
-                                                <option value="Backend Developer">Backend Developer</option>
-                                                <option value="Frontend Developer">Frontend Developer</option>
-                                                <option value="Quality Assurance">Quality Assurance</option>
+                                                <option value="TEAM LEAD">TEAM LEAD</option>
+                                                <option value="BACKEND DEVELOPER">BACKEND DEVELOPER</option>
+                                                <option value="FRONTEND DEVELOPER">FRONTEND DEVELOPER</option>
+                                                <option value="QUALITY ASSURANCE">QUALITY ASSURANCE</option>
                                             </select>
                                             <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -938,10 +938,10 @@ const DevmanResources = () => {
                                 style={{ fontSize: '13px', minWidth: '150px', fontFamily: 'SF Pro Display' }}
                             >
                                 <option value="all">All Roles</option>
-                                <option value="Team Lead">Team Lead</option>
-                                <option value="Backend Developer">Backend Developer</option>
-                                <option value="Frontend Developer">Frontend Developer</option>
-                                <option value="Quality Assurance">Quality Assurance</option>
+                                <option value="TEAM LEAD">TEAM LEAD</option>
+                                <option value="BACKEND DEVELOPER">BACKEND DEVELOPER</option>
+                                <option value="FRONTEND DEVELOPER">FRONTEND DEVELOPER</option>
+                                <option value="QUALITY ASSURANCE">QUALITY ASSURANCE</option>
                             </select>
                             <svg
                                 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
