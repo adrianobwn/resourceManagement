@@ -74,6 +74,12 @@ const Activities = () => {
                 text: '#FF0000',
                 border: '#FF0000'
             };
+        } else if (status === 'PENDING') {
+            return {
+                bg: 'rgba(251, 205, 63, 0.2)', // #FBCD3F with 20% opacity
+                text: '#FBCD3F',
+                border: '#FBCD3F'
+            };
         }
         return {
             bg: 'rgba(169, 169, 169, 0.2)',
