@@ -155,6 +155,24 @@ const DevmanDashboard = () => {
         }, 300);
     };
 
+    // Body scroll locking
+    useEffect(() => {
+        if (viewDetailModal.show || declineModal.show) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, [viewDetailModal.show, declineModal.show]);
+
+    const toTitleCase = (str) => {
+        if (!str) return '';
+        return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    };
+
     if (!user) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#E6F2F1] font-sf">
@@ -306,7 +324,7 @@ const DevmanDashboard = () => {
                                     <div className="flex items-center gap-3">
                                         <Users className="w-5 h-5 text-gray-500" />
                                         <span style={{ fontFamily: 'SF Pro Display' }}>
-                                            Role : <span className="font-bold">{viewDetailModal.request.role}</span>
+                                            Role : <span className="font-bold">{toTitleCase(viewDetailModal.request.role)}</span>
                                         </span>
                                     </div>
                                 </div>
@@ -365,7 +383,7 @@ const DevmanDashboard = () => {
                                     <div className="flex items-center gap-3">
                                         <Users className="w-5 h-5 text-gray-500" />
                                         <span style={{ fontFamily: 'SF Pro Display' }}>
-                                            Role : <span className="font-bold">{viewDetailModal.request.role}</span>
+                                            Role : <span className="font-bold">{toTitleCase(viewDetailModal.request.role)}</span>
                                         </span>
                                     </div>
                                 </div>
@@ -461,7 +479,7 @@ const DevmanDashboard = () => {
                                         {viewDetailModal.request.resourcePlan && viewDetailModal.request.resourcePlan.map((item, index) => (
                                             <div key={index} className="flex items-center gap-4 text-gray-600 mb-1">
                                                 <span>{index + 1}. {item.name}</span>
-                                                <span className="font-bold">{item.role}</span>
+                                                <span className="font-bold">{toTitleCase(item.role)}</span>
                                                 <span>{item.startDate}</span>
                                                 <span>-</span>
                                                 <span>{item.endDate}</span>
@@ -630,25 +648,28 @@ const DevmanDashboard = () => {
                                             key={assignment.assignmentId}
                                             className="rounded-xl p-4 flex items-center justify-between"
                                             style={{
-                                                backgroundColor: '#F5F5F5',
-                                                border: '1px solid rgba(255, 0, 0, 0.3)'
+                                                backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                                                border: '1px solid #FF0000'
                                             }}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                                                    <AlertTriangle className="w-6 h-6 text-red-500" />
+                                                <div
+                                                    className="w-10 h-10 rounded-lg flex items-center justify-center"
+                                                    style={{ backgroundColor: 'rgba(255, 0, 0, 0.2)' }}
+                                                >
+                                                    <AlertTriangle className="w-6 h-6" style={{ color: '#FF0000' }} />
                                                 </div>
                                                 <div style={{ fontFamily: 'SF Pro Display' }}>
-                                                    <p className="font-bold text-gray-800">{assignment.resourceName}</p>
-                                                    <p className="text-sm text-gray-600 font-bold">{assignment.projectRole}</p>
+                                                    <p className="font-bold text-gray-800 text-lg">{assignment.resourceName}</p>
+                                                    <p className="font-regular text-gray-800">{assignment.projectRole}</p>
                                                 </div>
                                             </div>
                                             <div className="text-right" style={{ fontFamily: 'SF Pro Display' }}>
-                                                <p className="text-red-500 font-bold flex items-center gap-1">
-                                                    <Calendar className="w-4 h-4" />
+                                                <p className="font-bold flex items-center justify-end gap-1" style={{ color: '#FF0000', fontSize: '18px' }}>
+                                                    <Calendar className="w-5 h-5" />
                                                     {assignment.daysLeft} Days
                                                 </p>
-                                                <p className="text-sm text-gray-600 font-bold">{formatDate(assignment.endDate)}</p>
+                                                <p className="text-sm text-gray-600 font-regular">{formatDate(assignment.endDate)}</p>
                                             </div>
                                         </div>
                                     ))
@@ -668,14 +689,21 @@ const DevmanDashboard = () => {
                                     </div>
                                 ) : (
                                     activeProjects.map((project) => (
-                                        <div key={project.projectId} className="rounded-xl p-4 flex items-center justify-between shadow-sm" style={{ backgroundColor: '#F5F5F5' }}>
+                                        <div
+                                            key={project.projectId}
+                                            className="rounded-xl p-4 flex items-center justify-between shadow-sm"
+                                            style={{
+                                                backgroundColor: '#F5F5F5',
+                                                border: '1px solid #A9A9A9'
+                                            }}
+                                        >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                                                    <Folder className="w-6 h-6 text-gray-500" />
+                                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                    <Folder className="w-6 h-6 text-blue-500" />
                                                 </div>
                                                 <div style={{ fontFamily: 'SF Pro Display' }}>
-                                                    <p className="font-bold text-gray-800">{project.projectName}</p>
-                                                    <p className="text-sm text-gray-600">{project.clientName}</p>
+                                                    <p className="font-bold text-gray-800 text-lg">{project.projectName}</p>
+                                                    <p className="text-sm font-regular text-gray-600">{project.clientName}</p>
                                                 </div>
                                             </div>
                                             <div className="flex flex-col items-end gap-1" style={{ fontFamily: 'SF Pro Display' }}>
@@ -685,7 +713,7 @@ const DevmanDashboard = () => {
                                                     }`}>
                                                     {project.status === 'ON_GOING' ? 'ONGOING' : project.status}
                                                 </span>
-                                                <div className="flex items-center gap-1 text-gray-500">
+                                                <div className="flex items-center gap-1 text-black font-bold">
                                                     <Users className="w-4 h-4" />
                                                     <span className="text-sm">{project.memberCount}</span>
                                                 </div>

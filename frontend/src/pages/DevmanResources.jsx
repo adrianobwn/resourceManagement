@@ -237,6 +237,19 @@ const DevmanResources = () => {
         }, 300);
     };
 
+    // Body scroll locking
+    useEffect(() => {
+        if (detailModal.show || assignModal.show || trackRecordModal.show) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, [detailModal.show, assignModal.show, trackRecordModal.show]);
+
     return (
         <div className="flex min-h-screen bg-[#E6F2F1] font-['SF_Pro_Display']">
             {/* Notification */}
@@ -694,7 +707,7 @@ const DevmanResources = () => {
                                 </div>
 
                                 {/* Project Timeline Rows */}
-                                <div className="space-y-0">
+                                <div className="space-y-0 overflow-y-auto custom-scrollbar" style={{ maxHeight: '470px' }}>
                                     {(() => {
                                         const now = new Date();
                                         const currentMonth = now.getMonth();
@@ -718,10 +731,30 @@ const DevmanResources = () => {
                                             return '#06D001'; // Ongoing (current/future)
                                         };
 
-                                        // Create 4 rows - fill with assignments first, then empty rows
+                                        // Calculate row count (min 4, or more if assignments exist)
+                                        const rowCount = Math.max(assignments.length, 4);
                                         const rows = [];
-                                        for (let i = 0; i < 4; i++) {
+
+                                        for (let i = 0; i < rowCount; i++) {
                                             const assignment = assignments[i];
+                                            let content = null;
+
+                                            // Grid lines are always rendered
+                                            const gridLines = (
+                                                <div className="grid grid-cols-9 h-full">
+                                                    {Array.from({ length: 9 }).map((_, index) => (
+                                                        <div
+                                                            key={index}
+                                                            className="border-r border-b border-l border-gray-300"
+                                                            style={{
+                                                                borderBottomLeftRadius: i === rowCount - 1 && index === 0 ? '8px' : '0',
+                                                                borderBottomRightRadius: i === rowCount - 1 && index === 8 ? '8px' : '0'
+                                                            }}
+                                                        ></div>
+                                                    ))}
+                                                </div>
+                                            );
+
                                             if (assignment) {
                                                 const startPos = getMonthPosition(assignment.startDate);
                                                 const endPos = getMonthPosition(assignment.endDate) + 1;
@@ -732,20 +765,9 @@ const DevmanResources = () => {
                                                 const endDateObj = new Date(assignment.endDate);
                                                 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-                                                rows.push(
-                                                    <div key={i} className="relative" style={{ height: '117.6px' }}>
-                                                        <div className="grid grid-cols-9 h-full">
-                                                            {Array.from({ length: 9 }).map((_, index) => (
-                                                                <div
-                                                                    key={index}
-                                                                    className="border-r border-b border-l border-gray-300"
-                                                                    style={{
-                                                                        borderBottomLeftRadius: i === 3 && index === 0 ? '8px' : '0',
-                                                                        borderBottomRightRadius: i === 3 && index === 8 ? '8px' : '0'
-                                                                    }}
-                                                                ></div>
-                                                            ))}
-                                                        </div>
+                                                content = (
+                                                    <>
+                                                        {gridLines}
                                                         <div
                                                             className="absolute flex items-center justify-center rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                                                             style={{
@@ -786,43 +808,25 @@ const DevmanResources = () => {
                                                                     </div>
                                                                     {/* Arrow */}
                                                                     <div
-                                                                        className="absolute"
-                                                                        style={{
-                                                                            bottom: '-8px',
-                                                                            left: '50%',
-                                                                            transform: 'translateX(-50%)',
-                                                                            width: '0',
-                                                                            height: '0',
-                                                                            borderLeft: '8px solid transparent',
-                                                                            borderRight: '8px solid transparent',
-                                                                            borderTop: '8px solid white'
-                                                                        }}
+                                                                        className="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white border-r border-b border-gray-200 rotate-45"
+                                                                        style={{ bottom: '-8px' }}
                                                                     ></div>
                                                                 </div>
                                                             )}
                                                         </div>
-                                                    </div>
+                                                    </>
                                                 );
                                             } else {
-                                                // Empty row
-                                                rows.push(
-                                                    <div key={i} className="relative" style={{ height: '117.6px' }}>
-                                                        <div className="grid grid-cols-9 h-full">
-                                                            {Array.from({ length: 9 }).map((_, index) => (
-                                                                <div
-                                                                    key={index}
-                                                                    className="border-r border-b border-l border-gray-300"
-                                                                    style={{
-                                                                        borderBottomLeftRadius: i === 3 && index === 0 ? '8px' : '0',
-                                                                        borderBottomRightRadius: i === 3 && index === 8 ? '8px' : '0'
-                                                                    }}
-                                                                ></div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                );
+                                                content = gridLines;
                                             }
+
+                                            rows.push(
+                                                <div key={i} className="relative" style={{ height: '117.6px' }}>
+                                                    {content}
+                                                </div>
+                                            );
                                         }
+
                                         return rows;
                                     })()}
                                 </div>
@@ -852,194 +856,198 @@ const DevmanResources = () => {
             <Sidebar />
 
             {/* Main Content */}
-            <div className="flex-1 ml-[267px] p-8">
-                {/* Page Title */}
-                <h1 className="text-4xl font-bold text-gray-800 mb-8">Resources</h1>
+            <div className="flex-1 ml-[267px] flex flex-col h-screen overflow-hidden bg-[#E6F2F1]">
+                <div className="p-8 pb-0">
+                    {/* Page Title */}
+                    <h1 className="text-4xl font-bold text-gray-800 mb-8">Resources</h1>
 
-                {/* Toolbar */}
-                <div className="flex items-center justify-between mb-6">
-                    {/* Search Bar */}
-                    <div className="relative">
-                        <svg
-                            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                            />
-                        </svg>
-                        <input
-                            type="text"
-                            placeholder="Search resources..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 pr-4 py-2 w-[200px] h-[40px] border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent placeholder:italic placeholder:font-light"
-                            style={{ fontSize: '15px' }}
-                        />
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        {/* Status Filter Dropdown */}
-
+                    {/* Toolbar */}
+                    <div className="flex items-center justify-between mb-6 gap-3">
+                        {/* Search Bar */}
                         <div className="relative">
-                            <select
-                                value={activeFilter}
-                                onChange={(e) => setActiveFilter(e.target.value)}
-                                className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
-                                style={{ fontSize: '13px', minWidth: '120px', fontFamily: 'SF Pro Display' }}
-                            >
-                                <option value="all">Status</option>
-                                <option value="available">Available</option>
-                                <option value="assigned">Assigned</option>
-                            </select>
                             <svg
-                                className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
+                                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
                             >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                />
                             </svg>
-                        </div>
-
-                        {/* Date Range Pickers */}
-                        <div className="flex items-center gap-2">
                             <input
-                                type="date"
-                                placeholder="Start Date"
-                                value={dateFilter.startDate}
-                                onChange={(e) => handleDateFilterChange('startDate', e.target.value)}
-                                className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
-                                style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
-                            />
-                            <span className="text-gray-500 font-medium" style={{ fontFamily: 'SF Pro Display' }}>to</span>
-                            <input
-                                type="date"
-                                placeholder="End Date"
-                                value={dateFilter.endDate}
-                                onChange={(e) => handleDateFilterChange('endDate', e.target.value)}
-                                max={new Date().toISOString().split('T')[0]} // Optional: Prevent future dates if needed, but not requested
-                                className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
-                                style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
+                                type="text"
+                                placeholder="Search resources..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-10 pr-4 py-2 w-[200px] h-[40px] border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent placeholder:italic placeholder:font-light"
+                                style={{ fontSize: '15px' }}
                             />
                         </div>
 
-                        {/* Role Filter Dropdown */}
-                        <div className="relative">
-                            <select
-                                value={roleFilter}
-                                onChange={(e) => setRoleFilter(e.target.value)}
-                                className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
-                                style={{ fontSize: '13px', minWidth: '150px', fontFamily: 'SF Pro Display' }}
-                            >
-                                <option value="all">All Roles</option>
-                                <option value="Team Lead">Team Lead</option>
-                                <option value="Backend Developer">Backend Developer</option>
-                                <option value="Frontend Developer">Frontend Developer</option>
-                                <option value="Quality Assurance">Quality Assurance</option>
-                            </select>
-                            <svg
-                                className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </div>
+                        <div className="flex items-center gap-3">
+                            {/* Status Filter Dropdown */}
+                            <div className="relative">
+                                <select
+                                    value={activeFilter}
+                                    onChange={(e) => setActiveFilter(e.target.value)}
+                                    className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
+                                    style={{ fontSize: '13px', minWidth: '120px', fontFamily: 'SF Pro Display' }}
+                                >
+                                    <option value="all">Status</option>
+                                    <option value="available">Available</option>
+                                    <option value="assigned">Assigned</option>
+                                </select>
+                                <svg
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
 
+                            {/* Date Range Pickers */}
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="date"
+                                    placeholder="Start Date"
+                                    value={dateFilter.startDate}
+                                    onChange={(e) => handleDateFilterChange('startDate', e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
+                                    style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
+                                />
+                                <span className="text-gray-500 font-medium" style={{ fontFamily: 'SF Pro Display' }}>to</span>
+                                <input
+                                    type="date"
+                                    placeholder="End Date"
+                                    value={dateFilter.endDate}
+                                    onChange={(e) => handleDateFilterChange('endDate', e.target.value)}
+                                    max={new Date().toISOString().split('T')[0]} // Optional: Prevent future dates if needed, but not requested
+                                    className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
+                                    style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
+                                />
+                            </div>
+
+                            {/* Role Filter Dropdown */}
+                            <div className="relative">
+                                <select
+                                    value={roleFilter}
+                                    onChange={(e) => setRoleFilter(e.target.value)}
+                                    className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
+                                    style={{ fontSize: '13px', minWidth: '150px', fontFamily: 'SF Pro Display' }}
+                                >
+                                    <option value="all">All Roles</option>
+                                    <option value="Team Lead">Team Lead</option>
+                                    <option value="Backend Developer">Backend Developer</option>
+                                    <option value="Frontend Developer">Frontend Developer</option>
+                                    <option value="Quality Assurance">Quality Assurance</option>
+                                </select>
+                                <svg
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 {/* Table */}
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                    {isLoading ? (
-                        <div className="p-8 text-center text-gray-500">Loading...</div>
-                    ) : (
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-gray-200">
-                                    <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '20px' }}>Name</th>
-                                    <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '20px' }}>Status</th>
-                                    <th className="text-center py-4 px-6 font-bold text-gray-700" style={{ fontSize: '20px' }}>Detail</th>
-                                    <th className="text-center py-4 px-6 font-bold text-gray-700" style={{ fontSize: '20px' }}>Track Record</th>
-                                    <th className="text-right py-4 px-6 font-bold text-gray-700"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredResources.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="5" className="py-8 text-center text-gray-500">
-                                            No resources found
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    filteredResources.map((resource) => (
-                                        <tr
-                                            key={resource.resourceId}
-                                            className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
-                                        >
-                                            <td className="py-4 px-6">
-                                                <span className="font-bold text-gray-800" style={{ fontSize: '20px' }}>
-                                                    {resource.resourceName}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span
-                                                    className="px-3 py-1 rounded-full font-bold"
-                                                    style={{
-                                                        fontSize: '12px',
-                                                        color: resource.status === 'AVAILABLE' ? '#06D001' : '#FF0000',
-                                                        backgroundColor: resource.status === 'AVAILABLE' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(255, 0, 0, 0.2)',
-                                                        border: resource.status === 'AVAILABLE' ? '1px solid #06D001' : '1px solid #FF0000'
-                                                    }}
-                                                >
-                                                    {resource.status}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-6 text-center">
-                                                <button
-                                                    onClick={() => handleViewDetail(resource)}
-                                                    className="inline-flex items-center gap-1 text-gray-600 hover:text-[#0059FF] transition-colors"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                    </svg>
-                                                    <span style={{ fontSize: '15px' }}>View Detail</span>
-                                                </button>
-                                            </td>
-                                            <td className="py-4 px-6 text-center">
-                                                <button
-                                                    onClick={() => handleViewTrackRecord(resource)}
-                                                    className="inline-flex items-center gap-1 text-gray-600 hover:text-[#0059FF] transition-colors"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    <span style={{ fontSize: '15px' }}>View Track Record</span>
-                                                </button>
-                                            </td>
-                                            <td className="py-4 px-6 text-right">
-                                                <button
-                                                    onClick={() => handleAssignToProject(resource)}
-                                                    className="px-4 py-2 bg-[#CAF0F8] text-black rounded-lg hover:bg-[#b8e8ef] transition-colors font-bold"
-                                                    style={{ fontSize: '15px' }}
-                                                >
-                                                    Assign to Project
-                                                </button>
-                                            </td>
+                <div className="px-8 pb-8 flex-1 overflow-hidden">
+                    <div className="bg-white rounded-xl shadow-sm overflow-hidden h-full flex flex-col">
+                        {isLoading ? (
+                            <div className="p-8 text-center text-gray-500">Loading...</div>
+                        ) : (
+                            <div className="overflow-y-auto flex-1 custom-scrollbar">
+                                <table className="w-full relative">
+                                    <thead className="sticky top-0 z-10 bg-white shadow-sm">
+                                        <tr className="border-b border-gray-200">
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-white" style={{ fontSize: '20px' }}>Name</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-white" style={{ fontSize: '20px' }}>Status</th>
+                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-white" style={{ fontSize: '20px' }}>Detail</th>
+                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-white" style={{ fontSize: '20px' }}>Track Record</th>
+                                            <th className="text-right py-4 px-6 font-bold text-gray-700 bg-white"></th>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    )}
+                                    </thead>
+                                    <tbody>
+                                        {filteredResources.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="5" className="py-8 text-center text-gray-500">
+                                                    No resources found
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            filteredResources.map((resource) => (
+                                                <tr
+                                                    key={resource.resourceId}
+                                                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                                                >
+                                                    <td className="py-4 px-6">
+                                                        <span className="font-bold text-gray-800" style={{ fontSize: '20px' }}>
+                                                            {resource.resourceName}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span
+                                                            className="px-3 py-1 rounded-full font-bold"
+                                                            style={{
+                                                                fontSize: '12px',
+                                                                color: resource.status === 'AVAILABLE' ? '#06D001' : '#FF0000',
+                                                                backgroundColor: resource.status === 'AVAILABLE' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(255, 0, 0, 0.2)',
+                                                                border: resource.status === 'AVAILABLE' ? '1px solid #06D001' : '1px solid #FF0000'
+                                                            }}
+                                                        >
+                                                            {resource.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4 px-6 text-center">
+                                                        <button
+                                                            onClick={() => handleViewDetail(resource)}
+                                                            className="inline-flex items-center gap-1 text-gray-600 hover:text-[#0059FF] transition-colors"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                            </svg>
+                                                            <span style={{ fontSize: '15px' }}>View Detail</span>
+                                                        </button>
+                                                    </td>
+                                                    <td className="py-4 px-6 text-center">
+                                                        <button
+                                                            onClick={() => handleViewTrackRecord(resource)}
+                                                            className="inline-flex items-center gap-1 text-gray-600 hover:text-[#0059FF] transition-colors"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            <span style={{ fontSize: '15px' }}>View Track Record</span>
+                                                        </button>
+                                                    </td>
+                                                    <td className="py-4 px-6 text-right">
+                                                        <button
+                                                            onClick={() => handleAssignToProject(resource)}
+                                                            className="px-4 py-2 bg-[#CAF0F8] text-black rounded-lg hover:bg-[#b8e8ef] transition-colors font-bold"
+                                                            style={{ fontSize: '15px' }}
+                                                        >
+                                                            Assign to Project
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

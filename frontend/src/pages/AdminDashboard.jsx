@@ -169,6 +169,24 @@ const Dashboard = () => {
         }, 300);
     };
 
+    // Body scroll locking
+    useEffect(() => {
+        if (viewDetailModal.show) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, [viewDetailModal.show]);
+
+    const toTitleCase = (str) => {
+        if (!str) return '';
+        return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    };
+
     if (!user) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#E6F2F1] font-sf">
@@ -285,7 +303,7 @@ const Dashboard = () => {
                                             <div className="flex items-center gap-3">
                                                 <Users className="w-5 h-5 text-gray-500" />
                                                 <span style={{ fontFamily: 'SF Pro Display' }}>
-                                                    Role : <span className="font-bold">{viewDetailModal.request.role}</span>
+                                                    Role : <span className="font-bold">{toTitleCase(viewDetailModal.request.role)}</span>
                                                 </span>
                                             </div>
                                         </div>
@@ -344,7 +362,7 @@ const Dashboard = () => {
                                             <div className="flex items-center gap-3">
                                                 <Users className="w-5 h-5 text-gray-500" />
                                                 <span style={{ fontFamily: 'SF Pro Display' }}>
-                                                    Role : <span className="font-bold">{viewDetailModal.request.role}</span>
+                                                    Role : <span className="font-bold">{toTitleCase(viewDetailModal.request.role)}</span>
                                                 </span>
                                             </div>
                                         </div>
@@ -440,7 +458,7 @@ const Dashboard = () => {
                                                 {viewDetailModal.request.resourcePlan && viewDetailModal.request.resourcePlan.map((item, index) => (
                                                     <div key={index} className="flex items-center gap-4 text-gray-600 mb-1">
                                                         <span>{index + 1}. {item.name}</span>
-                                                        <span className="font-bold">{item.role}</span>
+                                                        <span className="font-bold">{toTitleCase(item.role)}</span>
                                                         <span>{item.startDate}</span>
                                                         <span>-</span>
                                                         <span>{item.endDate}</span>
