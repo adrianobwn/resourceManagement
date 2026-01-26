@@ -255,7 +255,7 @@ const DevmanProject = () => {
         return matchesStatus && matchesSearch;
     });
 
-    if (!user) return null;
+
 
     return (
         <div className="flex min-h-screen bg-[#E6F2F1] font-['SF_Pro_Display']">

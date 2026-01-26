@@ -1,0 +1,23 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------< com.resourceManagement:resourceManagement >--------------
+[INFO] Building resourceManagement 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.4.1:clean (default-clean) @ resourceManagement ---
+[INFO] Deleting C:\Users\LENOVO\Documents\MAGANG INDIVARA\resourceManagement\backend\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ resourceManagement ---
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ resourceManagement ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 80 source files with javac [debug parameters release 17] to target\classes
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  8.793 s
+[INFO] Finished at: 2026-01-24T10:59:07+07:00
+[INFO] ------------------------------------------------------------------------

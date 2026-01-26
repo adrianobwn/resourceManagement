@@ -30,14 +30,14 @@ public class ProjectController {
     }
 
     @GetMapping("/{projectId}/resources")
-    public ResponseEntity<List<com.resourceManagement.dto.project.ProjectResourceDto>> getProjectResources(
-            @PathVariable Integer projectId) {
+    public ResponseEntity<List<com.resourceManagement.dto.project.ProjectResourceDto>> getProjectResources(@PathVariable Integer projectId) {
         return ResponseEntity.ok(projectService.getProjectResources(projectId));
     }
 
-    @PutMapping("/{projectId}/status")
-    public ResponseEntity<Void> updateProjectStatus(@PathVariable Integer projectId, @RequestParam String status) {
-        projectService.updateProjectStatus(projectId, status);
-        return ResponseEntity.ok().build();
+    @PatchMapping("/{projectId}/status")
+    public ResponseEntity<ProjectListResponse> updateProjectStatus(
+            @PathVariable Integer projectId,
+            @RequestParam com.resourceManagement.model.enums.ProjectStatus status) {
+        return ResponseEntity.ok(projectService.updateProjectStatus(projectId, status));
     }
 }

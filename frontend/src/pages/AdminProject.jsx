@@ -322,13 +322,7 @@ const AdminProject = () => {
         return matchesStatus && matchesSearch;
     });
 
-    if (!user) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-[#E6F2F1]">
-                <div className="text-xl font-bold">Loading...</div>
-            </div>
-        );
-    }
+
 
     return (
         <div className="flex min-h-screen bg-[#E6F2F1] font-['SF_Pro_Display']">

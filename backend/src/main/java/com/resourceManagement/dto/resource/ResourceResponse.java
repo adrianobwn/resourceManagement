@@ -18,7 +18,6 @@ public class ResourceResponse {
     private ResourceStatus status;
     private Integer projectCount;
     private List<AssignmentInfo> currentAssignments;
-    private List<AssignmentInfo> trackRecord;
 
     @Getter
     @Setter

@@ -121,13 +121,8 @@ public class ResourceService {
                                 .filter(a -> a.getStatus() == AssignmentStatus.ACTIVE)
                                 .count();
 
-                List<ResourceResponse.AssignmentInfo> activeAssignmentInfos = assignments.stream()
-                                .filter(a -> a.getStatus() == AssignmentStatus.ACTIVE)
-                                .map(this::mapToAssignmentInfo)
-                                .collect(Collectors.toList());
-
-                List<ResourceResponse.AssignmentInfo> trackRecordInfos = assignments.stream()
-                                .filter(a -> a.getStatus() != AssignmentStatus.ACTIVE)
+                // Include all assignments for track record purposes
+                List<ResourceResponse.AssignmentInfo> assignmentInfos = assignments.stream()
                                 .map(this::mapToAssignmentInfo)
                                 .collect(Collectors.toList());
 
@@ -138,8 +133,7 @@ public class ResourceService {
                                 .email(resource.getEmail())
                                 .status(resource.getStatus())
                                 .projectCount((int) projectCount)
-                                .currentAssignments(activeAssignmentInfos)
-                                .trackRecord(trackRecordInfos)
+                                .currentAssignments(assignmentInfos)
                                 .build();
         }
 
