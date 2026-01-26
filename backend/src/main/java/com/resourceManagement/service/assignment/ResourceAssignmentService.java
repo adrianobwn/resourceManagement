@@ -8,6 +8,7 @@ import com.resourceManagement.model.enums.AssignmentStatus;
 import com.resourceManagement.model.enums.ResourceStatus;
 import com.resourceManagement.repository.ResourceAssignmentRepository;
 import com.resourceManagement.repository.ResourceRepository;
+import com.resourceManagement.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,7 @@ public class ResourceAssignmentService {
     private final AssignmentRequestRepository requestRepository;
     private final HistoryLogService historyLogService;
     private final UserRepository userRepository;
+    private final ProjectRepository projectRepository; // Added injection
 
     private void recordDirectAction(User performedBy, RequestType type, AssignmentRequest details) {
         details.setRequestType(type);
@@ -51,7 +53,12 @@ public class ResourceAssignmentService {
     }
 
     @Transactional
-    public ResourceAssignment assignResourceToProject(ResourceAssignment assignment) {
+    public ResourceAssignment assignResourceToProject(ResourceAssignment assignment) { // Added method signature
+        // Validate project status
+        if (assignment.getProject().getStatus() == com.resourceManagement.model.enums.ProjectStatus.CLOSED) {
+            throw new RuntimeException("Cannot assign resources to a CLOSED project");
+        }
+
         // Save the assignment
         ResourceAssignment savedAssignment = assignmentRepository.save(assignment);
 
@@ -112,6 +119,28 @@ public class ResourceAssignmentService {
         Resource resource = assignment.getResource();
         resource.setStatus(ResourceStatus.AVAILABLE);
         resourceRepository.save(resource);
+
+        // Check if all resources in this project are now released
+        long activeCount = assignmentRepository.countByProject_ProjectIdAndStatus(
+            assignment.getProject().getProjectId(), 
+            AssignmentStatus.ACTIVE
+        );
+        if (activeCount == 0) {
+            com.resourceManagement.model.entity.Project project = assignment.getProject();
+            project.setStatus(com.resourceManagement.model.enums.ProjectStatus.CLOSED);
+            projectRepository.save(project); // Saved the project
+            
+            // Log project closure
+            historyLogService.logActivity(
+                EntityType.PROJECT, 
+                "AUTO_CLOSE", 
+                "Project closed automatically as all resources were released", 
+                getCurrentUser(), 
+                project, 
+                null, 
+                null
+            );
+        }
 
         // Record Activity
         AssignmentRequest details = AssignmentRequest.builder()

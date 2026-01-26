@@ -858,21 +858,25 @@ const AdminResources = () => {
                                 </div>
                             </div>
 
-                            {/* Current Projects */}
-                            {assignModal.resource?.currentAssignments && assignModal.resource.currentAssignments.length > 0 && (
-                                <div className="mb-6">
-                                    <h4 className="font-bold text-black mb-3" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>
-                                        Current Project{assignModal.resource.currentAssignments.length > 1 ? 's' : ''}
-                                    </h4>
-                                    <div className="space-y-2">
-                                        {assignModal.resource.currentAssignments.map((assignment, index) => (
-                                            <p key={assignment.assignmentId} className="text-black" style={{ fontSize: '14px', fontFamily: 'SF Pro Display' }}>
-                                                {index + 1}. {assignment.projectName} - Ends : {new Date(assignment.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                            </p>
-                                        ))}
+                            {/* Current Projects (Only show Active) */}
+                            {assignModal.resource?.currentAssignments &&
+                                assignModal.resource.currentAssignments.filter(a => a.assignmentStatus === 'ACTIVE').length > 0 && (
+                                    <div className="mb-6">
+                                        <h4 className="font-bold text-black mb-3" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>
+                                            Current Project{assignModal.resource.currentAssignments.filter(a => a.assignmentStatus === 'ACTIVE').length > 1 ? 's' : ''}
+                                        </h4>
+                                        <div className="space-y-2">
+                                            {assignModal.resource.currentAssignments
+                                                .filter(a => a.assignmentStatus === 'ACTIVE')
+                                                .map((assignment, index) => (
+                                                    <p key={assignment.assignmentId} className="text-black" style={{ fontSize: '14px', fontFamily: 'SF Pro Display' }}>
+                                                        {index + 1}. {assignment.projectName} - Ends : {new Date(assignment.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                    </p>
+                                                ))
+                                            }
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
 
                             {/* Separator */}
                             <div className="border-b border-gray-300 mb-6"></div>
@@ -887,14 +891,21 @@ const AdminResources = () => {
                                     <div className="relative">
                                         <select
                                             value={assignmentData.project}
-                                            onChange={(e) => setAssignmentData(prev => ({ ...prev, project: e.target.value }))}
+                                            onChange={(e) => {
+                                                const proj = projects.find(p => p.projectId === parseInt(e.target.value));
+                                                if (proj && proj.status === 'CLOSED') {
+                                                    showNotification('Cannot assign to a CLOSED project', 'error');
+                                                    return;
+                                                }
+                                                setAssignmentData(prev => ({ ...prev, project: e.target.value }));
+                                            }}
                                             className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full appearance-none"
                                             style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 35px 0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
                                         >
                                             <option value="">Select project</option>
                                             {projects.map(project => (
-                                                <option key={project.projectId} value={project.projectId}>
-                                                    {project.projectName}
+                                                <option key={project.projectId} value={project.projectId} disabled={project.status === 'CLOSED'}>
+                                                    {project.projectName} {project.status === 'CLOSED' ? '(CLOSED)' : ''}
                                                 </option>
                                             ))}
                                         </select>
@@ -1102,13 +1113,15 @@ const AdminResources = () => {
                                             return Math.max(0, Math.min(9, monthDiff));
                                         };
 
-                                        // Function to get project color based on status or if project ended
+                                        // Function to get project color based on status
                                         const getProjectColor = (assignment) => {
-                                            const endDate = new Date(assignment.endDate);
-                                            if (endDate < now) {
-                                                return '#FF0000'; // Closed (past)
+                                            if (assignment.projectStatus === 'CLOSED' || assignment.assignmentStatus === 'RELEASED') {
+                                                return '#FF0000'; // Closed
                                             }
-                                            return '#06D001'; // Ongoing (current/future)
+                                            if (assignment.projectStatus === 'HOLD') {
+                                                return '#F97316'; // Hold
+                                            }
+                                            return '#06D001'; // Ongoing
                                         };
 
                                         // Create 4 rows - fill with assignments first, then empty rows

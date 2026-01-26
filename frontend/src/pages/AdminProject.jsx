@@ -46,9 +46,11 @@ const AdminProject = () => {
             setLoading(true);
             const response = await api.get('/projects');
             setProjects(response.data);
+            return response.data;
         } catch (error) {
             console.error('Error fetching projects:', error);
             showNotification('Failed to fetch projects', 'error');
+            return [];
         } finally {
             setLoading(false);
         }
@@ -126,9 +128,32 @@ const AdminProject = () => {
             showNotification('Resource released successfully!', 'success');
             setShowReleaseModal(false);
             fetchProjectResources(selectedProject.projectId);
+
+            // Refresh project list and update selected project
+            const updatedProjects = await fetchProjects();
+            const updatedCurrentProject = updatedProjects.find(p => p.projectId === selectedProject.projectId);
+            if (updatedCurrentProject) {
+                setSelectedProject(updatedCurrentProject);
+            }
         } catch (error) {
             console.error('Error releasing assignment:', error);
             showNotification('Failed to release resource', 'error');
+        }
+    };
+
+    const handleToggleStatus = async (projectId, currentStatus) => {
+        const newStatus = currentStatus === 'ON_GOING' ? 'HOLD' : 'ON_GOING';
+        try {
+            const response = await api.patch(`/projects/${projectId}/status?status=${newStatus}`);
+            showNotification(`Project status updated to ${newStatus}`, 'success');
+            // Update local state for real-time update
+            setProjects(prev => prev.map(p => p.projectId === projectId ? { ...p, status: newStatus } : p));
+            if (selectedProject && selectedProject.projectId === projectId) {
+                setSelectedProject(prev => ({ ...prev, status: newStatus }));
+            }
+        } catch (error) {
+            console.error('Error toggling project status:', error);
+            showNotification('Failed to update project status', 'error');
         }
     };
 
@@ -360,9 +385,19 @@ const AdminProject = () => {
                                 </div>
                                 <div className="flex items-center gap-8">
                                     <div className="text-right">
-                                        <span className="text-xs px-3 py-1 rounded-full font-bold" style={getStatusBadgeStyle(project.status)}>
+                                        <div
+                                            className="text-xs px-3 py-1 rounded-full font-bold cursor-pointer hover:opacity-80 transition-opacity"
+                                            style={getStatusBadgeStyle(project.status)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (project.status !== 'CLOSED') {
+                                                    handleToggleStatus(project.projectId, project.status);
+                                                }
+                                            }}
+                                            title={project.status !== 'CLOSED' ? `Click to switch to ${project.status === 'ON_GOING' ? 'HOLD' : 'ON_GOING'}` : ''}
+                                        >
                                             {getStatusLabel(project.status)}
-                                        </span>
+                                        </div>
                                         <p className="text-gray-400 text-sm mt-2 font-medium">{project.memberCount} Members assigned</p>
                                     </div>
                                     <button
@@ -388,9 +423,25 @@ const AdminProject = () => {
 
                         <div className="flex items-center gap-4 mb-2">
                             <h2 className="text-3xl font-bold text-gray-800">{selectedProject.projectName}</h2>
-                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-600">
-                                {selectedProject.status === 'ON_GOING' ? 'ONGOING' : selectedProject.status}
-                            </span>
+                            <div
+                                className="px-3 py-1 rounded-full text-xs font-bold"
+                                style={getStatusBadgeStyle(selectedProject.status)}
+                            >
+                                {getStatusLabel(selectedProject.status)}
+                            </div>
+                            {selectedProject.status !== 'CLOSED' && (
+                                <button
+                                    onClick={() => handleToggleStatus(selectedProject.projectId, selectedProject.status)}
+                                    className="px-3 py-1 rounded-lg text-xs font-bold border transition-colors ml-2"
+                                    style={{
+                                        borderColor: selectedProject.status === 'ON_GOING' ? '#FBCD3F' : '#06D001',
+                                        color: selectedProject.status === 'ON_GOING' ? '#FBCD3F' : '#06D001',
+                                        backgroundColor: 'transparent'
+                                    }}
+                                >
+                                    {selectedProject.status === 'ON_GOING' ? 'Change to Hold' : 'Change to Ongoing'}
+                                </button>
+                            )}
                         </div>
 
                         <div className="flex gap-8 mb-6">
@@ -423,14 +474,24 @@ const AdminProject = () => {
                                                 <td className="px-6 py-6 font-bold text-gray-800">{res.resourceName}</td>
                                                 <td className="px-6 py-6 text-center font-bold text-gray-800">{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
                                                 <td className="px-6 py-6 text-center">
-                                                    <span className="px-4 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-600">
-                                                        {res.status}
+                                                    <span
+                                                        className="px-4 py-1 rounded-full text-[10px] font-bold"
+                                                        style={{
+                                                            backgroundColor: res.status === 'ACTIVE' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(255, 0, 0, 0.2)',
+                                                            color: res.status === 'ACTIVE' ? '#06D001' : '#FF0000',
+                                                        }}
+                                                    >
+                                                        {res.status === 'ACTIVE' ? 'ACTIVE' : 'RELEASED'}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-6 text-center">
                                                     <div className="flex justify-center gap-2">
-                                                        <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] hover:bg-[#F97316]/20">EXTEND</button>
-                                                        <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] hover:bg-[#FF0000]/20">RELEASE</button>
+                                                        {res.status === 'ACTIVE' && (
+                                                            <>
+                                                                <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] hover:bg-[#F97316]/20">EXTEND</button>
+                                                                <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] hover:bg-[#FF0000]/20">RELEASE</button>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>

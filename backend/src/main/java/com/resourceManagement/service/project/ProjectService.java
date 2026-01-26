@@ -121,4 +121,27 @@ public class ProjectService {
                         .build())
                 .collect(Collectors.toList());
     }
+
+    public ProjectListResponse updateProjectStatus(Integer projectId, ProjectStatus status) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+        
+        project.setStatus(status);
+        Project saved = projectRepository.save(project);
+        
+        // Log activity
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User admin = userRepository.findByEmail(email).orElseThrow();
+        historyLogService.logActivity(
+            EntityType.PROJECT, 
+            "UPDATE_STATUS", 
+            "Project status updated to " + status, 
+            admin, 
+            saved, 
+            null, 
+            null
+        );
+        
+        return mapToProjectListResponse(saved);
+    }
 }

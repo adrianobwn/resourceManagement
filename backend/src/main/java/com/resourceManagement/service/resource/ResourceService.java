@@ -121,8 +121,8 @@ public class ResourceService {
                                 .filter(a -> a.getStatus() == AssignmentStatus.ACTIVE)
                                 .count();
 
+                // Include all assignments for track record purposes
                 List<ResourceResponse.AssignmentInfo> assignmentInfos = assignments.stream()
-                                .filter(a -> a.getStatus() == AssignmentStatus.ACTIVE)
                                 .map(this::mapToAssignmentInfo)
                                 .collect(Collectors.toList());
 

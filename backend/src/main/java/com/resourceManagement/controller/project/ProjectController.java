@@ -33,4 +33,11 @@ public class ProjectController {
     public ResponseEntity<List<com.resourceManagement.dto.project.ProjectResourceDto>> getProjectResources(@PathVariable Integer projectId) {
         return ResponseEntity.ok(projectService.getProjectResources(projectId));
     }
+
+    @PatchMapping("/{projectId}/status")
+    public ResponseEntity<ProjectListResponse> updateProjectStatus(
+            @PathVariable Integer projectId,
+            @RequestParam com.resourceManagement.model.enums.ProjectStatus status) {
+        return ResponseEntity.ok(projectService.updateProjectStatus(projectId, status));
+    }
 }
