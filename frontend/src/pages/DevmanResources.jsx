@@ -26,6 +26,14 @@ const DevmanResources = () => {
     const [hoveredProject, setHoveredProject] = useState(null);
     const [projects, setProjects] = useState([]);
 
+    // Tooltip state
+    const [tooltipState, setTooltipState] = useState({
+        show: false,
+        x: 0,
+        y: 0,
+        data: null
+    });
+
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -778,41 +786,26 @@ const DevmanResources = () => {
                                                                 transform: 'translateY(-50%)',
                                                                 backgroundColor: color
                                                             }}
-                                                            onMouseEnter={() => setHoveredProject(`project${i}`)}
-                                                            onMouseLeave={() => setHoveredProject(null)}
+                                                            onMouseEnter={(e) => {
+                                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                                setTooltipState({
+                                                                    show: true,
+                                                                    x: rect.left + rect.width / 2,
+                                                                    y: rect.top,
+                                                                    data: {
+                                                                        assignment,
+                                                                        startDateObj,
+                                                                        endDateObj,
+                                                                        monthNames,
+                                                                        now
+                                                                    }
+                                                                });
+                                                            }}
+                                                            onMouseLeave={() => setTooltipState(prev => ({ ...prev, show: false }))}
                                                         >
                                                             <span className="font-bold text-white text-center px-4 truncate" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
                                                                 {assignment.projectName} • {assignment.projectRole}
                                                             </span>
-
-                                                            {/* Tooltip */}
-                                                            {hoveredProject === `project${i}` && (
-                                                                <div
-                                                                    className="absolute z-10 bg-white rounded-lg shadow-xl p-4 border border-gray-200"
-                                                                    style={{
-                                                                        top: '-120px',
-                                                                        left: '50%',
-                                                                        transform: 'translateX(-50%)',
-                                                                        width: '300px',
-                                                                        fontFamily: 'SF Pro Display'
-                                                                    }}
-                                                                >
-                                                                    <div className="space-y-2">
-                                                                        <h4 className="font-bold text-black" style={{ fontSize: '16px' }}>{assignment.projectName}</h4>
-                                                                        <div className="text-sm text-gray-700">
-                                                                            <p><span className="font-semibold">Role:</span> {assignment.projectRole}</p>
-                                                                            <p><span className="font-semibold">Start:</span> {monthNames[startDateObj.getMonth()]} {startDateObj.getFullYear()}</p>
-                                                                            <p><span className="font-semibold">End:</span> {monthNames[endDateObj.getMonth()]} {endDateObj.getFullYear()}</p>
-                                                                            <p><span className="font-semibold">Status:</span> <span className={endDateObj < now ? 'text-red-600 font-bold' : 'text-green-600 font-bold'}>{endDateObj < now ? 'Closed' : 'Ongoing'}</span></p>
-                                                                        </div>
-                                                                    </div>
-                                                                    {/* Arrow */}
-                                                                    <div
-                                                                        className="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white border-r border-b border-gray-200 rotate-45"
-                                                                        style={{ bottom: '-8px' }}
-                                                                    ></div>
-                                                                </div>
-                                                            )}
                                                         </div>
                                                     </>
                                                 );
@@ -1050,7 +1043,48 @@ const DevmanResources = () => {
                     </div>
                 </div>
             </div>
-        </div>
+
+
+            {/* Hoisted Tooltip */}
+            {
+                tooltipState.show && tooltipState.data && (
+                    <div
+                        className="fixed z-[9999] bg-white rounded-lg shadow-xl p-4 border border-gray-200 pointer-events-none animate-fade-in"
+                        style={{
+                            top: tooltipState.y - 120, // Offset above the cursor/element
+                            left: tooltipState.x,
+                            transform: 'translateX(-50%)',
+                            width: '300px',
+                            fontFamily: 'SF Pro Display'
+                        }}
+                    >
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-black" style={{ fontSize: '16px' }}>{tooltipState.data.assignment.projectName}</h4>
+                            <div className="text-sm text-gray-700">
+                                <p><span className="font-semibold">Role:</span> {tooltipState.data.assignment.projectRole}</p>
+                                <p><span className="font-semibold">Start:</span> {tooltipState.data.monthNames[tooltipState.data.startDateObj.getMonth()]} {tooltipState.data.startDateObj.getFullYear()}</p>
+                                <p><span className="font-semibold">End:</span> {tooltipState.data.monthNames[tooltipState.data.endDateObj.getMonth()]} {tooltipState.data.endDateObj.getFullYear()}</p>
+                                <p><span className="font-semibold">Status:</span> <span className={new Date(tooltipState.data.assignment.endDate) < tooltipState.data.now ? 'text-red-600 font-bold' : 'text-green-600 font-bold'}>{new Date(tooltipState.data.assignment.endDate) < tooltipState.data.now ? 'Closed' : 'Ongoing'}</span></p>
+                            </div>
+                        </div>
+                        {/* Arrow */}
+                        <div
+                            className="absolute"
+                            style={{
+                                bottom: '-8px',
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                width: '0',
+                                height: '0',
+                                borderLeft: '8px solid transparent',
+                                borderRight: '8px solid transparent',
+                                borderTop: '8px solid white'
+                            }}
+                        ></div>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 

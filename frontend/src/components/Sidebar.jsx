@@ -59,8 +59,8 @@ const Sidebar = () => {
                                 key={item.name}
                                 onClick={() => navigate(item.path)}
                                 className={`w-full flex items-center gap-4 px-5 py-4 mb-2 text-left transition-all rounded-lg text-lg font-sf ${isActive(item.path)
-                                        ? 'bg-[#CAF0F8] text-black'
-                                        : 'text-white hover:bg-[#CAF0F8]/20'
+                                    ? 'bg-[#CAF0F8] text-black'
+                                    : 'text-white hover:bg-[#CAF0F8]/20'
                                     }`}
                             >
                                 <IconComponent className="w-6 h-6" />
@@ -80,7 +80,7 @@ const Sidebar = () => {
                         </div>
                         <div className="font-sf">
                             <p className="font-bold text-white text-sm">{user.name || 'User'}</p>
-                            <p className="text-[#CAF0F8] italic text-xs">{user.userType || 'Admin'}</p>
+                            <p className="text-[#CAF0F8] italic text-xs">{user.userType === 'DEV_MANAGER' ? 'Development Manager' : (user.userType?.replace('_', ' ') || 'Admin')}</p>
                         </div>
                     </div>
                     <button

@@ -89,9 +89,18 @@ const DevmanProject = () => {
     const [selectedResourceForAction, setSelectedResourceForAction] = useState(null);
     const [actionDate, setActionDate] = useState('');
     const [actionReason, setActionReason] = useState('');
+    const [minDate, setMinDate] = useState('');
 
     const handleOpenExtendModal = (resource) => {
         setSelectedResourceForAction(resource);
+
+        // Calculate min date based on current End Date
+        const currentEndDate = new Date(resource.endDate);
+        const nextDay = new Date(currentEndDate);
+        nextDay.setDate(currentEndDate.getDate() + 1);
+        const minDateStr = nextDay.toISOString().split('T')[0];
+
+        setMinDate(minDateStr);
         setActionDate('');
         setActionReason('');
         setShowReleaseModal(false);
@@ -471,6 +480,7 @@ const DevmanProject = () => {
                                     <input
                                         type="date"
                                         value={actionDate}
+                                        min={minDate}
                                         onChange={(e) => setActionDate(e.target.value)}
                                         className="w-full px-4 py-3 bg-[#F5F5F5] border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black"
                                         style={{ fontFamily: 'SF Pro Display' }}
