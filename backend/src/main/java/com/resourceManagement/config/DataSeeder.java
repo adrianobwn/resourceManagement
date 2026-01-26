@@ -87,7 +87,7 @@ public class DataSeeder {
                         projects.add(createProject("Telemedicine App", "Halodoc", managers.get(1),
                                         ProjectStatus.ON_GOING));
                         projects.add(createProject("Government Portal", "Kominfo", managers.get(2),
-                                        ProjectStatus.COMPLETED));
+                                        ProjectStatus.CLOSED));
 
                         // 4. Seed Assignments & Update Resource Status
                         // Mobile Banking App (3 resources)
