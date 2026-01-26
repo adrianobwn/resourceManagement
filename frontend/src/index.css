@@ -71,7 +71,9 @@
 
 /* ===== BASE STYLES ===== */
 @layer base {
-  body {
+  html, body, #root {
     @apply font-sf antialiased;
+    background-color: #E6F2F1;
+    min-height: 100vh;
   }
 }

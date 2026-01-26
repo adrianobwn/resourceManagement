@@ -173,13 +173,7 @@ const DevmanDashboard = () => {
         return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     };
 
-    if (!user) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-[#E6F2F1] font-sf">
-                <div className="text-xl">Loading...</div>
-            </div>
-        );
-    }
+
 
     return (
         <div className="flex min-h-screen bg-[#E6F2F1] font-['SF_Pro_Display']">
