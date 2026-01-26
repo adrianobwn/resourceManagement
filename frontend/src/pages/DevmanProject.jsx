@@ -357,7 +357,7 @@ const DevmanProject = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-gray-800 mb-1">{project.projectName}</h3>
-                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-gray-500 font-bold">PM: {project.pmName}</span></p>
+                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-gray-500 font-bold">DevMan: {project.pmName}</span></p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-8">
@@ -425,6 +425,7 @@ const DevmanProject = () => {
                                     <thead className="bg-[#E6F2F1] border-b border-gray-200 text-left">
                                         <tr>
                                             <th className="px-6 py-4 font-bold text-gray-700 text-center rounded-tl-xl">Name</th>
+                                            <th className="px-6 py-4 font-bold text-center text-gray-700">Role</th>
                                             <th className="px-6 py-4 font-bold text-center text-gray-700">Period</th>
                                             <th className="px-6 py-4 font-bold text-center text-gray-700">Status</th>
                                             <th className="px-6 py-4 font-bold text-center text-gray-700 rounded-tr-xl">Action</th>
@@ -434,6 +435,7 @@ const DevmanProject = () => {
                                         {projectResources.map((res, idx) => (
                                             <tr key={idx} className="border-b border-gray-200 last:border-none">
                                                 <td className="px-6 py-6 font-bold text-gray-800">{res.resourceName}</td>
+                                                <td className="px-6 py-6 text-center font-bold text-gray-800">{res.role || '-'}</td>
                                                 <td className="px-6 py-6 text-center font-bold text-gray-800">{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
                                                 <td className="px-6 py-6 text-center">
                                                     <span className={`px-4 py-1 rounded-full text-[10px] font-bold border ${(res.status === 'RELEASED' || res.status === 'EXPIRED') ? 'bg-red-100 text-red-600 border-red-600' : 'bg-green-100 text-green-600 border-green-600'}`}>
@@ -660,10 +662,10 @@ const DevmanProject = () => {
                                                     className="w-full p-2 border border-gray-300 rounded-lg bg-white appearance-none text-sm"
                                                 >
                                                     <option value="">Select Role</option>
-                                                    <option value="TEAM LEAD">Team Lead</option>
-                                                    <option value="BACKEND DEVELOPER">Backend Dev</option>
-                                                    <option value="FRONTEND DEVELOPER">Frontend Dev</option>
-                                                    <option value="QUALITY ASSURANCE">QA</option>
+                                                    <option value="Team Lead">Team Lead</option>
+                                                    <option value="Backend Developer">Backend Dev</option>
+                                                    <option value="Frontend Developer">Frontend Dev</option>
+                                                    <option value="Quality Assurance">QA</option>
                                                 </select>
                                                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                                                     <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>

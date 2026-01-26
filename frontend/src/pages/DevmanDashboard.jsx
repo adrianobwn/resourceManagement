@@ -430,7 +430,7 @@ const DevmanDashboard = () => {
                                     <div className="flex items-center gap-3">
                                         <Calendar className="w-5 h-5 text-gray-500" />
                                         <span style={{ fontFamily: 'SF Pro Display' }}>
-                                            Submitted : <span className="font-bold">{viewDetailModal.request.submittedDate}</span>
+                                            Submitted : <span className="font-bold">{formatDate(viewDetailModal.request.submittedDate)}</span>
                                         </span>
                                     </div>
                                 </div>

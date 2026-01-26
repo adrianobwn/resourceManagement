@@ -920,7 +920,7 @@ const DevmanResources = () => {
                                     placeholder="End Date"
                                     value={dateFilter.endDate}
                                     onChange={(e) => handleDateFilterChange('endDate', e.target.value)}
-                                    max={new Date().toISOString().split('T')[0]} // Optional: Prevent future dates if needed, but not requested
+                                    min={dateFilter.startDate || undefined}
                                     className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
                                     style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
                                 />

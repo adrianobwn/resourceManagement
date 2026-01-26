@@ -91,13 +91,13 @@ public class DataSeeder {
 
                         // 4. Seed Assignments & Update Resource Status
                         // Mobile Banking App (3 resources)
-                        createAssignment(resources.get(0), projects.get(0), "Backend Lead",
+                        createAssignment(resources.get(0), projects.get(0), "Backend Developer",
                                         LocalDate.now().minusMonths(3), LocalDate.now().plusMonths(6),
                                         AssignmentStatus.ACTIVE);
                         createAssignment(resources.get(1), projects.get(0), "Frontend Developer",
                                         LocalDate.now().minusMonths(3), LocalDate.now().plusMonths(6),
                                         AssignmentStatus.ACTIVE);
-                        createAssignment(resources.get(2), projects.get(0), "QA Engineer",
+                        createAssignment(resources.get(2), projects.get(0), "Quality Assurance",
                                         LocalDate.now().minusMonths(2), LocalDate.now().plusMonths(4),
                                         AssignmentStatus.ACTIVE);
 
@@ -105,7 +105,7 @@ public class DataSeeder {
                         createAssignment(resources.get(4), projects.get(1), "Backend Developer",
                                         LocalDate.now().minusMonths(1), LocalDate.now().plusMonths(5),
                                         AssignmentStatus.ACTIVE);
-                        createAssignment(resources.get(5), projects.get(1), "UI Designer",
+                        createAssignment(resources.get(5), projects.get(1), "UI/UX Designer",
                                         LocalDate.now().minusMonths(1), LocalDate.now().plusMonths(2),
                                         AssignmentStatus.ACTIVE);
 

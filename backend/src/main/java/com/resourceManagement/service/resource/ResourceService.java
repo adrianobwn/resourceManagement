@@ -27,6 +27,7 @@ public class ResourceService {
         private final ResourceRepository resourceRepository;
         private final ResourceAssignmentRepository assignmentRepository;
         private final ProjectRepository projectRepository;
+        private final com.resourceManagement.service.assignment.ResourceAssignmentService resourceAssignmentService;
 
         public List<ResourceResponse> getAllResources() {
                 List<Resource> resources = resourceRepository.findAll();
@@ -96,11 +97,9 @@ public class ResourceService {
                                 .status(AssignmentStatus.ACTIVE)
                                 .build();
 
-                assignmentRepository.save(assignment);
-
-                // Update resource status to ASSIGNED
-                resource.setStatus(ResourceStatus.ASSIGNED);
-                resourceRepository.save(resource);
+                // Delegate to ResourceAssignmentService to handle validation, saving, and
+                // logging
+                resourceAssignmentService.assignResourceToProject(assignment);
 
                 return mapToResourceResponse(resource);
         }

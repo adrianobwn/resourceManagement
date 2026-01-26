@@ -42,8 +42,12 @@ public class ResourceAssignmentService {
         requestRepository.save(details);
 
         // Log to History
-        String desc = String.format("Admin directly performed %s: %s", type, details.getReason() != null ? details.getReason() : "");
-        historyLogService.logActivity(EntityType.ASSIGNMENT, type.name(), desc, performedBy, details.getProject(), details.getResource(), details.getRole());
+        String userRole = performedBy.getUserType() == com.resourceManagement.model.enums.UserType.ADMIN ? "Admin"
+                : "Dev Manager";
+        String desc = String.format("%s directly performed %s: %s", userRole, type,
+                details.getReason() != null ? details.getReason() : "");
+        historyLogService.logActivity(EntityType.ASSIGNMENT, type.name(), desc, performedBy, details.getProject(),
+                details.getResource(), details.getRole());
     }
 
     private User getCurrentUser() {
@@ -53,10 +57,19 @@ public class ResourceAssignmentService {
     }
 
     @Transactional
-    public ResourceAssignment assignResourceToProject(ResourceAssignment assignment) { // Added method signature
+    public ResourceAssignment assignResourceToProject(ResourceAssignment assignment) {
+        User currentUser = getCurrentUser();
+
         // Validate project status
         if (assignment.getProject().getStatus() == com.resourceManagement.model.enums.ProjectStatus.CLOSED) {
             throw new RuntimeException("Cannot assign resources to a CLOSED project");
+        }
+
+        // Validate permissions for DEV_MANAGER
+        if (currentUser.getUserType() == com.resourceManagement.model.enums.UserType.DEV_MANAGER) {
+            if (!assignment.getProject().getPm().getUserId().equals(currentUser.getUserId())) {
+                throw new RuntimeException("You can only assign resources to your own projects");
+            }
         }
 
         // Save the assignment
@@ -74,9 +87,16 @@ public class ResourceAssignmentService {
                 .role(assignment.getProjectRole())
                 .startDate(assignment.getStartDate())
                 .endDate(assignment.getEndDate())
-                .reason("Directly assigned by Admin")
+                .reason(currentUser.getUserType() == com.resourceManagement.model.enums.UserType.ADMIN
+                        ? "Directly assigned by Admin"
+                        : "Assigned by Dev Manager")
                 .build();
-        recordDirectAction(getCurrentUser(), RequestType.ASSIGN, details);
+
+        // Use a different request type or modify recordDirectAction to handle non-admin
+        // logging if needed,
+        // but for now reusing recordDirectAction with the current user is fine as it
+        // uses 'performedBy'.
+        recordDirectAction(currentUser, RequestType.ASSIGN, details);
 
         return savedAssignment;
     }
@@ -111,7 +131,7 @@ public class ResourceAssignmentService {
 
         assignment.setEndDate(request.getReleaseDate());
         assignment.setStatus(AssignmentStatus.RELEASED);
-        
+
         // Save assignment first
         ResourceAssignment savedAssignment = assignmentRepository.save(assignment);
 
@@ -122,24 +142,22 @@ public class ResourceAssignmentService {
 
         // Check if all resources in this project are now released
         long activeCount = assignmentRepository.countByProject_ProjectIdAndStatus(
-            assignment.getProject().getProjectId(), 
-            AssignmentStatus.ACTIVE
-        );
+                assignment.getProject().getProjectId(),
+                AssignmentStatus.ACTIVE);
         if (activeCount == 0) {
             com.resourceManagement.model.entity.Project project = assignment.getProject();
             project.setStatus(com.resourceManagement.model.enums.ProjectStatus.CLOSED);
             projectRepository.save(project); // Saved the project
-            
+
             // Log project closure
             historyLogService.logActivity(
-                EntityType.PROJECT, 
-                "AUTO_CLOSE", 
-                "Project closed automatically as all resources were released", 
-                getCurrentUser(), 
-                project, 
-                null, 
-                null
-            );
+                    EntityType.PROJECT,
+                    "AUTO_CLOSE",
+                    "Project closed automatically as all resources were released",
+                    getCurrentUser(),
+                    project,
+                    null,
+                    null);
         }
 
         // Record Activity

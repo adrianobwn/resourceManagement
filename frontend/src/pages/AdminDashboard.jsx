@@ -294,7 +294,7 @@ const Dashboard = () => {
                                     <div className="flex items-center gap-3">
                                         <Users className="w-5 h-5 text-gray-500" />
                                         <span style={{ fontFamily: 'SF Pro Display' }}>
-                                            Role : <span className="font-bold">{toTitleCase(viewDetailModal.request.role)}</span>
+                                            Role : <span className="font-bold">{toTitleCase(viewDetailModal.request.role) || '-'}</span>
                                         </span>
                                     </div>
                                 </div>
@@ -353,7 +353,7 @@ const Dashboard = () => {
                                     <div className="flex items-center gap-3">
                                         <Users className="w-5 h-5 text-gray-500" />
                                         <span style={{ fontFamily: 'SF Pro Display' }}>
-                                            Role : <span className="font-bold">{toTitleCase(viewDetailModal.request.role)}</span>
+                                            Role : <span className="font-bold">{toTitleCase(viewDetailModal.request.role) || '-'}</span>
                                         </span>
                                     </div>
                                 </div>
@@ -406,7 +406,7 @@ const Dashboard = () => {
                                     <div className="flex items-center gap-3">
                                         <Calendar className="w-5 h-5 text-gray-500" />
                                         <span style={{ fontFamily: 'SF Pro Display' }}>
-                                            Submitted : <span className="font-bold">{viewDetailModal.request.submittedDate}</span>
+                                            Submitted : <span className="font-bold">{formatDate(viewDetailModal.request.submittedDate)}</span>
                                         </span>
                                     </div>
                                 </div>
