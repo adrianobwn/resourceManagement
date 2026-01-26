@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import api from '../utils/api';
 import * as XLSX from 'xlsx';
-import { Search, Users, Trash2, X, Calendar, AlertTriangle, Folder } from 'lucide-react';
+import { Search, Users, Trash2, X, Calendar, AlertTriangle, Folder, Edit2 } from 'lucide-react';
 
 const AdminProject = () => {
     const navigate = useNavigate();
@@ -72,7 +72,9 @@ const AdminProject = () => {
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedProject, setSelectedProject] = useState(null);
     const [projectResources, setProjectResources] = useState([]);
+
     const [loadingResources, setLoadingResources] = useState(false);
+    const [isEditingStatus, setIsEditingStatus] = useState(false);
 
     // Extend/Release Action states (for direct Admin actions)
     const [showExtendModal, setShowExtendModal] = useState(false);
@@ -474,49 +476,82 @@ const AdminProject = () => {
 
                         <div className="flex items-center gap-4 mb-2">
                             <h2 className="text-3xl font-bold text-gray-800">{selectedProject.projectName}</h2>
-                            <div className="relative">
-                                {selectedProject.status === 'CLOSED' ? (
-                                    <span
-                                        className="px-3 py-1 rounded-full text-xs font-bold"
-                                        style={{
-                                            backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                                            color: '#FF0000',
-                                            display: 'inline-block',
-                                            textAlign: 'center',
-                                            border: '1px solid #FF0000'
-                                        }}
-                                    >
-                                        CLOSED
-                                    </span>
-                                ) : (
-                                    <select
-                                        value={selectedProject.status}
-                                        onChange={async (e) => {
-                                            try {
-                                                const newStatus = e.target.value;
-                                                await api.put(`/projects/${selectedProject.projectId}/status`, null, { params: { status: newStatus } });
+                            <div className="flex items-center gap-3">
+                                {/* Status Badge */}
+                                <span
+                                    className="px-3 py-1 rounded-full text-xs font-bold"
+                                    style={{
+                                        backgroundColor: selectedProject.status === 'ON_GOING' ? 'rgba(6, 208, 1, 0.2)' : selectedProject.status === 'HOLD' ? 'rgba(251, 205, 63, 0.2)' : 'rgba(255, 0, 0, 0.2)',
+                                        color: selectedProject.status === 'ON_GOING' ? '#06D001' : selectedProject.status === 'HOLD' ? '#FBCD3F' : '#FF0000',
+                                        border: selectedProject.status === 'ON_GOING' ? '1px solid #06D001' : selectedProject.status === 'HOLD' ? '1px solid #FBCD3F' : '1px solid #FF0000',
+                                        display: 'inline-block',
+                                        textAlign: 'center'
+                                    }}
+                                >
+                                    {getStatusLabel(selectedProject.status)}
+                                </span>
 
-                                                // Real-time update
-                                                setSelectedProject(prev => ({ ...prev, status: newStatus }));
-                                                setProjects(prev => prev.map(p => p.projectId === selectedProject.projectId ? { ...p, status: newStatus } : p));
-
-                                                showNotification(`Status updated to ${newStatus}`, 'success');
-                                            } catch (error) {
-                                                console.error('Error updating status:', error);
-                                                showNotification('Failed to update status', 'error');
-                                            }
-                                        }}
-                                        className="px-3 py-1 rounded-full text-xs font-bold appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500"
-                                        style={{
-                                            backgroundColor: selectedProject.status === 'ON_GOING' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(251, 205, 63, 0.2)',
-                                            color: selectedProject.status === 'ON_GOING' ? '#06D001' : '#FBCD3F',
-                                            border: selectedProject.status === 'ON_GOING' ? '1px solid #06D001' : '1px solid #FBCD3F',
-                                            textAlign: 'center'
-                                        }}
-                                    >
-                                        <option value="ON_GOING">ONGOING</option>
-                                        <option value="HOLD">HOLD</option>
-                                    </select>
+                                {/* Edit Action */}
+                                {selectedProject.status !== 'CLOSED' && (
+                                    <>
+                                        {isEditingStatus ? (
+                                            <div className="flex items-center gap-2 animate-fade-in">
+                                                <select
+                                                    value={selectedProject.status}
+                                                    onChange={(e) => {
+                                                        const newStatus = e.target.value;
+                                                        // Optimistic update locally for select value, commit on save
+                                                        setSelectedProject(prev => ({ ...prev, status: newStatus }));
+                                                    }}
+                                                    className="px-3 py-1 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                >
+                                                    <option value="ON_GOING">ONGOING</option>
+                                                    <option value="HOLD">HOLD</option>
+                                                </select>
+                                                <button
+                                                    onClick={async () => {
+                                                        try {
+                                                            await api.patch(`/projects/${selectedProject.projectId}/status`, null, { params: { status: selectedProject.status } });
+                                                            // Real-time update list
+                                                            setProjects(prev => prev.map(p => p.projectId === selectedProject.projectId ? { ...p, status: selectedProject.status } : p));
+                                                            showNotification(`Status updated to ${getStatusLabel(selectedProject.status)}`, 'success');
+                                                            setIsEditingStatus(false);
+                                                        } catch (error) {
+                                                            console.error('Error updating status:', error);
+                                                            showNotification('Failed to update status', 'error');
+                                                        }
+                                                    }}
+                                                    className="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700"
+                                                >
+                                                    Save
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setIsEditingStatus(false);
+                                                        // Revert if needed, or better fetch fresh details. For now assumes optimistic was fine or user handles revert manually by re-selecting.
+                                                        // But let's verify if 'status' state needs reverting?
+                                                        // Actually simpler logic: 'selectedProject' state *is* the one we edit.
+                                                        // If cancel, we might want to revert `selectedProject.status` to what is in `projects`.
+                                                        const original = projects.find(p => p.projectId === selectedProject.projectId);
+                                                        if (original) {
+                                                            setSelectedProject(prev => ({ ...prev, status: original.status }));
+                                                        }
+                                                    }}
+                                                    className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-300"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => setIsEditingStatus(true)}
+                                                className="p-1.5 bg-gray-100 rounded-full text-gray-600 hover:bg-gray-200 hover:text-blue-600 transition-colors"
+                                                title="Change Status"
+                                            >
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>

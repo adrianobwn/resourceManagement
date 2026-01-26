@@ -30,4 +30,9 @@ public class Resource {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ResourceStatus status;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "resource_skills", joinColumns = @JoinColumn(name = "resource_id"))
+    @Column(name = "skill")
+    private java.util.List<String> skills;
 }

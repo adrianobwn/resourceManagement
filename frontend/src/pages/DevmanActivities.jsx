@@ -188,7 +188,7 @@ const DevmanActivities = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {activities.length === 0 ? (
+                                    {activities.filter(a => a.type === 'EXTEND').length === 0 ? (
                                         <tr>
                                             <td colSpan="8" className="text-center py-4 text-gray-500">No activities found</td>
                                         </tr>
@@ -256,7 +256,7 @@ const DevmanActivities = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {activities.length === 0 ? (
+                                    {activities.filter(a => a.type === 'RELEASE').length === 0 ? (
                                         <tr>
                                             <td colSpan="8" className="text-center py-4 text-gray-500">No activities found</td>
                                         </tr>
@@ -323,7 +323,7 @@ const DevmanActivities = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {activities.length === 0 ? (
+                                    {activities.filter(a => a.type === 'ASSIGN').length === 0 ? (
                                         <tr>
                                             <td colSpan="7" className="text-center py-4 text-gray-500">No activities found</td>
                                         </tr>
@@ -385,7 +385,7 @@ const DevmanActivities = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {activities.length === 0 ? (
+                                    {activities.filter(a => a.type === 'PROJECT').length === 0 ? (
                                         <tr>
                                             <td colSpan="5" className="text-center py-4 text-gray-500">No activities found</td>
                                         </tr>
