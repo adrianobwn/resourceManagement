@@ -96,6 +96,13 @@ const AdminProject = () => {
 
     const handleOpenExtendModal = (resource) => {
         setSelectedResourceForAction(resource);
+        // Set minimum date to the day after current end date
+        const currentEndDate = new Date(resource.endDate);
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        // Use the later of: day after current end date or tomorrow
+        const minDate = currentEndDate > tomorrow ? currentEndDate : tomorrow;
+        minDate.setDate(minDate.getDate() + 1); // Day after the max
         setActionDate('');
         setActionReason('');
         setShowReleaseModal(false);
@@ -589,6 +596,13 @@ const AdminProject = () => {
                                         type="date"
                                         value={actionDate}
                                         onChange={(e) => setActionDate(e.target.value)}
+                                        min={selectedResourceForAction?.endDate ? (() => {
+                                            const currentEnd = new Date(selectedResourceForAction.endDate);
+                                            const today = new Date();
+                                            const minDate = currentEnd > today ? currentEnd : today;
+                                            minDate.setDate(minDate.getDate() + 1);
+                                            return minDate.toISOString().split('T')[0];
+                                        })() : new Date().toISOString().split('T')[0]}
                                         className="w-full px-4 py-3 bg-[#F5F5F5] border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black"
                                         style={{ fontFamily: 'SF Pro Display' }}
                                     />

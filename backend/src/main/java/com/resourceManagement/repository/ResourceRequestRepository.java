@@ -16,4 +16,6 @@ public interface ResourceRequestRepository extends JpaRepository<ResourceRequest
     List<ResourceRequest> findByResource_ResourceId(Integer resourceId);
 
     List<ResourceRequest> findByProject_ProjectId(Integer projectId);
+
+    void deleteByProject_ProjectId(Integer projectId);
 }

@@ -11,21 +11,24 @@ import java.util.List;
 @Repository
 public interface ResourceAssignmentRepository extends JpaRepository<ResourceAssignment, Integer> {
 
-    List<ResourceAssignment> findByResource_ResourceId(Integer resourceId);
+        List<ResourceAssignment> findByResource_ResourceId(Integer resourceId);
 
-    List<ResourceAssignment> findByProject_ProjectId(Integer projectId);
+        List<ResourceAssignment> findByProject_ProjectId(Integer projectId);
 
-    List<ResourceAssignment> findByStatus(AssignmentStatus status);
+        List<ResourceAssignment> findByStatus(AssignmentStatus status);
 
-    List<ResourceAssignment> findByStatusAndEndDateBetween(AssignmentStatus status, LocalDate startDate,
-            LocalDate endDate);
+        List<ResourceAssignment> findByStatusAndEndDateBetween(AssignmentStatus status, LocalDate startDate,
+                        LocalDate endDate);
 
-    List<ResourceAssignment> findByStatusAndProject_Pm_UserIdAndEndDateBetween(AssignmentStatus status, Integer pmId,
-            LocalDate startDate, LocalDate endDate);
+        List<ResourceAssignment> findByStatusAndProject_Pm_UserIdAndEndDateBetween(AssignmentStatus status,
+                        Integer pmId,
+                        LocalDate startDate, LocalDate endDate);
 
-    long countByProject_ProjectId(Integer projectId);
+        long countByProject_ProjectId(Integer projectId);
 
-    long countByProject_ProjectIdAndStatus(Integer projectId, AssignmentStatus status);
+        long countByProject_ProjectIdAndStatus(Integer projectId, AssignmentStatus status);
 
-    List<ResourceAssignment> findByStatusAndEndDateBefore(AssignmentStatus status, LocalDate date);
+        List<ResourceAssignment> findByStatusAndEndDateBefore(AssignmentStatus status, LocalDate date);
+
+        void deleteByProject_ProjectId(Integer projectId);
 }

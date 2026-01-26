@@ -21,4 +21,6 @@ public interface AssignmentRequestRepository extends JpaRepository<AssignmentReq
 
     boolean existsByAssignmentIdAndRequestTypeAndStatus(Integer assignmentId, RequestType requestType,
             RequestStatus status);
+
+    void deleteByProject_ProjectId(Integer projectId);
 }

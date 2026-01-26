@@ -1183,7 +1183,7 @@ const AdminResources = () => {
                                                             {/* Tooltip */}
                                                             {hoveredProject === `project${i}` && (
                                                                 <div
-                                                                    className="absolute z-10 bg-white rounded-lg shadow-xl p-4 border border-gray-200"
+                                                                    className="absolute z-50 bg-white rounded-lg shadow-xl p-4 border border-gray-200"
                                                                     style={{
                                                                         top: '-120px',
                                                                         left: '50%',
