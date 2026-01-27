@@ -69,12 +69,24 @@ const DevmanProject = () => {
     const [selectedProject, setSelectedProject] = useState(null);
     const [projectResources, setProjectResources] = useState([]);
     const [loadingResources, setLoadingResources] = useState(false);
+    const [pendingRequests, setPendingRequests] = useState([]);
 
     const fetchProjectResources = async (projectId) => {
         try {
             setLoadingResources(true);
-            const response = await api.get(`/projects/${projectId}/resources`);
-            setProjectResources(response.data);
+
+            // Fetch resources (required)
+            const resourcesResponse = await api.get(`/projects/${projectId}/resources`);
+            setProjectResources(resourcesResponse.data);
+
+            // Fetch pending requests (optional - don't fail if this endpoint has issues)
+            try {
+                const pendingResponse = await api.get(`/requests/project/${projectId}/pending`);
+                setPendingRequests(pendingResponse.data);
+            } catch (pendingError) {
+                console.warn('Failed to fetch pending requests, continuing without them:', pendingError);
+                setPendingRequests([]); // Set to empty array if fetch fails
+            }
         } catch (error) {
             console.error('Error fetching project resources:', error);
             showNotification('Failed to fetch project resources', 'error');
@@ -120,6 +132,7 @@ const DevmanProject = () => {
             });
             showNotification('Extension request submitted for approval!', 'success');
             setShowExtendModal(false);
+            fetchProjectResources(selectedProject.projectId);
         } catch (error) {
             console.error('Error extending assignment:', error);
             showNotification(error.response?.data?.message || 'Failed to extend assignment', 'error');
@@ -140,6 +153,7 @@ const DevmanProject = () => {
             });
             showNotification('Release request submitted for approval!', 'success');
             setShowReleaseModal(false);
+            fetchProjectResources(selectedProject.projectId);
         } catch (error) {
             console.error('Error releasing assignment:', error);
             showNotification(error.response?.data?.message || 'Failed to release assignment', 'error');
@@ -291,24 +305,31 @@ const DevmanProject = () => {
             )}
 
             <div className="flex-1 p-8 ml-[267px]">
-                <div className="flex justify-between items-center mb-8">
+                <div className="mb-8">
                     <h1 className="text-4xl font-bold text-gray-800">Projects</h1>
-                    <div className="flex items-center gap-4">
-                        <button onClick={handleExport} className="px-6 py-2 bg-white text-gray-700 rounded-lg font-bold border border-gray-200">Export</button>
-                        <button onClick={() => setShowNewProjectModal(true)} className="px-6 py-2 bg-[#00B4D8] text-white rounded-lg font-bold">+ Propose Project</button>
-                    </div>
                 </div>
 
-                {/* Filters */}
+                {/* Toolbar */}
                 <div className="flex items-center justify-between mb-8">
-                    <div className="flex bg-white rounded-lg p-1 shadow-sm border border-gray-100">
-                        {filterTabs.map(tab => (
-                            <button key={tab} onClick={() => setActiveFilter(tab)} className={`px-6 py-2 rounded-md font-bold ${activeFilter === tab ? 'bg-[#00B4D8] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}>{tab}</button>
-                        ))}
-                    </div>
+                    {/* Left: Search */}
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <input type="text" placeholder="Find projects..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 pr-4 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B4D8]" />
+                    </div>
+
+                    {/* Right: Filters & Actions */}
+                    <div className="flex items-center gap-4">
+                        <div className="flex bg-white rounded-lg p-1 shadow-sm border border-gray-100">
+                            {filterTabs.map(tab => (
+                                <button key={tab} onClick={() => setActiveFilter(tab)} className={`px-6 py-2 rounded-md font-bold ${activeFilter === tab ? 'bg-[#00B4D8] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}>{tab}</button>
+                            ))}
+                        </div>
+
+                        {/* Separator */}
+                        <div className="h-10 w-px bg-gray-200 mx-2"></div>
+
+                        <button onClick={handleExport} className="px-6 py-2 bg-white text-gray-700 rounded-lg font-bold border border-gray-200">Export</button>
+                        <button onClick={() => setShowNewProjectModal(true)} className="px-6 py-2 bg-[#00B4D8] text-white rounded-lg font-bold">+ Propose Project</button>
                     </div>
                 </div>
 
@@ -392,8 +413,21 @@ const DevmanProject = () => {
                                             </td>
                                             <td className="px-6 py-6 text-center">
                                                 <div className="flex justify-center gap-2">
-                                                    <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] hover:bg-[#F97316]/20">EXTEND</button>
-                                                    <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] hover:bg-[#FF0000]/20">RELEASE</button>
+                                                    {res.status === 'RELEASED' ? (
+                                                        // Show dash for released assignments
+                                                        <span className="text-gray-400 text-xs font-bold">-</span>
+                                                    ) : pendingRequests.some(req => req.assignmentId && String(req.assignmentId) === String(res.assignmentId)) ? (
+                                                        // Show "Pending" badge if there's any pending request for this assignment
+                                                        <span className="px-4 py-1.5 rounded-full bg-yellow-100 text-yellow-700 font-bold text-[10px]">
+                                                            PENDING
+                                                        </span>
+                                                    ) : res.status === 'ACTIVE' ? (
+                                                        // Show buttons only if ACTIVE and no pending requests
+                                                        <>
+                                                            <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] hover:bg-[#F97316]/20">EXTEND</button>
+                                                            <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] hover:bg-[#FF0000]/20">RELEASE</button>
+                                                        </>
+                                                    ) : null}
                                                 </div>
                                             </td>
                                         </tr>

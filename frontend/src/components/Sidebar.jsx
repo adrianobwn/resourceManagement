@@ -26,6 +26,12 @@ const Sidebar = () => {
             path: '/project',
             icon: Folder,
         },
+        // Only show DevMan menu for Admin (not for DevMan/PM)
+        ...(!isDevMan ? [{
+            name: 'DevMan',
+            path: '/devman',
+            icon: Users, // Or another icon like UserCog if available, reusing Users for now
+        }] : []),
         {
             name: 'Resources',
             path: '/resources',

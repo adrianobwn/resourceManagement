@@ -12,6 +12,7 @@ public class ProjectListResponse {
     private String projectName;
     private String clientName;
     private String pmName;
+    private Integer pmId;
     private Integer memberCount;
     private String status;
 }

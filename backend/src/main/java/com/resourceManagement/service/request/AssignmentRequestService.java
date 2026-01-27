@@ -161,6 +161,14 @@ public class AssignmentRequestService {
         }
     }
 
+    public List<AssignmentRequest> getPendingRequestsByProject(Integer projectId) {
+        // Find all PENDING requests (EXTEND/RELEASE) for assignments in this project
+        return requestRepository.findByProject_ProjectIdAndStatus(projectId, RequestStatus.PENDING)
+                .stream()
+                .filter(req -> req.getRequestType() == RequestType.EXTEND || req.getRequestType() == RequestType.RELEASE)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
     @Transactional
     public void approveRequest(Integer requestId) {
          AssignmentRequest req = requestRepository.findById(requestId)
@@ -176,12 +184,28 @@ public class AssignmentRequestService {
              dto.setNewEndDate(req.getNewEndDate());
              dto.setReason(req.getReason());
              resourceAssignmentService.extendAssignment(dto);
+             
+             // Log with REQUESTER as performer (PM who submitted the request)
+             String desc = String.format("Extended assignment until %s - %s", 
+                 req.getNewEndDate(), 
+                 req.getReason() != null ? req.getReason() : "");
+             logToHistory(req.getRequester(), EntityType.ASSIGNMENT, "EXTEND", desc, 
+                         req.getProject(), req.getResource(), req.getRole());
+                         
          } else if (req.getRequestType() == RequestType.RELEASE) {
              ReleaseAssignmentRequest dto = new ReleaseAssignmentRequest();
              dto.setAssignmentId(req.getAssignmentId());
              dto.setReleaseDate(req.getNewEndDate());
              dto.setReason(req.getReason());
              resourceAssignmentService.releaseAssignment(dto);
+             
+             // Log with REQUESTER as performer (PM who submitted the request)
+             String desc = String.format("Released from project on %s - %s", 
+                 req.getNewEndDate(),
+                 req.getReason() != null ? req.getReason() : "");
+             logToHistory(req.getRequester(), EntityType.ASSIGNMENT, "RELEASE", desc, 
+                         req.getProject(), req.getResource(), req.getRole());
+                         
          } else if (req.getRequestType() == RequestType.PROJECT) {
              // Create project
              Project project = Project.builder()
@@ -212,6 +236,11 @@ public class AssignmentRequestService {
                  }
              }
          } else if (req.getRequestType() == RequestType.ASSIGN) {
+             // Validate project status - cannot assign to closed projects
+             if (req.getProject().getStatus() == ProjectStatus.CLOSED) {
+                 throw new RuntimeException("Cannot assign resources to a CLOSED project");
+             }
+             
              ResourceAssignment assignment = ResourceAssignment.builder()
                      .project(req.getProject())
                      .resource(req.getResource())
@@ -230,10 +259,6 @@ public class AssignmentRequestService {
          
          req.setStatus(RequestStatus.APPROVED);
          requestRepository.save(req);
-
-         // Log to History
-         String desc = String.format("Approved %s request by %s", req.getRequestType(), req.getRequester().getName());
-         logToHistory(getCurrentUser(), EntityType.REQUEST, "APPROVE", desc, req.getProject(), req.getResource(), req.getRole());
     }
 
     private User getCurrentUser() {

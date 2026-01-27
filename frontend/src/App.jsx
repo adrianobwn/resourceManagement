@@ -7,6 +7,7 @@ import AdminResources from './pages/AdminResources';
 import DevmanResources from './pages/DevmanResources';
 import AdminProject from './pages/AdminProject';
 import DevmanProject from './pages/DevmanProject';
+import AdminDevman from './pages/AdminDevman';
 import AdminActivities from './pages/AdminActivities';
 import DevmanActivities from './pages/DevmanActivities';
 
@@ -62,6 +63,9 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/dashboard" element={<DashboardWrapper />} />
         <Route path="/project" element={<ProjectWrapper />} />
+        <Route path="/devman" element={
+          useUserRole().isDevman ? <Navigate to="/dashboard" /> : <AdminDevman />
+        } />
         <Route path="/resources" element={<ResourcesWrapper />} />
         <Route path="/activities" element={<ActivitiesWrapper />} />
       </Routes>

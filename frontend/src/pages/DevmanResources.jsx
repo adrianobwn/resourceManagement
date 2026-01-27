@@ -10,7 +10,7 @@ const DevmanResources = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
     const [roleFilter, setRoleFilter] = useState('all');
-    const [dateFilter, setDateFilter] = useState({ startDate: '', endDate: '' });
+    const [dateFilter, setDateFilter] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [notification, setNotification] = useState({ show: false, message: '' });
     const [detailModal, setDetailModal] = useState({ show: false, resource: null, projects: [] });
@@ -60,42 +60,73 @@ const DevmanResources = () => {
         }
     };
 
-    const handleDateFilterChange = (field, value) => {
-        if (field === 'startDate' && dateFilter.endDate && value > dateFilter.endDate) {
-            setNotification({ show: true, message: 'Start Date cannot be later than End Date' });
-            setTimeout(() => setNotification({ show: false, message: '' }), 3000);
-            return;
-        }
-        if (field === 'endDate' && dateFilter.startDate && value < dateFilter.startDate) {
-            setNotification({ show: true, message: 'End Date cannot be earlier than Start Date' });
-            setTimeout(() => setNotification({ show: false, message: '' }), 3000);
-            return;
-        }
-        setDateFilter(prev => ({ ...prev, [field]: value }));
+    const handleDateFilterChange = (e) => {
+        setDateFilter(e.target.value);
     };
 
 
 
     useEffect(() => {
-        let result = resources;
+        // Start with all resources
+        let result = resources.map(r => ({ ...r })); // create shallow copy
 
-        // Filter by status
+        // 1. Apply DATE FILTER first to determine status/availability on that specific date
+        if (dateFilter) {
+            const selectedDate = new Date(dateFilter);
+            selectedDate.setHours(0, 0, 0, 0);
+
+            result = result.map(resource => {
+                // Check if resource has an active assignment on the selected date
+                const activeAssignmentOnDate = resource.currentAssignments?.find(assignment => {
+                    const start = new Date(assignment.startDate);
+                    start.setHours(0, 0, 0, 0);
+                    const end = new Date(assignment.endDate);
+                    end.setHours(0, 0, 0, 0);
+
+                    // Check if selected date is within range [start, end]
+                    return selectedDate >= start && selectedDate <= end && assignment.assignmentStatus === 'ACTIVE';
+                });
+
+                if (activeAssignmentOnDate) {
+                    return {
+                        ...resource,
+                        status: 'ASSIGNED',
+                        // Store the role for this specific date for role filtering later
+                        _dateSpecificRole: activeAssignmentOnDate.projectRole
+                    };
+                } else {
+                    return {
+                        ...resource,
+                        status: 'AVAILABLE',
+                        _dateSpecificRole: null
+                    };
+                }
+            });
+        }
+
+        // 2. Filter by status
         if (activeFilter !== 'all') {
             result = result.filter(
                 (r) => r.status.toLowerCase() === activeFilter.toLowerCase()
             );
         }
 
-        // Filter by search query
+        // 3. Filter by search query
         if (searchQuery) {
             result = result.filter((r) =>
                 r.resourceName.toLowerCase().includes(searchQuery.toLowerCase())
             );
         }
 
-        // Filter by role (based on past/current project assignments)
+        // 4. Filter by role
         if (roleFilter !== 'all') {
             result = result.filter((r) => {
+                // If date is selected, use the specific role determined above
+                if (dateFilter) {
+                    return r._dateSpecificRole === roleFilter;
+                }
+
+                // Fallback to original logic: check any current assignment
                 if (!r.currentAssignments || r.currentAssignments.length === 0) {
                     return false;
                 }
@@ -106,7 +137,7 @@ const DevmanResources = () => {
         }
 
         setFilteredResources(result);
-    }, [searchQuery, activeFilter, roleFilter, resources]);
+    }, [searchQuery, activeFilter, roleFilter, resources, dateFilter]);
 
     const showNotification = (message, type = 'info') => {
         setNotification({ show: true, message, type, closing: false });
@@ -499,11 +530,13 @@ const DevmanResources = () => {
                                             style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 35px 0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
                                         >
                                             <option value="">Select project</option>
-                                            {projects.map(project => (
-                                                <option key={project.projectId} value={project.projectId}>
-                                                    {project.projectName}
-                                                </option>
-                                            ))}
+                                            {projects
+                                                .filter(project => project.status !== 'CLOSED')
+                                                .map(project => (
+                                                    <option key={project.projectId} value={project.projectId}>
+                                                        {project.projectName}
+                                                    </option>
+                                                ))}
                                         </select>
                                         <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -693,138 +726,143 @@ const DevmanResources = () => {
                                     })()}
                                 </div>
 
-                                {/* Project Timeline Rows */}
-                                <div className="space-y-0">
-                                    {(() => {
-                                        const now = new Date();
-                                        const currentMonth = now.getMonth();
-                                        const currentYear = now.getFullYear();
-                                        const startDate = new Date(currentYear, currentMonth - 4, 1);
-                                        const assignments = trackRecordModal.resource?.currentAssignments || [];
+                                {/* Scrollable Container for Rows */}
+                                <div className="overflow-y-auto" style={{ height: '470.4px' }}>
+                                    <div className="space-y-0 relative">
+                                        {(() => {
+                                            const now = new Date();
+                                            const currentMonth = now.getMonth();
+                                            const currentYear = now.getFullYear();
+                                            const startDate = new Date(currentYear, currentMonth - 4, 1);
+                                            const assignments = trackRecordModal.resource?.currentAssignments || [];
+                                            const totalRows = Math.max(4, assignments.length);
 
-                                        // Function to calculate position based on date
-                                        const getMonthPosition = (date) => {
-                                            const d = new Date(date);
-                                            const monthDiff = (d.getFullYear() - startDate.getFullYear()) * 12 + (d.getMonth() - startDate.getMonth());
-                                            return Math.max(0, Math.min(9, monthDiff));
-                                        };
+                                            // Function to calculate position based on date
+                                            const getMonthPosition = (date) => {
+                                                const d = new Date(date);
+                                                const monthDiff = (d.getFullYear() - startDate.getFullYear()) * 12 + (d.getMonth() - startDate.getMonth());
+                                                return Math.max(0, Math.min(9, monthDiff));
+                                            };
 
-                                        // Function to get project color based on status or if project ended
-                                        const getProjectColor = (assignment) => {
-                                            const endDate = new Date(assignment.endDate);
-                                            if (endDate < now) {
-                                                return '#FF0000'; // Closed (past)
-                                            }
-                                            return '#06D001'; // Ongoing (current/future)
-                                        };
+                                            // Function to get project color based on status
+                                            const getProjectColor = (assignment) => {
+                                                if (assignment.projectStatus === 'CLOSED' || assignment.assignmentStatus === 'RELEASED') {
+                                                    return '#FF0000'; // Closed
+                                                }
+                                                if (assignment.projectStatus === 'HOLD') {
+                                                    return '#F97316'; // Hold
+                                                }
+                                                return '#06D001'; // Ongoing
+                                            };
 
-                                        // Create 4 rows - fill with assignments first, then empty rows
-                                        const rows = [];
-                                        for (let i = 0; i < 4; i++) {
-                                            const assignment = assignments[i];
-                                            if (assignment) {
-                                                const startPos = getMonthPosition(assignment.startDate);
-                                                const endPos = getMonthPosition(assignment.endDate) + 1;
-                                                const width = ((endPos - startPos) / 9) * 100;
-                                                const left = (startPos / 9) * 100;
-                                                const color = getProjectColor(assignment);
-                                                const startDateObj = new Date(assignment.startDate);
-                                                const endDateObj = new Date(assignment.endDate);
-                                                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                                            // Create dynamic rows
+                                            const rows = [];
+                                            for (let i = 0; i < totalRows; i++) {
+                                                const assignment = assignments[i];
+                                                if (assignment) {
+                                                    const startPos = getMonthPosition(assignment.startDate);
+                                                    const endPos = getMonthPosition(assignment.endDate) + 1;
+                                                    const width = ((endPos - startPos) / 9) * 100;
+                                                    const left = (startPos / 9) * 100;
+                                                    const color = getProjectColor(assignment);
+                                                    const startDateObj = new Date(assignment.startDate);
+                                                    const endDateObj = new Date(assignment.endDate);
+                                                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-                                                rows.push(
-                                                    <div key={i} className="relative" style={{ height: '117.6px' }}>
-                                                        <div className="grid grid-cols-9 h-full">
-                                                            {Array.from({ length: 9 }).map((_, index) => (
-                                                                <div
-                                                                    key={index}
-                                                                    className="border-r border-b border-l border-gray-300"
-                                                                    style={{
-                                                                        borderBottomLeftRadius: i === 3 && index === 0 ? '8px' : '0',
-                                                                        borderBottomRightRadius: i === 3 && index === 8 ? '8px' : '0'
-                                                                    }}
-                                                                ></div>
-                                                            ))}
-                                                        </div>
-                                                        <div
-                                                            className="absolute flex items-center justify-center rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                                            style={{
-                                                                left: `${left}%`,
-                                                                width: `${Math.min(width, 100 - left)}%`,
-                                                                height: '60px',
-                                                                top: '50%',
-                                                                transform: 'translateY(-50%)',
-                                                                backgroundColor: color
-                                                            }}
-                                                            onMouseEnter={() => setHoveredProject(`project${i}`)}
-                                                            onMouseLeave={() => setHoveredProject(null)}
-                                                        >
-                                                            <span className="font-bold text-white text-center px-4 truncate" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
-                                                                {assignment.projectName} • {assignment.projectRole}
-                                                            </span>
-
-                                                            {/* Tooltip */}
-                                                            {hoveredProject === `project${i}` && (
-                                                                <div
-                                                                    className="absolute z-10 bg-white rounded-lg shadow-xl p-4 border border-gray-200"
-                                                                    style={{
-                                                                        top: '-120px',
-                                                                        left: '50%',
-                                                                        transform: 'translateX(-50%)',
-                                                                        width: '300px',
-                                                                        fontFamily: 'SF Pro Display'
-                                                                    }}
-                                                                >
-                                                                    <div className="space-y-2">
-                                                                        <h4 className="font-bold text-black" style={{ fontSize: '16px' }}>{assignment.projectName}</h4>
-                                                                        <div className="text-sm text-gray-700">
-                                                                            <p><span className="font-semibold">Role:</span> {assignment.projectRole}</p>
-                                                                            <p><span className="font-semibold">Start:</span> {monthNames[startDateObj.getMonth()]} {startDateObj.getFullYear()}</p>
-                                                                            <p><span className="font-semibold">End:</span> {monthNames[endDateObj.getMonth()]} {endDateObj.getFullYear()}</p>
-                                                                            <p><span className="font-semibold">Status:</span> <span className={endDateObj < now ? 'text-red-600 font-bold' : 'text-green-600 font-bold'}>{endDateObj < now ? 'Closed' : 'Ongoing'}</span></p>
-                                                                        </div>
-                                                                    </div>
-                                                                    {/* Arrow */}
+                                                    rows.push(
+                                                        <div key={i} className="relative" style={{ height: '117.6px' }}>
+                                                            <div className="grid grid-cols-9 h-full">
+                                                                {Array.from({ length: 9 }).map((_, index) => (
                                                                     <div
-                                                                        className="absolute"
+                                                                        key={index}
+                                                                        className="border-r border-b border-l border-gray-300"
                                                                         style={{
-                                                                            bottom: '-8px',
-                                                                            left: '50%',
-                                                                            transform: 'translateX(-50%)',
-                                                                            width: '0',
-                                                                            height: '0',
-                                                                            borderLeft: '8px solid transparent',
-                                                                            borderRight: '8px solid transparent',
-                                                                            borderTop: '8px solid white'
+                                                                            borderBottomLeftRadius: i === totalRows - 1 && index === 0 ? '8px' : '0',
+                                                                            borderBottomRightRadius: i === totalRows - 1 && index === 8 ? '8px' : '0'
                                                                         }}
                                                                     ></div>
-                                                                </div>
-                                                            )}
+                                                                ))}
+                                                            </div>
+                                                            <div
+                                                                className="absolute flex items-center justify-center rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                                                style={{
+                                                                    left: `${left}%`,
+                                                                    width: `${Math.min(width, 100 - left)}%`,
+                                                                    height: '60px',
+                                                                    top: '50%',
+                                                                    transform: 'translateY(-50%)',
+                                                                    backgroundColor: color
+                                                                }}
+                                                                onMouseEnter={() => setHoveredProject(`project${i}`)}
+                                                                onMouseLeave={() => setHoveredProject(null)}
+                                                            >
+                                                                <span className="font-bold text-white text-center px-4 truncate" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
+                                                                    {assignment.projectName} • {assignment.projectRole}
+                                                                </span>
+
+                                                                {/* Tooltip */}
+                                                                {hoveredProject === `project${i}` && (
+                                                                    <div
+                                                                        className="absolute z-10 bg-white rounded-lg shadow-xl p-4 border border-gray-200"
+                                                                        style={{
+                                                                            top: '-120px',
+                                                                            left: '50%',
+                                                                            transform: 'translateX(-50%)',
+                                                                            width: '300px',
+                                                                            fontFamily: 'SF Pro Display'
+                                                                        }}
+                                                                    >
+                                                                        <div className="space-y-2">
+                                                                            <h4 className="font-bold text-black" style={{ fontSize: '16px' }}>{assignment.projectName}</h4>
+                                                                            <div className="text-sm text-gray-700">
+                                                                                <p><span className="font-semibold">Role:</span> {assignment.projectRole}</p>
+                                                                                <p><span className="font-semibold">Start:</span> {monthNames[startDateObj.getMonth()]} {startDateObj.getFullYear()}</p>
+                                                                                <p><span className="font-semibold">End:</span> {monthNames[endDateObj.getMonth()]} {endDateObj.getFullYear()}</p>
+                                                                                <p><span className="font-semibold">Status:</span> <span className={endDateObj < now ? 'text-red-600 font-bold' : 'text-green-600 font-bold'}>{endDateObj < now ? 'Closed' : 'Ongoing'}</span></p>
+                                                                            </div>
+                                                                        </div>
+                                                                        {/* Arrow */}
+                                                                        <div
+                                                                            className="absolute"
+                                                                            style={{
+                                                                                bottom: '-8px',
+                                                                                left: '50%',
+                                                                                transform: 'translateX(-50%)',
+                                                                                width: '0',
+                                                                                height: '0',
+                                                                                borderLeft: '8px solid transparent',
+                                                                                borderRight: '8px solid transparent',
+                                                                                borderTop: '8px solid white'
+                                                                            }}
+                                                                        ></div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                );
-                                            } else {
-                                                // Empty row
-                                                rows.push(
-                                                    <div key={i} className="relative" style={{ height: '117.6px' }}>
-                                                        <div className="grid grid-cols-9 h-full">
-                                                            {Array.from({ length: 9 }).map((_, index) => (
-                                                                <div
-                                                                    key={index}
-                                                                    className="border-r border-b border-l border-gray-300"
-                                                                    style={{
-                                                                        borderBottomLeftRadius: i === 3 && index === 0 ? '8px' : '0',
-                                                                        borderBottomRightRadius: i === 3 && index === 8 ? '8px' : '0'
-                                                                    }}
-                                                                ></div>
-                                                            ))}
+                                                    );
+                                                } else {
+                                                    // Empty row
+                                                    rows.push(
+                                                        <div key={i} className="relative" style={{ height: '117.6px' }}>
+                                                            <div className="grid grid-cols-9 h-full">
+                                                                {Array.from({ length: 9 }).map((_, index) => (
+                                                                    <div
+                                                                        key={index}
+                                                                        className="border-r border-b border-l border-gray-300"
+                                                                        style={{
+                                                                            borderBottomLeftRadius: i === totalRows - 1 && index === 0 ? '8px' : '0',
+                                                                            borderBottomRightRadius: i === totalRows - 1 && index === 8 ? '8px' : '0'
+                                                                        }}
+                                                                    ></div>
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                );
+                                                    );
+                                                }
                                             }
-                                        }
-                                        return rows;
-                                    })()}
+                                            return rows;
+                                        })()}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -907,27 +945,14 @@ const DevmanResources = () => {
                             </svg>
                         </div>
 
-                        {/* Date Range Pickers */}
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="date"
-                                placeholder="Start Date"
-                                value={dateFilter.startDate}
-                                onChange={(e) => handleDateFilterChange('startDate', e.target.value)}
-                                className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
-                                style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
-                            />
-                            <span className="text-gray-500 font-medium" style={{ fontFamily: 'SF Pro Display' }}>to</span>
-                            <input
-                                type="date"
-                                placeholder="End Date"
-                                value={dateFilter.endDate}
-                                onChange={(e) => handleDateFilterChange('endDate', e.target.value)}
-                                max={new Date().toISOString().split('T')[0]} // Optional: Prevent future dates if needed, but not requested
-                                className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
-                                style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
-                            />
-                        </div>
+                        {/* Single Date Picker */}
+                        <input
+                            type="date"
+                            value={dateFilter}
+                            onChange={handleDateFilterChange}
+                            className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
+                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
+                        />
 
                         {/* Role Filter Dropdown */}
                         <div className="relative">
