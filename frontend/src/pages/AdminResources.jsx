@@ -11,7 +11,7 @@ const AdminResources = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
     const [roleFilter, setRoleFilter] = useState('all');
-    const [dateFilter, setDateFilter] = useState({ startDate: '', endDate: '' });
+    const [dateFilter, setDateFilter] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [notification, setNotification] = useState({ show: false, message: '' });
     const [detailModal, setDetailModal] = useState({ show: false, resource: null, projects: [] });
@@ -75,42 +75,74 @@ const AdminResources = () => {
         }
     };
 
-    const handleDateFilterChange = (field, value) => {
-        if (field === 'startDate' && dateFilter.endDate && value > dateFilter.endDate) {
-            setNotification({ show: true, message: 'Start Date cannot be later than End Date' });
-            setTimeout(() => setNotification({ show: false, message: '' }), 3000);
-            return;
-        }
-        if (field === 'endDate' && dateFilter.startDate && value < dateFilter.startDate) {
-            setNotification({ show: true, message: 'End Date cannot be earlier than Start Date' });
-            setTimeout(() => setNotification({ show: false, message: '' }), 3000);
-            return;
-        }
-        setDateFilter(prev => ({ ...prev, [field]: value }));
+    const handleDateFilterChange = (e) => {
+        setDateFilter(e.target.value);
     };
 
-
-
     useEffect(() => {
-        let result = resources;
+        // Start with all resources
+        let result = resources.map(r => ({ ...r })); // create shallow copy
 
-        // Filter by status
+        // 1. apply DATE FILTER first to determine status/availability on that specific date
+        if (dateFilter) {
+            const selectedDate = new Date(dateFilter);
+            selectedDate.setHours(0, 0, 0, 0);
+
+            result = result.map(resource => {
+                // Check if resource has an active assignment on the selected date
+                const activeAssignmentOnDate = resource.currentAssignments?.find(assignment => {
+                    const start = new Date(assignment.startDate);
+                    start.setHours(0, 0, 0, 0);
+                    const end = new Date(assignment.endDate);
+                    end.setHours(0, 0, 0, 0);
+
+                    // Check if selected date is within range [start, end]
+                    // Also check assignmentStatus if needed, but usually date range + ACTIVE status is enough
+                    // Assuming we only care about 'ACTIVE' assignments or similar. 
+                    // If the backend returns all history, we should check status too.
+                    return selectedDate >= start && selectedDate <= end && assignment.assignmentStatus === 'ACTIVE';
+                });
+
+                if (activeAssignmentOnDate) {
+                    return {
+                        ...resource,
+                        status: 'ASSIGNED',
+                        // Store the role for this specific date for role filtering later
+                        _dateSpecificRole: activeAssignmentOnDate.projectRole
+                    };
+                } else {
+                    return {
+                        ...resource,
+                        status: 'AVAILABLE',
+                        _dateSpecificRole: null
+                    };
+                }
+            });
+        }
+
+        // 2. Filter by status
         if (activeFilter !== 'all') {
             result = result.filter(
                 (r) => r.status.toLowerCase() === activeFilter.toLowerCase()
             );
         }
 
-        // Filter by search query
+        // 3. Filter by search query
         if (searchQuery) {
             result = result.filter((r) =>
                 r.resourceName.toLowerCase().includes(searchQuery.toLowerCase())
             );
         }
 
-        // Filter by role (based on past/current project assignments)
+        // 4. Filter by role
         if (roleFilter !== 'all') {
             result = result.filter((r) => {
+                // If date is selected, use the specific role determined above
+                if (dateFilter) {
+                    return r._dateSpecificRole === roleFilter;
+                }
+
+                // Fallback to original logic: check any current assignment
                 if (!r.currentAssignments || r.currentAssignments.length === 0) {
                     return false;
                 }
@@ -121,7 +153,7 @@ const AdminResources = () => {
         }
 
         setFilteredResources(result);
-    }, [searchQuery, activeFilter, roleFilter, resources]);
+    }, [searchQuery, activeFilter, roleFilter, resources, dateFilter]);
 
     const showNotification = (message, type = 'info') => {
         setNotification({ show: true, message, type, closing: false });
@@ -1312,16 +1344,8 @@ const AdminResources = () => {
                         <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-gray-200 shadow-sm">
                             <input
                                 type="date"
-                                value={dateFilter.startDate}
-                                onChange={(e) => handleDateFilterChange('startDate', e.target.value)}
-                                className="px-3 py-1.5 border-none bg-transparent focus:ring-0 font-bold text-xs"
-                                style={{ fontFamily: 'SF Pro Display' }}
-                            />
-                            <span className="text-gray-400 font-bold text-xs italic">to</span>
-                            <input
-                                type="date"
-                                value={dateFilter.endDate}
-                                onChange={(e) => handleDateFilterChange('endDate', e.target.value)}
+                                value={dateFilter}
+                                onChange={handleDateFilterChange}
                                 className="px-3 py-1.5 border-none bg-transparent focus:ring-0 font-bold text-xs"
                                 style={{ fontFamily: 'SF Pro Display' }}
                             />

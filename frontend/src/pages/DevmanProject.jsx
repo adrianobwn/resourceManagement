@@ -244,6 +244,19 @@ const DevmanProject = () => {
         }
     };
 
+    const getStatusLabel = (status) => {
+        switch (status) {
+            case 'ON_GOING':
+                return 'ONGOING';
+            case 'HOLD':
+                return 'HOLD';
+            case 'CLOSED':
+                return 'CLOSED';
+            default:
+                return status;
+        }
+    };
+
     const filteredProjects = projects.filter(p => {
         const matchesStatus = activeFilter === 'All' ||
             (activeFilter === 'Ongoing' && p.status === 'ON_GOING') ||
@@ -317,7 +330,7 @@ const DevmanProject = () => {
                                 </div>
                                 <div className="flex items-center gap-8">
                                     <div className="text-right">
-                                        <span className="text-xs px-3 py-1 rounded-full font-bold" style={getStatusBadgeStyle(project.status)}>{project.status}</span>
+                                        <span className="text-xs px-3 py-1 rounded-full font-bold" style={getStatusBadgeStyle(project.status)}>{getStatusLabel(project.status)}</span>
                                         <p className="text-gray-400 text-sm mt-2 font-medium">{project.memberCount} Members</p>
                                     </div>
                                     <button onClick={() => handleViewDetail(project)} className="px-6 py-2 bg-[#E6F2F1] text-[#00B4D8] rounded-lg font-bold hover:bg-[#CAF0F8]">View Detail</button>
@@ -338,8 +351,11 @@ const DevmanProject = () => {
 
                         <div className="flex items-center gap-4 mb-2">
                             <h2 className="text-3xl font-bold text-gray-800">{selectedProject.projectName}</h2>
-                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-600">
-                                {selectedProject.status === 'ON_GOING' ? 'ONGOING' : selectedProject.status}
+                            <span
+                                className="px-3 py-1 rounded-full text-xs font-bold"
+                                style={getStatusBadgeStyle(selectedProject.status)}
+                            >
+                                {getStatusLabel(selectedProject.status)}
                             </span>
                         </div>
 
@@ -357,6 +373,7 @@ const DevmanProject = () => {
                                 <thead className="border-b border-gray-200 text-left">
                                     <tr>
                                         <th className="px-6 py-4 font-bold text-gray-700 text-center">Name</th>
+                                        <th className="px-6 py-4 font-bold text-center text-gray-700">Role</th>
                                         <th className="px-6 py-4 font-bold text-center text-gray-700">Period</th>
                                         <th className="px-6 py-4 font-bold text-center text-gray-700">Status</th>
                                         <th className="px-6 py-4 font-bold text-center text-gray-700">Action</th>
@@ -366,6 +383,7 @@ const DevmanProject = () => {
                                     {projectResources.map((res, idx) => (
                                         <tr key={idx} className="border-b border-gray-50 last:border-none">
                                             <td className="px-6 py-6 font-bold text-gray-800">{res.resourceName}</td>
+                                            <td className="px-6 py-6 text-center font-bold text-gray-600">{res.role}</td>
                                             <td className="px-6 py-6 text-center font-bold text-gray-800">{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
                                             <td className="px-6 py-6 text-center">
                                                 <span className="px-4 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-600">

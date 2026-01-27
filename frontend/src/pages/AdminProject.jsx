@@ -380,13 +380,13 @@ const AdminProject = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-gray-800 mb-1">{project.projectName}</h3>
-                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-[#00B4D8] font-bold">PM: {project.pmName}</span></p>
+                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-[#00B4D8] font-bold">{project.pmName}</span></p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-8">
                                     <div className="text-right">
-                                        <div
-                                            className="text-xs px-3 py-1 rounded-full font-bold cursor-pointer hover:opacity-80 transition-opacity"
+                                        <span
+                                            className="text-xs px-3 py-1 rounded-full font-bold cursor-pointer hover:opacity-80 transition-opacity inline-block"
                                             style={getStatusBadgeStyle(project.status)}
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -397,8 +397,8 @@ const AdminProject = () => {
                                             title={project.status !== 'CLOSED' ? `Click to switch to ${project.status === 'ON_GOING' ? 'HOLD' : 'ON_GOING'}` : ''}
                                         >
                                             {getStatusLabel(project.status)}
-                                        </div>
-                                        <p className="text-gray-400 text-sm mt-2 font-medium">{project.memberCount} Members assigned</p>
+                                        </span>
+                                        <p className="text-gray-400 text-sm mt-2 font-medium">{project.memberCount} Members</p>
                                     </div>
                                     <button
                                         onClick={() => handleViewDetail(project)}
@@ -423,12 +423,12 @@ const AdminProject = () => {
 
                         <div className="flex items-center gap-4 mb-2">
                             <h2 className="text-3xl font-bold text-gray-800">{selectedProject.projectName}</h2>
-                            <div
+                            <span
                                 className="px-3 py-1 rounded-full text-xs font-bold"
                                 style={getStatusBadgeStyle(selectedProject.status)}
                             >
                                 {getStatusLabel(selectedProject.status)}
-                            </div>
+                            </span>
                             {selectedProject.status !== 'CLOSED' && (
                                 <button
                                     onClick={() => handleToggleStatus(selectedProject.projectId, selectedProject.status)}
@@ -463,6 +463,7 @@ const AdminProject = () => {
                                     <thead className="border-b border-gray-200 text-left">
                                         <tr>
                                             <th className="px-6 py-4 font-bold text-gray-700 text-center">Name</th>
+                                            <th className="px-6 py-4 font-bold text-center text-gray-700">Role</th>
                                             <th className="px-6 py-4 font-bold text-center text-gray-700">Period</th>
                                             <th className="px-6 py-4 font-bold text-center text-gray-700">Status</th>
                                             <th className="px-6 py-4 font-bold text-center text-gray-100">Action</th>
@@ -472,6 +473,7 @@ const AdminProject = () => {
                                         {projectResources.map((res, idx) => (
                                             <tr key={idx} className="border-b border-gray-50 last:border-none">
                                                 <td className="px-6 py-6 font-bold text-gray-800">{res.resourceName}</td>
+                                                <td className="px-6 py-6 text-center font-bold text-gray-600">{res.role}</td>
                                                 <td className="px-6 py-6 text-center font-bold text-gray-800">{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
                                                 <td className="px-6 py-6 text-center">
                                                     <span
