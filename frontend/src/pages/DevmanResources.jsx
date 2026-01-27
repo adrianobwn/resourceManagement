@@ -168,11 +168,11 @@ const DevmanResources = () => {
             };
             await api.post('/resources/assign', assignData);
             closeAssignModal();
-            showNotification('Assigned Successfully!', 'success');
+            showNotification('Assignment request submitted for approval!', 'success');
             fetchResources(); // Refresh the list
         } catch (error) {
             console.error('Error assigning resource:', error);
-            showNotification(error.response?.data?.message || 'Failed to assign resource', 'error');
+            showNotification(error.response?.data?.message || 'Failed to submit assignment request', 'error');
         }
     };
 
@@ -582,6 +582,7 @@ const DevmanResources = () => {
                                                 <input
                                                     type="date"
                                                     value={assignmentData.endDate}
+                                                    min={assignmentData.startDate || ''}
                                                     onChange={(e) => setAssignmentData(prev => ({ ...prev, endDate: e.target.value }))}
                                                     className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
                                                     style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}

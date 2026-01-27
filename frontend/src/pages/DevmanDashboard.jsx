@@ -53,6 +53,17 @@ const DevmanDashboard = () => {
 
         setUser(JSON.parse(storedUser));
         fetchDashboardData();
+
+        // Refresh data when user returns to dashboard (tab/window focus)
+        const handleFocus = () => {
+            fetchDashboardData();
+        };
+
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            window.removeEventListener('focus', handleFocus);
+        };
     }, [navigate]);
 
     const fetchDashboardData = async () => {

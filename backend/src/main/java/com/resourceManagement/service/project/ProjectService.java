@@ -119,7 +119,7 @@ public class ProjectService {
                 return assignments.stream()
                                 .map(assignment -> com.resourceManagement.dto.project.ProjectResourceDto.builder()
                                                 .resourceName(assignment.getResource().getResourceName())
-                                                .role(assignment.getProjectRole())
+                                                .projectRole(assignment.getProjectRole())
                                                 .startDate(assignment.getStartDate())
                                                 .endDate(assignment.getEndDate())
                                                 .status(assignment.getStatus().name())

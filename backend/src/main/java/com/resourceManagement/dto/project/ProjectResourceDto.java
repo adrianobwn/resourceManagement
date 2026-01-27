@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Builder
 public class ProjectResourceDto {
     private String resourceName;
-    private String role;
+    private String projectRole;
     private LocalDate startDate;
     private LocalDate endDate;
     private String status;

@@ -4,10 +4,15 @@ import com.resourceManagement.dto.resource.AssignResourceRequest;
 import com.resourceManagement.dto.resource.CreateResourceRequest;
 import com.resourceManagement.dto.resource.ResourceResponse;
 import com.resourceManagement.service.resource.ResourceService;
+import com.resourceManagement.service.request.AssignmentRequestService;
+import com.resourceManagement.repository.UserRepository;
+import com.resourceManagement.model.entity.User;
+import com.resourceManagement.model.enums.UserType;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +23,8 @@ import java.util.List;
 public class ResourceController {
 
     private final ResourceService resourceService;
+    private final AssignmentRequestService requestService;
+    private final UserRepository userRepository;
 
     @GetMapping
     public ResponseEntity<List<ResourceResponse>> getAllResources() {
@@ -40,9 +47,17 @@ public class ResourceController {
 
     @PostMapping("/assign")
     // @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ResourceResponse> assignResource(@Valid @RequestBody AssignResourceRequest request) {
-        ResourceResponse resource = resourceService.assignResourceToProject(request);
-        return ResponseEntity.ok(resource);
+    public ResponseEntity<String> assignResource(@Valid @RequestBody AssignResourceRequest request) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email).orElseThrow();
+
+        if (user.getUserType() == UserType.PM) {
+            requestService.createAssignRequest(email, request);
+            return ResponseEntity.ok("Assignment request submitted successfully");
+        } else {
+            resourceService.assignResourceToProject(request);
+            return ResponseEntity.ok("Resource assigned successfully");
+        }
     }
 
     @GetMapping("/{resourceId}/assignments")

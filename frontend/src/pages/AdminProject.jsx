@@ -432,7 +432,7 @@ const AdminProject = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-gray-800 mb-1">{project.projectName}</h3>
-                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-gray-500 font-bold">PM: {project.pmName}</span></p>
+                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-gray-500 font-bold">DevMan: {project.pmName}</span></p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-8">
@@ -577,6 +577,7 @@ const AdminProject = () => {
                                     <thead className="bg-[#E6F2F1] border-b border-gray-200 text-left">
                                         <tr>
                                             <th className="px-6 py-4 font-bold text-gray-700 text-center rounded-tl-xl">Name</th>
+                                            <th className="px-6 py-4 font-bold text-center text-gray-700">Role</th>
                                             <th className="px-6 py-4 font-bold text-center text-gray-700">Period</th>
                                             <th className="px-6 py-4 font-bold text-center text-gray-700">Status</th>
                                             <th className="px-6 py-4 font-bold text-center text-gray-700 rounded-tr-xl">Action</th>
@@ -586,6 +587,7 @@ const AdminProject = () => {
                                         {projectResources.map((res, idx) => (
                                             <tr key={idx} className="border-b border-gray-200 last:border-none">
                                                 <td className="px-6 py-6 font-bold text-gray-800">{res.resourceName}</td>
+                                                <td className="px-6 py-6 text-center font-bold text-gray-800">{res.projectRole || '-'}</td>
                                                 <td className="px-6 py-6 text-center font-bold text-gray-800">{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
                                                 <td className="px-6 py-6 text-center">
                                                     <span className={`px-4 py-1 rounded-full text-[10px] font-bold border ${(res.status === 'RELEASED' || res.status === 'EXPIRED') ? 'bg-red-100 text-red-600 border-red-600' : 'bg-green-100 text-green-600 border-green-600'}`}>
