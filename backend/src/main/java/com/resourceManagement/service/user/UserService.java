@@ -32,7 +32,7 @@ public class UserService {
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .userType(UserType.PM)
+                .userType(UserType.DEV_MANAGER)
                 .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
@@ -47,7 +47,7 @@ public class UserService {
     }
 
     public List<PmListResponse> getAllPms() {
-        List<User> pms = userRepository.findByUserType(UserType.PM);
+        List<User> pms = userRepository.findByUserType(UserType.DEV_MANAGER);
         return pms.stream()
                 .map(pm -> PmListResponse.builder()
                         .userId(pm.getUserId())

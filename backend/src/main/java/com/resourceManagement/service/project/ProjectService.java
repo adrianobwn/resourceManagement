@@ -50,7 +50,7 @@ public class ProjectService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<Project> projects;
-        if (currentUser.getUserType() == UserType.PM) {
+        if (currentUser.getUserType() == UserType.DEV_MANAGER) {
             projects = projectRepository.findByPm_UserId(currentUser.getUserId());
         } else {
             projects = projectRepository.findAll();

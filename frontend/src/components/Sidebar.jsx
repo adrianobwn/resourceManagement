@@ -11,8 +11,7 @@ const Sidebar = () => {
 
     const isDevman = user.userType && (
         user.userType.toUpperCase().includes('DEV') ||
-        user.userType.toUpperCase().includes('MANAGER') ||
-        user.userType.toUpperCase() === 'PM'
+        user.userType.toUpperCase().includes('MANAGER')
     );
 
     useEffect(() => {

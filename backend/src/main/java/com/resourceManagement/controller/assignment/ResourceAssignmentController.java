@@ -43,7 +43,7 @@ public class ResourceAssignmentController {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByEmail(email).orElseThrow();
 
-        if (user.getUserType() == UserType.PM) {
+        if (user.getUserType() == UserType.DEV_MANAGER) {
             requestService.createExtendRequest(email, request);
             return ResponseEntity.ok("Extend request submitted successfully");
         } else {
@@ -57,7 +57,7 @@ public class ResourceAssignmentController {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByEmail(email).orElseThrow();
 
-        if (user.getUserType() == UserType.PM) {
+        if (user.getUserType() == UserType.DEV_MANAGER) {
             requestService.createReleaseRequest(email, request);
             return ResponseEntity.ok("Release request submitted successfully");
         } else {

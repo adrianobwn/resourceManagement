@@ -46,7 +46,7 @@ public class DataInitializer implements CommandLineRunner {
                                         .name("Project Manager")
                                         .email("pm@inteleq.com")
                                         .password(passwordEncoder.encode("password123"))
-                                        .userType(UserType.PM)
+                                        .userType(UserType.DEV_MANAGER)
                                         .accountStatus(AccountStatus.ACTIVE)
                                         .build();
                         userRepository.save(pm);

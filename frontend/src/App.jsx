@@ -20,8 +20,7 @@ const useUserRole = () => {
       const user = JSON.parse(userStr);
       isDevman = user.userType && (
         user.userType.toUpperCase().includes('DEV') ||
-        user.userType.toUpperCase().includes('MANAGER') ||
-        user.userType.toUpperCase() === 'PM'
+        user.userType.toUpperCase().includes('MANAGER')
       );
       console.log("App.jsx Debug: UserType:", user.userType, "IsDevman:", isDevman);
     } catch (e) {
