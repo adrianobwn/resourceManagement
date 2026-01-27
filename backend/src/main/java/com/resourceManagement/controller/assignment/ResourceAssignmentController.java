@@ -26,7 +26,7 @@ public class ResourceAssignmentController {
     private final UserRepository userRepository;
 
     @PostMapping
-    // @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResourceAssignment> createAssignment(@RequestBody ResourceAssignment assignment) {
         ResourceAssignment savedAssignment = assignmentService.assignResourceToProject(assignment);
         return ResponseEntity.ok(savedAssignment);

@@ -8,10 +8,8 @@ import com.resourceManagement.model.enums.ProjectStatus;
 import com.resourceManagement.repository.ProjectRepository;
 import com.resourceManagement.repository.ResourceAssignmentRepository;
 import com.resourceManagement.repository.UserRepository;
-import com.resourceManagement.repository.ResourceRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,150 +26,122 @@ import com.resourceManagement.model.enums.EntityType;
 @RequiredArgsConstructor
 public class ProjectService {
 
-        private final ProjectRepository projectRepository;
-        private final UserRepository userRepository;
-        private final ResourceAssignmentRepository resourceAssignmentRepository;
-        private final AssignmentRequestRepository assignmentRequestRepository;
-        private final ResourceRequestRepository resourceRequestRepository;
-        private final HistoryLogService historyLogService;
+    private final ProjectRepository projectRepository;
+    private final UserRepository userRepository;
+    private final ResourceAssignmentRepository resourceAssignmentRepository;
+    private final AssignmentRequestRepository requestRepository;
+    private final HistoryLogService historyLogService;
 
-        private void recordDirectAction(User performedBy, RequestType type, AssignmentRequest details) {
-                details.setRequestType(type);
-                details.setStatus(RequestStatus.APPROVED);
-                details.setRequester(performedBy);
-                assignmentRequestRepository.save(details);
+    private void recordDirectAction(User performedBy, RequestType type, AssignmentRequest details) {
+        details.setRequestType(type);
+        details.setStatus(RequestStatus.APPROVED);
+        details.setRequester(performedBy);
+        requestRepository.save(details);
 
-                // Log to History
-                String desc = String.format("Admin directly performed %s: %s", type,
-                                details.getReason() != null ? details.getReason() : "");
-                historyLogService.logActivity(EntityType.ASSIGNMENT, type.name(), desc, performedBy,
-                                details.getProject(),
-                                details.getResource(), details.getRole());
+        // Log to History
+        String desc = String.format("Admin directly performed %s: %s", type, details.getReason() != null ? details.getReason() : "");
+        historyLogService.logActivity(EntityType.ASSIGNMENT, type.name(), desc, performedBy, details.getProject(), details.getResource(), details.getRole());
+    }
+
+    public List<ProjectListResponse> getAllProjects() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        User currentUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Project> projects;
+        if (currentUser.getUserType() == UserType.PM) {
+            projects = projectRepository.findByPm_UserId(currentUser.getUserId());
+        } else {
+            projects = projectRepository.findAll();
         }
 
-        public List<ProjectListResponse> getAllProjects() {
-                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-                String email = auth.getName();
-                User currentUser = userRepository.findByEmail(email)
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+        return projects.stream()
+                .map(this::mapToProjectListResponse)
+                .collect(Collectors.toList());
+    }
 
-                List<Project> projects;
-                if (currentUser.getUserType() == UserType.PM || currentUser.getUserType() == UserType.DEV_MANAGER) {
-                        projects = projectRepository.findByPm_UserId(currentUser.getUserId());
-                } else {
-                        projects = projectRepository.findAll();
-                }
+    public ProjectListResponse createProject(CreateProjectRequest request) {
+        User pm = userRepository.findById(request.getPmId())
+                .orElseThrow(() -> new RuntimeException("PM not found with id: " + request.getPmId()));
 
-                return projects.stream()
-                                .map(this::mapToProjectListResponse)
-                                .collect(Collectors.toList());
-        }
+        Project project = Project.builder()
+                .projectName(request.getProjectName())
+                .clientName(request.getClientName())
+                .pm(pm)
+                .status(ProjectStatus.ON_GOING)
+                .build();
 
-        public ProjectListResponse createProject(CreateProjectRequest request) {
-                User pm = userRepository.findById(request.getPmId())
-                                .orElseThrow(() -> new RuntimeException("PM not found with id: " + request.getPmId()));
+        Project savedProject = projectRepository.save(project);
 
-                Project project = Project.builder()
-                                .projectName(request.getProjectName())
-                                .clientName(request.getClientName())
-                                .pm(pm)
-                                .status(ProjectStatus.ON_GOING)
-                                .build();
+        // Record Activity
+        AssignmentRequest details = AssignmentRequest.builder()
+                .project(savedProject)
+                .projectName(savedProject.getProjectName())
+                .clientName(savedProject.getClientName())
+                .description("Project created directly by Admin")
+                .build();
+        
+        // Find current admin user
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User admin = userRepository.findByEmail(email).orElseThrow();
+        
+        recordDirectAction(admin, RequestType.PROJECT, details);
 
-                Project savedProject = projectRepository.save(project);
+        return mapToProjectListResponse(savedProject);
+    }
 
-                // Record Activity
-                AssignmentRequest details = AssignmentRequest.builder()
-                                .project(savedProject)
-                                .projectName(savedProject.getProjectName())
-                                .clientName(savedProject.getClientName())
-                                .description("Project created directly by Admin")
-                                .build();
+    private ProjectListResponse mapToProjectListResponse(Project project) {
+        long memberCount = resourceAssignmentRepository.countByProject_ProjectIdAndStatus(
+                project.getProjectId(), 
+                com.resourceManagement.model.enums.AssignmentStatus.ACTIVE
+        );
+        
+        return ProjectListResponse.builder()
+                .projectId(project.getProjectId())
+                .projectName(project.getProjectName())
+                .clientName(project.getClientName())
+                .pmName(project.getPm().getName())
+                .memberCount((int) memberCount)
+                .status(project.getStatus().name())
+                .build();
+    }
 
-                // Find current admin user
-                String email = SecurityContextHolder.getContext().getAuthentication().getName();
-                User admin = userRepository.findByEmail(email).orElseThrow();
+    public List<com.resourceManagement.dto.project.ProjectResourceDto> getProjectResources(Integer projectId) {
+        List<com.resourceManagement.model.entity.ResourceAssignment> assignments = resourceAssignmentRepository.findByProject_ProjectId(projectId);
+        
+        return assignments.stream()
+                .map(assignment -> com.resourceManagement.dto.project.ProjectResourceDto.builder()
+                        .resourceName(assignment.getResource().getResourceName())
+                        .role(assignment.getProjectRole())
+                        .startDate(assignment.getStartDate())
+                        .endDate(assignment.getEndDate())
+                        .status(assignment.getStatus().name())
+                        .assignmentId(assignment.getAssignmentId())
+                        .build())
+                .collect(Collectors.toList());
+    }
 
-                recordDirectAction(admin, RequestType.PROJECT, details);
-
-                return mapToProjectListResponse(savedProject);
-        }
-
-        private ProjectListResponse mapToProjectListResponse(Project project) {
-                long memberCount = resourceAssignmentRepository.countByProject_ProjectIdAndStatus(
-                                project.getProjectId(),
-                                com.resourceManagement.model.enums.AssignmentStatus.ACTIVE);
-
-                return ProjectListResponse.builder()
-                                .projectId(project.getProjectId())
-                                .projectName(project.getProjectName())
-                                .clientName(project.getClientName())
-                                .pmName(project.getPm().getName())
-                                .memberCount((int) memberCount)
-                                .status(project.getStatus().name())
-                                .build();
-        }
-
-        public List<com.resourceManagement.dto.project.ProjectResourceDto> getProjectResources(Integer projectId) {
-                List<com.resourceManagement.model.entity.ResourceAssignment> assignments = resourceAssignmentRepository
-                                .findByProject_ProjectId(projectId);
-
-                return assignments.stream()
-                                .map(assignment -> com.resourceManagement.dto.project.ProjectResourceDto.builder()
-                                                .resourceName(assignment.getResource().getResourceName())
-                                                .projectRole(assignment.getProjectRole())
-                                                .startDate(assignment.getStartDate())
-                                                .endDate(assignment.getEndDate())
-                                                .status(assignment.getStatus().name())
-                                                .assignmentId(assignment.getAssignmentId())
-                                                .build())
-                                .collect(Collectors.toList());
-        }
-
-        public ProjectListResponse updateProjectStatus(Integer projectId, ProjectStatus status) {
-                Project project = projectRepository.findById(projectId)
-                                .orElseThrow(() -> new RuntimeException("Project not found"));
-
-                project.setStatus(status);
-                Project saved = projectRepository.save(project);
-
-                // Log activity
-                String email = SecurityContextHolder.getContext().getAuthentication().getName();
-                User admin = userRepository.findByEmail(email).orElseThrow();
-                historyLogService.logActivity(
-                                EntityType.PROJECT,
-                                "UPDATE_STATUS",
-                                "Project status updated to " + status,
-                                admin,
-                                saved,
-                                null,
-                                null);
-
-                return mapToProjectListResponse(saved);
-        }
-
-        @Transactional
-        public void deleteProject(Integer projectId) {
-                Project project = projectRepository.findById(projectId)
-                                .orElseThrow(() -> new RuntimeException("Project not found with id: " + projectId));
-
-                // Log activity before deletion
-                String email = SecurityContextHolder.getContext().getAuthentication().getName();
-                User admin = userRepository.findByEmail(email).orElseThrow();
-                historyLogService.logActivity(
-                                EntityType.PROJECT,
-                                "DELETE",
-                                "Project '" + project.getProjectName() + "' deleted",
-                                admin,
-                                null,
-                                null,
-                                null);
-
-                // Delete related records first (cascade delete)
-                resourceAssignmentRepository.deleteByProject_ProjectId(projectId);
-                assignmentRequestRepository.deleteByProject_ProjectId(projectId);
-                resourceRequestRepository.deleteByProject_ProjectId(projectId);
-
-                projectRepository.delete(project);
-        }
+    public ProjectListResponse updateProjectStatus(Integer projectId, ProjectStatus status) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+        
+        project.setStatus(status);
+        Project saved = projectRepository.save(project);
+        
+        // Log activity
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User admin = userRepository.findByEmail(email).orElseThrow();
+        historyLogService.logActivity(
+            EntityType.PROJECT, 
+            "UPDATE_STATUS", 
+            "Project status updated to " + status, 
+            admin, 
+            saved, 
+            null, 
+            null
+        );
+        
+        return mapToProjectListResponse(saved);
+    }
 }
