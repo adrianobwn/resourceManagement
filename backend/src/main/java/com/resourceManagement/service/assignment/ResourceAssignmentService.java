@@ -89,18 +89,7 @@ public class ResourceAssignmentService {
         assignment.setEndDate(request.getNewEndDate());
         ResourceAssignment saved = assignmentRepository.save(assignment);
 
-        // Record Activity
-        AssignmentRequest details = AssignmentRequest.builder()
-                .assignmentId(assignment.getAssignmentId())
-                .project(assignment.getProject())
-                .resource(assignment.getResource())
-                .role(assignment.getProjectRole())
-                .currentEndDate(assignment.getEndDate()) // Needs careful check, old date?
-                .newEndDate(request.getNewEndDate())
-                .reason(request.getReason())
-                .build();
-        recordDirectAction(getCurrentUser(), RequestType.EXTEND, details);
-
+        // Activity logging is handled by the caller (either approval flow or direct action)
         return saved;
     }
 
@@ -142,18 +131,7 @@ public class ResourceAssignmentService {
             );
         }
 
-        // Record Activity
-        AssignmentRequest details = AssignmentRequest.builder()
-                .assignmentId(assignment.getAssignmentId())
-                .project(assignment.getProject())
-                .resource(assignment.getResource())
-                .role(assignment.getProjectRole())
-                .currentEndDate(assignment.getEndDate())
-                .newEndDate(request.getReleaseDate())
-                .reason(request.getReason())
-                .build();
-        recordDirectAction(getCurrentUser(), RequestType.RELEASE, details);
-
+        // Activity logging is handled by the caller (either approval flow or direct action)
         return savedAssignment;
     }
 

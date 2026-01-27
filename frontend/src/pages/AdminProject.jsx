@@ -51,9 +51,11 @@ const AdminProject = () => {
             setLoading(true);
             const response = await api.get('/projects');
             setProjects(response.data);
+            return response.data;
         } catch (error) {
             console.error('Error fetching projects:', error);
             showNotification('Failed to fetch projects', 'error');
+            return [];
         } finally {
             setLoading(false);
         }
@@ -74,7 +76,7 @@ const AdminProject = () => {
     const [projectResources, setProjectResources] = useState([]);
 
     const [loadingResources, setLoadingResources] = useState(false);
-    const [isEditingStatus, setIsEditingStatus] = useState(false);
+    const [pendingRequests, setPendingRequests] = useState([]);
 
     // Extend/Release Action states (for direct Admin actions)
     const [showExtendModal, setShowExtendModal] = useState(false);
@@ -158,32 +160,50 @@ const AdminProject = () => {
             // Refresh modal resources
             fetchProjectResources(selectedProject.projectId);
 
-            // Real-time update for list (optimistic)
-            setProjects(prev => prev.map(p => {
-                if (p.projectId === selectedProject.projectId) {
-                    const newCount = Math.max(0, p.memberCount - 1);
-                    const newStatus = newCount === 0 ? 'CLOSED' : p.status;
-
-                    // Also update selectedProject if status changed
-                    if (newStatus !== p.status) {
-                        setSelectedProject(curr => ({ ...curr, status: newStatus }));
-                    }
-
-                    return { ...p, memberCount: newCount, status: newStatus };
-                }
-                return p;
-            }));
+            // Refresh project list and update selected project
+            const updatedProjects = await fetchProjects();
+            const updatedCurrentProject = updatedProjects.find(p => p.projectId === selectedProject.projectId);
+            if (updatedCurrentProject) {
+                setSelectedProject(updatedCurrentProject);
+            }
         } catch (error) {
             console.error('Error releasing assignment:', error);
             showNotification('Failed to release resource', 'error');
         }
     };
 
+    const handleToggleStatus = async (projectId, currentStatus) => {
+        const newStatus = currentStatus === 'ON_GOING' ? 'HOLD' : 'ON_GOING';
+        try {
+            const response = await api.patch(`/projects/${projectId}/status?status=${newStatus}`);
+            showNotification(`Project status updated to ${newStatus}`, 'success');
+            // Update local state for real-time update
+            setProjects(prev => prev.map(p => p.projectId === projectId ? { ...p, status: newStatus } : p));
+            if (selectedProject && selectedProject.projectId === projectId) {
+                setSelectedProject(prev => ({ ...prev, status: newStatus }));
+            }
+        } catch (error) {
+            console.error('Error toggling project status:', error);
+            showNotification('Failed to update project status', 'error');
+        }
+    };
+
     const fetchProjectResources = async (projectId) => {
         try {
             setLoadingResources(true);
-            const response = await api.get(`/projects/${projectId}/resources`);
-            setProjectResources(response.data);
+
+            // Fetch resources (required)
+            const resourcesResponse = await api.get(`/projects/${projectId}/resources`);
+            setProjectResources(resourcesResponse.data);
+
+            // Fetch pending requests (optional - don't fail if this endpoint has issues)
+            try {
+                const pendingResponse = await api.get(`/requests/project/${projectId}/pending`);
+                setPendingRequests(pendingResponse.data);
+            } catch (pendingError) {
+                console.warn('Failed to fetch pending requests, continuing without them:', pendingError);
+                setPendingRequests([]); // Set to empty array if fetch fails
+            }
         } catch (error) {
             console.error('Error fetching project resources:', error);
             showNotification('Failed to fetch project resources', 'error');
@@ -369,50 +389,52 @@ const AdminProject = () => {
 
             {/* Main Content */}
             <div className="flex-1 p-8 ml-[267px]">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-4xl font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Projects</h1>
-                    <div className="flex items-center gap-4">
-                        {/* Empty header actions as per request to move New Project button */}
-                    </div>
+                <div className="mb-8">
+                    <h1 className="text-4xl font-bold text-gray-800">Admin Projects</h1>
                 </div>
 
-                {/* Filters */}
+                {/* Toolbar */}
                 <div className="flex items-center justify-between mb-8">
-                    <div className="flex bg-white rounded-lg p-1 shadow-sm border border-gray-100">
-                        {filterTabs.map(tab => (
-                            <button key={tab} onClick={() => setActiveFilter(tab)} className={`px-6 py-2 rounded-md font-bold transition-all ${activeFilter === tab ? 'bg-[#CAF0F8] text-black shadow-md' : 'text-gray-500 hover:text-gray-700'}`}>{tab}</button>
-                        ))}
+                    {/* Left: Search */}
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Find projects..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-10 pr-4 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B4D8] font-medium"
+                        />
                     </div>
-                    <div className="flex items-center gap-3">
-                        <div className="relative">
-                            <input
-                                type="text"
-                                placeholder="Find projects..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-4 pr-10 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B4D8] font-medium"
-                            />
-                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+
+                    {/* Right: Filters & Actions */}
+                    <div className="flex items-center gap-4">
+                        <div className="flex bg-white rounded-lg p-1 shadow-sm border border-gray-100">
+                            {filterTabs.map(tab => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveFilter(tab)}
+                                    className={`px-6 py-2 rounded-md font-bold transition-all ${activeFilter === tab ? 'bg-[#00B4D8] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    {tab}
+                                </button>
+                            ))}
                         </div>
+
+                        {/* Separator */}
+                        <div className="h-10 w-px bg-gray-200 mx-2"></div>
+
                         <button
                             onClick={handleExport}
-                            className="px-4 py-2 bg-white text-gray-700 rounded-lg font-bold border border-gray-200 hover:bg-gray-50 flex items-center gap-2"
-                            style={{ fontFamily: 'SF Pro Display' }}
+                            className="px-6 py-2 bg-white text-gray-700 rounded-lg font-bold border border-gray-200 hover:bg-gray-50"
                         >
-                            <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
                             Export
                         </button>
                         <button
                             onClick={() => setShowNewProjectModal(true)}
-                            className="px-6 py-2 bg-[#CAF0F8] text-black rounded-lg font-bold hover:opacity-90 transition-all shadow-md shadow-cyan-100 flex items-center gap-2"
-                            style={{ fontFamily: 'SF Pro Display' }}
+                            className="px-6 py-2 bg-[#00B4D8] text-white rounded-lg font-bold hover:opacity-90"
                         >
-                            <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            New Project
+                            + New Project
                         </button>
                     </div>
                 </div>
@@ -432,34 +454,25 @@ const AdminProject = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-gray-800 mb-1">{project.projectName}</h3>
-                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-gray-500 font-bold">DevMan: {project.pmName}</span></p>
+                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-[#00B4D8] font-bold">{project.pmName}</span></p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-8">
-                                    <div className="flex flex-col items-end gap-1">
-                                        <span className="text-xs px-3 py-1 rounded-full font-bold" style={getStatusBadgeStyle(project.status)}>
+                                    <div className="text-right">
+                                        <span
+                                            className="text-xs px-3 py-1 rounded-full font-bold cursor-pointer hover:opacity-80 transition-opacity inline-block"
+                                            style={getStatusBadgeStyle(project.status)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (project.status !== 'CLOSED') {
+                                                    handleToggleStatus(project.projectId, project.status);
+                                                }
+                                            }}
+                                            title={project.status !== 'CLOSED' ? `Click to switch to ${project.status === 'ON_GOING' ? 'HOLD' : 'ON_GOING'}` : ''}
+                                        >
                                             {getStatusLabel(project.status)}
                                         </span>
-                                        <div className="flex items-center gap-1 text-black font-bold mt-1 justify-end">
-                                            <Users className="w-4 h-4" />
-                                            <span className="text-sm">{project.memberCount}</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => handleViewDetail(project)}
-                                            className="px-6 py-2 bg-[#CAF0F8] text-black rounded-lg font-bold hover:bg-[#b8e8ef] transition-colors"
-                                            style={{ fontFamily: 'SF Pro Display' }}
-                                        >
-                                            View Detail
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteClick(project)}
-                                            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                                            title="Delete Project"
-                                        >
-                                            <Trash2 className="w-5 h-5" />
-                                        </button>
+                                        <p className="text-gray-400 text-sm mt-2 font-medium">{project.memberCount} Members</p>
                                     </div>
                                 </div>
                             </div>
@@ -478,84 +491,25 @@ const AdminProject = () => {
 
                         <div className="flex items-center gap-4 mb-2">
                             <h2 className="text-3xl font-bold text-gray-800">{selectedProject.projectName}</h2>
-                            <div className="flex items-center gap-3">
-                                {/* Status Badge */}
-                                <span
-                                    className="px-3 py-1 rounded-full text-xs font-bold"
+                            <span
+                                className="px-3 py-1 rounded-full text-xs font-bold"
+                                style={getStatusBadgeStyle(selectedProject.status)}
+                            >
+                                {getStatusLabel(selectedProject.status)}
+                            </span>
+                            {selectedProject.status !== 'CLOSED' && (
+                                <button
+                                    onClick={() => handleToggleStatus(selectedProject.projectId, selectedProject.status)}
+                                    className="px-3 py-1 rounded-lg text-xs font-bold border transition-colors ml-2"
                                     style={{
-                                        backgroundColor: selectedProject.status === 'ON_GOING' ? 'rgba(6, 208, 1, 0.2)' : selectedProject.status === 'HOLD' ? 'rgba(251, 205, 63, 0.2)' : 'rgba(255, 0, 0, 0.2)',
-                                        color: selectedProject.status === 'ON_GOING' ? '#06D001' : selectedProject.status === 'HOLD' ? '#FBCD3F' : '#FF0000',
-                                        border: selectedProject.status === 'ON_GOING' ? '1px solid #06D001' : selectedProject.status === 'HOLD' ? '1px solid #FBCD3F' : '1px solid #FF0000',
-                                        display: 'inline-block',
-                                        textAlign: 'center'
+                                        borderColor: selectedProject.status === 'ON_GOING' ? '#FBCD3F' : '#06D001',
+                                        color: selectedProject.status === 'ON_GOING' ? '#FBCD3F' : '#06D001',
+                                        backgroundColor: 'transparent'
                                     }}
                                 >
-                                    {getStatusLabel(selectedProject.status)}
-                                </span>
-
-                                {/* Edit Action */}
-                                {selectedProject.status !== 'CLOSED' && (
-                                    <>
-                                        {isEditingStatus ? (
-                                            <div className="flex items-center gap-2 animate-fade-in">
-                                                <select
-                                                    value={selectedProject.status}
-                                                    onChange={(e) => {
-                                                        const newStatus = e.target.value;
-                                                        // Optimistic update locally for select value, commit on save
-                                                        setSelectedProject(prev => ({ ...prev, status: newStatus }));
-                                                    }}
-                                                    className="px-3 py-1 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                >
-                                                    <option value="ON_GOING">ONGOING</option>
-                                                    <option value="HOLD">HOLD</option>
-                                                </select>
-                                                <button
-                                                    onClick={async () => {
-                                                        try {
-                                                            await api.patch(`/projects/${selectedProject.projectId}/status`, null, { params: { status: selectedProject.status } });
-                                                            // Real-time update list
-                                                            setProjects(prev => prev.map(p => p.projectId === selectedProject.projectId ? { ...p, status: selectedProject.status } : p));
-                                                            showNotification(`Status updated to ${getStatusLabel(selectedProject.status)}`, 'success');
-                                                            setIsEditingStatus(false);
-                                                        } catch (error) {
-                                                            console.error('Error updating status:', error);
-                                                            showNotification('Failed to update status', 'error');
-                                                        }
-                                                    }}
-                                                    className="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700"
-                                                >
-                                                    Save
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setIsEditingStatus(false);
-                                                        // Revert if needed, or better fetch fresh details. For now assumes optimistic was fine or user handles revert manually by re-selecting.
-                                                        // But let's verify if 'status' state needs reverting?
-                                                        // Actually simpler logic: 'selectedProject' state *is* the one we edit.
-                                                        // If cancel, we might want to revert `selectedProject.status` to what is in `projects`.
-                                                        const original = projects.find(p => p.projectId === selectedProject.projectId);
-                                                        if (original) {
-                                                            setSelectedProject(prev => ({ ...prev, status: original.status }));
-                                                        }
-                                                    }}
-                                                    className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-300"
-                                                >
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <button
-                                                onClick={() => setIsEditingStatus(true)}
-                                                className="p-1.5 bg-gray-100 rounded-full text-gray-600 hover:bg-gray-200 hover:text-blue-600 transition-colors"
-                                                title="Change Status"
-                                            >
-                                                <Edit2 className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                    </>
-                                )}
-                            </div>
+                                    {selectedProject.status === 'ON_GOING' ? 'Change to Hold' : 'Change to Ongoing'}
+                                </button>
+                            )}
                         </div>
 
                         <div className="flex gap-8 mb-6">
@@ -576,7 +530,7 @@ const AdminProject = () => {
                                 <table className="w-full">
                                     <thead className="bg-[#E6F2F1] border-b border-gray-200 text-left">
                                         <tr>
-                                            <th className="px-6 py-4 font-bold text-gray-700 text-center rounded-tl-xl">Name</th>
+                                            <th className="px-6 py-4 font-bold text-gray-700 text-center">Name</th>
                                             <th className="px-6 py-4 font-bold text-center text-gray-700">Role</th>
                                             <th className="px-6 py-4 font-bold text-center text-gray-700">Period</th>
                                             <th className="px-6 py-4 font-bold text-center text-gray-700">Status</th>
@@ -587,20 +541,37 @@ const AdminProject = () => {
                                         {projectResources.map((res, idx) => (
                                             <tr key={idx} className="border-b border-gray-200 last:border-none">
                                                 <td className="px-6 py-6 font-bold text-gray-800">{res.resourceName}</td>
-                                                <td className="px-6 py-6 text-center font-bold text-gray-800">{res.projectRole || '-'}</td>
+                                                <td className="px-6 py-6 text-center font-bold text-gray-600">{res.role}</td>
                                                 <td className="px-6 py-6 text-center font-bold text-gray-800">{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
                                                 <td className="px-6 py-6 text-center">
-                                                    <span className={`px-4 py-1 rounded-full text-[10px] font-bold border ${(res.status === 'RELEASED' || res.status === 'EXPIRED') ? 'bg-red-100 text-red-600 border-red-600' : 'bg-green-100 text-green-600 border-green-600'}`}>
-                                                        {res.status}
+                                                    <span
+                                                        className="px-4 py-1 rounded-full text-[10px] font-bold"
+                                                        style={{
+                                                            backgroundColor: res.status === 'ACTIVE' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(255, 0, 0, 0.2)',
+                                                            color: res.status === 'ACTIVE' ? '#06D001' : '#FF0000',
+                                                        }}
+                                                    >
+                                                        {res.status === 'ACTIVE' ? 'ACTIVE' : 'RELEASED'}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-6 text-center">
-                                                    {(res.status !== 'RELEASED' && res.status !== 'EXPIRED') && (
-                                                        <div className="flex justify-center gap-2">
-                                                            <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] border border-[#F97316] hover:bg-[#F97316]/20">EXTEND</button>
-                                                            <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] border border-[#FF0000] hover:bg-[#FF0000]/20">RELEASE</button>
-                                                        </div>
-                                                    )}
+                                                    <div className="flex justify-center gap-2">
+                                                        {res.status === 'RELEASED' ? (
+                                                            // Show dash for released assignments
+                                                            <span className="text-gray-400 text-xs font-bold">-</span>
+                                                        ) : pendingRequests.some(req => req.assignmentId && String(req.assignmentId) === String(res.assignmentId)) ? (
+                                                            // Show "Pending" badge if there's any pending request for this assignment
+                                                            <span className="px-4 py-1.5 rounded-full bg-yellow-100 text-yellow-700 font-bold text-[10px]">
+                                                                PENDING
+                                                            </span>
+                                                        ) : res.status === 'ACTIVE' ? (
+                                                            // Show buttons only if ACTIVE and no pending requests
+                                                            <>
+                                                                <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] hover:bg-[#F97316]/20">EXTEND</button>
+                                                                <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] hover:bg-[#FF0000]/20">RELEASE</button>
+                                                            </>
+                                                        ) : null}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}

@@ -11,23 +11,18 @@ const AdminResources = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
     const [roleFilter, setRoleFilter] = useState('all');
-    const [dateFilter, setDateFilter] = useState({ startDate: '', endDate: '' });
+    const [dateFilter, setDateFilter] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [notification, setNotification] = useState({ show: false, message: '' });
     const [detailModal, setDetailModal] = useState({ show: false, resource: null, projects: [] });
     const [addResourceModal, setAddResourceModal] = useState({ show: false });
-    const [addDevManModal, setAddDevManModal] = useState({ show: false });
     const [assignModal, setAssignModal] = useState({ show: false, resource: null });
     const [trackRecordModal, setTrackRecordModal] = useState({ show: false, resource: null });
     const [newResource, setNewResource] = useState({
         fullName: '',
         email: ''
     });
-    const [newDevMan, setNewDevMan] = useState({
-        fullName: '',
-        email: '',
-        password: ''
-    });
+
     const [assignmentData, setAssignmentData] = useState({
         project: '',
         role: '',
@@ -93,42 +88,74 @@ const AdminResources = () => {
         }
     };
 
-    const handleDateFilterChange = (field, value) => {
-        if (field === 'startDate' && dateFilter.endDate && value > dateFilter.endDate) {
-            setNotification({ show: true, message: 'Start Date cannot be later than End Date' });
-            setTimeout(() => setNotification({ show: false, message: '' }), 3000);
-            return;
-        }
-        if (field === 'endDate' && dateFilter.startDate && value < dateFilter.startDate) {
-            setNotification({ show: true, message: 'End Date cannot be earlier than Start Date' });
-            setTimeout(() => setNotification({ show: false, message: '' }), 3000);
-            return;
-        }
-        setDateFilter(prev => ({ ...prev, [field]: value }));
+    const handleDateFilterChange = (e) => {
+        setDateFilter(e.target.value);
     };
 
-
-
     useEffect(() => {
-        let result = resources;
+        // Start with all resources
+        let result = resources.map(r => ({ ...r })); // create shallow copy
 
-        // Filter by status
+        // 1. apply DATE FILTER first to determine status/availability on that specific date
+        if (dateFilter) {
+            const selectedDate = new Date(dateFilter);
+            selectedDate.setHours(0, 0, 0, 0);
+
+            result = result.map(resource => {
+                // Check if resource has an active assignment on the selected date
+                const activeAssignmentOnDate = resource.currentAssignments?.find(assignment => {
+                    const start = new Date(assignment.startDate);
+                    start.setHours(0, 0, 0, 0);
+                    const end = new Date(assignment.endDate);
+                    end.setHours(0, 0, 0, 0);
+
+                    // Check if selected date is within range [start, end]
+                    // Also check assignmentStatus if needed, but usually date range + ACTIVE status is enough
+                    // Assuming we only care about 'ACTIVE' assignments or similar. 
+                    // If the backend returns all history, we should check status too.
+                    return selectedDate >= start && selectedDate <= end && assignment.assignmentStatus === 'ACTIVE';
+                });
+
+                if (activeAssignmentOnDate) {
+                    return {
+                        ...resource,
+                        status: 'ASSIGNED',
+                        // Store the role for this specific date for role filtering later
+                        _dateSpecificRole: activeAssignmentOnDate.projectRole
+                    };
+                } else {
+                    return {
+                        ...resource,
+                        status: 'AVAILABLE',
+                        _dateSpecificRole: null
+                    };
+                }
+            });
+        }
+
+        // 2. Filter by status
         if (activeFilter !== 'all') {
             result = result.filter(
                 (r) => r.status.toLowerCase() === activeFilter.toLowerCase()
             );
         }
 
-        // Filter by search query
+        // 3. Filter by search query
         if (searchQuery) {
             result = result.filter((r) =>
                 r.resourceName.toLowerCase().includes(searchQuery.toLowerCase())
             );
         }
 
-        // Filter by role (based on past/current project assignments)
+        // 4. Filter by role
         if (roleFilter !== 'all') {
             result = result.filter((r) => {
+                // If date is selected, use the specific role determined above
+                if (dateFilter) {
+                    return r._dateSpecificRole === roleFilter;
+                }
+
+                // Fallback to original logic: check any current assignment
                 if (!r.currentAssignments || r.currentAssignments.length === 0) {
                     return false;
                 }
@@ -139,7 +166,7 @@ const AdminResources = () => {
         }
 
         setFilteredResources(result);
-    }, [searchQuery, activeFilter, roleFilter, resources]);
+    }, [searchQuery, activeFilter, roleFilter, resources, dateFilter]);
 
     const showNotification = (message, type = 'info') => {
         setNotification({ show: true, message, type, closing: false });
@@ -224,43 +251,7 @@ const AdminResources = () => {
         }
     };
 
-    const handleAddDevMan = () => {
-        setAddDevManModal({ show: true });
-    };
 
-    const closeAddDevManModal = () => {
-        setAddDevManModal({ show: false });
-        setNewDevMan({
-            fullName: '',
-            email: '',
-            password: ''
-        });
-    };
-
-    const handleSaveDevMan = async () => {
-        // Validation
-        if (!newDevMan.fullName || !newDevMan.email || !newDevMan.password) {
-            showNotification('Please fill in all fields', 'error');
-            return;
-        }
-
-        try {
-            const response = await api.post('/users/pm', {
-                name: newDevMan.fullName,
-                email: newDevMan.email,
-                password: newDevMan.password
-            });
-            console.log('DevMan API Response Status:', response.status);
-            console.log('DevMan successfully created:', response.data);
-            closeAddDevManModal();
-            showNotification('Saved Successfully! DevMan created successfully.', 'success');
-            setSearchQuery('');
-            setActiveFilter('all');
-        } catch (error) {
-            console.error('Error creating DevMan:', error);
-            showNotification(error.response?.data?.message || 'Failed to create DevMan', 'error');
-        }
-    };
 
     const handleAssignToProject = (resource) => {
         setAssignModal({ show: true, resource });
@@ -684,114 +675,7 @@ const AdminResources = () => {
                 </div>
             )}
 
-            {/* Add DevMan Modal */}
-            {addDevManModal.show && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
-                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-                >
-                    <div
-                        className="rounded-2xl relative flex flex-col animate-scale-in"
-                        style={{ width: '500px', maxHeight: '90vh', backgroundColor: '#F5F5F5' }}
-                    >
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-8 pt-6 pb-4">
-                            <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
-                                Add DevMan
-                            </h2>
-                            <button
-                                onClick={closeAddDevManModal}
-                                className="text-gray-500 hover:text-gray-700 transition-colors"
-                            >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
 
-                        {/* Line below title */}
-                        <div className="border-b border-gray-300 mx-0" style={{ width: '500px' }}></div>
-
-                        {/* Form Content */}
-                        <div className="px-8 py-6 mb-6">
-                            {/* Identity & Contact Section */}
-                            <div className="mb-6">
-                                <div className="flex items-center justify-center gap-2 mb-4">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                    <span className="font-bold text-black" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>Identity & contact</span>
-                                </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Full Name</label>
-                                        <input
-                                            type="text"
-                                            value={newDevMan.fullName}
-                                            onChange={(e) => setNewDevMan(prev => ({ ...prev, fullName: e.target.value }))}
-                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
-                                            style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
-                                        />
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <div style={{ width: '48%' }}>
-                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Email Address</label>
-                                            <input
-                                                type="email"
-                                                value={newDevMan.email}
-                                                onChange={(e) => setNewDevMan(prev => ({ ...prev, email: e.target.value }))}
-                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
-                                                style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
-                                            />
-                                        </div>
-                                        <div style={{ width: '48%' }}>
-                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Password</label>
-                                            <input
-                                                type="password"
-                                                value={newDevMan.password}
-                                                onChange={(e) => setNewDevMan(prev => ({ ...prev, password: e.target.value }))}
-                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
-                                                style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Separator before buttons */}
-                        <div className="border-b border-gray-300 mx-0 mb-4" style={{ width: '500px' }}></div>
-
-                        {/* Footer Buttons */}
-                        <div className="flex items-center justify-between px-8 pb-6">
-                            <button
-                                onClick={closeAddDevManModal}
-                                className="font-bold text-black bg-white hover:bg-gray-100 transition-colors"
-                                style={{ width: '76px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', border: '1px solid #A9A9A9', borderRadius: '8px' }}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSaveDevMan}
-                                disabled={!newDevMan.fullName || !newDevMan.email || !newDevMan.password}
-                                className="font-bold text-black hover:opacity-90 transition-colors"
-                                style={{
-                                    width: '180px',
-                                    height: '40px',
-                                    fontSize: '14px',
-                                    fontFamily: 'SF Pro Display',
-                                    backgroundColor: '#CAF0F8',
-                                    borderRadius: '8px',
-                                    opacity: (!newDevMan.fullName || !newDevMan.email || !newDevMan.password) ? 0.5 : 1,
-                                    cursor: (!newDevMan.fullName || !newDevMan.email || !newDevMan.password) ? 'not-allowed' : 'pointer'
-                                }}
-                            >
-                                Save & Create DevMan
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Assign to Project Modal */}
             {assignModal.show && (
@@ -869,21 +753,25 @@ const AdminResources = () => {
                                 </div>
                             </div>
 
-                            {/* Current Projects */}
-                            {assignModal.resource?.currentAssignments && assignModal.resource.currentAssignments.length > 0 && (
-                                <div className="mb-6">
-                                    <h4 className="font-bold text-black mb-3" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>
-                                        Current Project{assignModal.resource.currentAssignments.length > 1 ? 's' : ''}
-                                    </h4>
-                                    <div className="space-y-2">
-                                        {assignModal.resource.currentAssignments.map((assignment, index) => (
-                                            <p key={assignment.assignmentId} className="text-black" style={{ fontSize: '14px', fontFamily: 'SF Pro Display' }}>
-                                                {index + 1}. {assignment.projectName} - Ends : {new Date(assignment.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                            </p>
-                                        ))}
+                            {/* Current Projects (Only show Active) */}
+                            {assignModal.resource?.currentAssignments &&
+                                assignModal.resource.currentAssignments.filter(a => a.assignmentStatus === 'ACTIVE').length > 0 && (
+                                    <div className="mb-6">
+                                        <h4 className="font-bold text-black mb-3" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>
+                                            Current Project{assignModal.resource.currentAssignments.filter(a => a.assignmentStatus === 'ACTIVE').length > 1 ? 's' : ''}
+                                        </h4>
+                                        <div className="space-y-2">
+                                            {assignModal.resource.currentAssignments
+                                                .filter(a => a.assignmentStatus === 'ACTIVE')
+                                                .map((assignment, index) => (
+                                                    <p key={assignment.assignmentId} className="text-black" style={{ fontSize: '14px', fontFamily: 'SF Pro Display' }}>
+                                                        {index + 1}. {assignment.projectName} - Ends : {new Date(assignment.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                    </p>
+                                                ))
+                                            }
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
 
                             {/* Separator */}
                             <div className="border-b border-gray-300 mb-6"></div>
@@ -898,16 +786,25 @@ const AdminResources = () => {
                                     <div className="relative">
                                         <select
                                             value={assignmentData.project}
-                                            onChange={(e) => setAssignmentData(prev => ({ ...prev, project: e.target.value }))}
+                                            onChange={(e) => {
+                                                const proj = projects.find(p => p.projectId === parseInt(e.target.value));
+                                                if (proj && proj.status === 'CLOSED') {
+                                                    showNotification('Cannot assign to a CLOSED project', 'error');
+                                                    return;
+                                                }
+                                                setAssignmentData(prev => ({ ...prev, project: e.target.value }));
+                                            }}
                                             className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full appearance-none"
                                             style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 35px 0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
                                         >
                                             <option value="">Select project</option>
-                                            {projects.filter(p => p.status !== 'CLOSED').map(project => (
-                                                <option key={project.projectId} value={project.projectId}>
-                                                    {project.projectName}
-                                                </option>
-                                            ))}
+                                            {projects
+                                                .filter(project => project.status !== 'CLOSED')
+                                                .map(project => (
+                                                    <option key={project.projectId} value={project.projectId}>
+                                                        {project.projectName}
+                                                    </option>
+                                                ))}
                                         </select>
                                         <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -1105,127 +1002,143 @@ const AdminResources = () => {
                                     })()}
                                 </div>
 
-                                {/* Project Timeline Rows */}
-                                <div className="space-y-0 overflow-y-auto custom-scrollbar" style={{ maxHeight: '471px' }}>
-                                    {(() => {
-                                        const now = new Date();
-                                        const currentMonth = now.getMonth();
-                                        const currentYear = now.getFullYear();
-                                        const startDate = new Date(currentYear, currentMonth - 4, 1);
-                                        // Merge current and past assignments
-                                        const assignments = [
-                                            ...(trackRecordModal.resource?.currentAssignments || []),
-                                            ...(trackRecordModal.resource?.trackRecord || [])
-                                        ];
+                                {/* Scrollable Container for Rows */}
+                                <div className="overflow-y-auto" style={{ height: '470.4px' }}>
+                                    <div className="space-y-0 relative">
+                                        {(() => {
+                                            const now = new Date();
+                                            const currentMonth = now.getMonth();
+                                            const currentYear = now.getFullYear();
+                                            const startDate = new Date(currentYear, currentMonth - 4, 1);
+                                            const assignments = trackRecordModal.resource?.currentAssignments || [];
+                                            const totalRows = Math.max(4, assignments.length);
 
-                                        // Function to calculate position based on date
-                                        const getMonthPosition = (date) => {
-                                            const d = new Date(date);
-                                            const monthDiff = (d.getFullYear() - startDate.getFullYear()) * 12 + (d.getMonth() - startDate.getMonth());
-                                            return Math.max(0, Math.min(9, monthDiff));
-                                        };
+                                            // Function to calculate position based on date
+                                            const getMonthPosition = (date) => {
+                                                const d = new Date(date);
+                                                const monthDiff = (d.getFullYear() - startDate.getFullYear()) * 12 + (d.getMonth() - startDate.getMonth());
+                                                return Math.max(0, Math.min(9, monthDiff));
+                                            };
 
-                                        // Function to get project color based on status or if project ended
-                                        const getProjectColor = (assignment) => {
-                                            const pStatus = assignment.projectStatus;
-                                            if (pStatus === 'HOLD') {
-                                                return '#F97316'; // Orange
-                                            }
-                                            if (pStatus === 'CLOSED' || assignment.assignmentStatus !== 'ACTIVE') {
-                                                return '#FF0000'; // Red
-                                            }
-                                            const endDate = new Date(assignment.endDate);
-                                            if (endDate < new Date()) {
-                                                return '#FF0000';
-                                            }
-                                            return '#06D001'; // Ongoing (current/future)
-                                        };
+                                            // Function to get project color based on status
+                                            const getProjectColor = (assignment) => {
+                                                if (assignment.projectStatus === 'CLOSED' || assignment.assignmentStatus === 'RELEASED') {
+                                                    return '#FF0000'; // Closed
+                                                }
+                                                if (assignment.projectStatus === 'HOLD') {
+                                                    return '#F97316'; // Hold
+                                                }
+                                                return '#06D001'; // Ongoing
+                                            };
 
-                                        // Calculate total rows needed (minimum 4, or more if assignments exist)
-                                        const rowCount = Math.max(assignments.length, 4);
-                                        const rows = [];
+                                            // Create dynamic rows
+                                            const rows = [];
+                                            for (let i = 0; i < totalRows; i++) {
+                                                const assignment = assignments[i];
+                                                if (assignment) {
+                                                    const startPos = getMonthPosition(assignment.startDate);
+                                                    const endPos = getMonthPosition(assignment.endDate) + 1;
+                                                    const width = ((endPos - startPos) / 9) * 100;
+                                                    const left = (startPos / 9) * 100;
+                                                    const color = getProjectColor(assignment);
+                                                    const startDateObj = new Date(assignment.startDate);
+                                                    const endDateObj = new Date(assignment.endDate);
+                                                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-                                        for (let i = 0; i < rowCount; i++) {
-                                            const assignment = assignments[i];
-                                            if (assignment) {
-                                                const startPos = getMonthPosition(assignment.startDate);
-                                                const endPos = getMonthPosition(assignment.endDate) + 1;
-                                                const width = ((endPos - startPos) / 9) * 100;
-                                                const left = (startPos / 9) * 100;
-                                                const color = getProjectColor(assignment);
-                                                const startDateObj = new Date(assignment.startDate);
-                                                const endDateObj = new Date(assignment.endDate);
-                                                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                                                    rows.push(
+                                                        <div key={i} className="relative" style={{ height: '117.6px' }}>
+                                                            <div className="grid grid-cols-9 h-full">
+                                                                {Array.from({ length: 9 }).map((_, index) => (
+                                                                    <div
+                                                                        key={index}
+                                                                        className="border-r border-b border-l border-gray-300"
+                                                                        style={{
+                                                                            borderBottomLeftRadius: i === totalRows - 1 && index === 0 ? '8px' : '0',
+                                                                            borderBottomRightRadius: i === totalRows - 1 && index === 8 ? '8px' : '0'
+                                                                        }}
+                                                                    ></div>
+                                                                ))}
+                                                            </div>
+                                                            <div
+                                                                className="absolute flex items-center justify-center rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                                                style={{
+                                                                    left: `${left}%`,
+                                                                    width: `${Math.min(width, 100 - left)}%`,
+                                                                    height: '60px',
+                                                                    top: '50%',
+                                                                    transform: 'translateY(-50%)',
+                                                                    backgroundColor: color
+                                                                }}
+                                                                onMouseEnter={() => setHoveredProject(`project${i}`)}
+                                                                onMouseLeave={() => setHoveredProject(null)}
+                                                            >
+                                                                <span className="font-bold text-white text-center px-4 truncate" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
+                                                                    {assignment.projectName} • {assignment.projectRole}
+                                                                </span>
 
-                                                rows.push(
-                                                    <div key={i} className="relative" style={{ height: '117.6px' }}>
-                                                        <div className="grid grid-cols-9 h-full">
-                                                            {Array.from({ length: 9 }).map((_, index) => (
-                                                                <div
-                                                                    key={index}
-                                                                    className="border-r border-b border-l border-gray-300"
-                                                                    style={{
-                                                                        borderBottomLeftRadius: i === rowCount - 1 && index === 0 ? '8px' : '0',
-                                                                        borderBottomRightRadius: i === rowCount - 1 && index === 8 ? '8px' : '0'
-                                                                    }}
-                                                                ></div>
-                                                            ))}
+                                                                {/* Tooltip */}
+                                                                {hoveredProject === `project${i}` && (
+                                                                    <div
+                                                                        className="absolute z-10 bg-white rounded-lg shadow-xl p-4 border border-gray-200"
+                                                                        style={{
+                                                                            top: '-120px',
+                                                                            left: '50%',
+                                                                            transform: 'translateX(-50%)',
+                                                                            width: '300px',
+                                                                            fontFamily: 'SF Pro Display'
+                                                                        }}
+                                                                    >
+                                                                        <div className="space-y-2">
+                                                                            <h4 className="font-bold text-black" style={{ fontSize: '16px' }}>{assignment.projectName}</h4>
+                                                                            <div className="text-sm text-gray-700">
+                                                                                <p><span className="font-semibold">Role:</span> {assignment.projectRole}</p>
+                                                                                <p><span className="font-semibold">Start:</span> {monthNames[startDateObj.getMonth()]} {startDateObj.getFullYear()}</p>
+                                                                                <p><span className="font-semibold">End:</span> {monthNames[endDateObj.getMonth()]} {endDateObj.getFullYear()}</p>
+                                                                                <p><span className="font-semibold">Status:</span> <span className={endDateObj < now ? 'text-red-600 font-bold' : 'text-green-600 font-bold'}>{endDateObj < now ? 'Closed' : 'Ongoing'}</span></p>
+                                                                            </div>
+                                                                        </div>
+                                                                        {/* Arrow */}
+                                                                        <div
+                                                                            className="absolute"
+                                                                            style={{
+                                                                                bottom: '-8px',
+                                                                                left: '50%',
+                                                                                transform: 'translateX(-50%)',
+                                                                                width: '0',
+                                                                                height: '0',
+                                                                                borderLeft: '8px solid transparent',
+                                                                                borderRight: '8px solid transparent',
+                                                                                borderTop: '8px solid white'
+                                                                            }}
+                                                                        ></div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                        <div
-                                                            className="absolute flex items-center justify-center rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                                            style={{
-                                                                left: `${left}%`,
-                                                                width: `${Math.min(width, 100 - left)}%`,
-                                                                height: '60px',
-                                                                top: '50%',
-                                                                transform: 'translateY(-50%)',
-                                                                backgroundColor: color
-                                                            }}
-                                                            onMouseEnter={(e) => {
-                                                                const rect = e.currentTarget.getBoundingClientRect();
-                                                                setTooltipState({
-                                                                    show: true,
-                                                                    x: rect.left + rect.width / 2,
-                                                                    y: rect.top,
-                                                                    data: {
-                                                                        assignment,
-                                                                        startDateObj,
-                                                                        endDateObj,
-                                                                        monthNames,
-                                                                        now
-                                                                    }
-                                                                });
-                                                            }}
-                                                            onMouseLeave={() => setTooltipState(prev => ({ ...prev, show: false }))}
-                                                        >
-                                                            <span className="font-bold text-white text-center px-4 truncate" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
-                                                                {assignment.projectName} • {assignment.projectRole}
-                                                            </span>
+                                                    );
+                                                } else {
+                                                    // Empty row
+                                                    rows.push(
+                                                        <div key={i} className="relative" style={{ height: '117.6px' }}>
+                                                            <div className="grid grid-cols-9 h-full">
+                                                                {Array.from({ length: 9 }).map((_, index) => (
+                                                                    <div
+                                                                        key={index}
+                                                                        className="border-r border-b border-l border-gray-300"
+                                                                        style={{
+                                                                            borderBottomLeftRadius: i === totalRows - 1 && index === 0 ? '8px' : '0',
+                                                                            borderBottomRightRadius: i === totalRows - 1 && index === 8 ? '8px' : '0'
+                                                                        }}
+                                                                    ></div>
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                );
-                                            } else {
-                                                // Empty row
-                                                rows.push(
-                                                    <div key={i} className="relative" style={{ height: '117.6px' }}>
-                                                        <div className="grid grid-cols-9 h-full">
-                                                            {Array.from({ length: 9 }).map((_, index) => (
-                                                                <div
-                                                                    key={index}
-                                                                    className="border-r border-b border-l border-gray-300"
-                                                                    style={{
-                                                                        borderBottomLeftRadius: i === rowCount - 1 && index === 0 ? '8px' : '0',
-                                                                        borderBottomRightRadius: i === rowCount - 1 && index === 8 ? '8px' : '0'
-                                                                    }}
-                                                                ></div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                );
+                                                    );
+                                                }
                                             }
-                                        }
-                                        return rows;
-                                    })()}
+                                            return rows;
+                                        })()}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1311,20 +1224,10 @@ const AdminResources = () => {
                         <div className="flex items-center gap-2">
                             <input
                                 type="date"
-                                placeholder="Start Date"
-                                value={dateFilter.startDate}
-                                onChange={(e) => handleDateFilterChange('startDate', e.target.value)}
-                                className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
-                                style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
-                            />
-                            <span className="text-gray-500 font-medium" style={{ fontFamily: 'SF Pro Display' }}>to</span>
-                            <input
-                                type="date"
-                                placeholder="End Date"
-                                value={dateFilter.endDate}
-                                onChange={(e) => handleDateFilterChange('endDate', e.target.value)}
-                                className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
-                                style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
+                                value={dateFilter}
+                                onChange={handleDateFilterChange}
+                                className="px-3 py-1.5 border-none bg-transparent focus:ring-0 font-bold text-xs"
+                                style={{ fontFamily: 'SF Pro Display' }}
                             />
                         </div>
 
@@ -1352,33 +1255,28 @@ const AdminResources = () => {
                             </svg>
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={handleExport}
-                                className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F5] rounded-lg text-black hover:bg-gray-200 transition-colors font-bold border border-gray-300"
-                                style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
-                            >
-                                <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                Export
-                            </button>
-                            <button
-                                onClick={handleAddDevMan}
-                                className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F5] rounded-lg text-black hover:bg-gray-200 transition-colors font-bold whitespace-nowrap border border-gray-300"
-                                style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
-                            >
-                                + Add DevMan
-                            </button>
-                            <button
-                                onClick={handleAddResource}
-                                className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F5] text-black rounded-lg hover:bg-gray-200 transition-colors font-bold whitespace-nowrap border border-gray-300"
-                                style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
-                            >
-                                + Add Resource
-                            </button>
-                        </div>
+                        {/* Main Actions */}
+                        <div className="h-10 w-px bg-gray-200 mx-2"></div>
+
+                        <button
+                            onClick={handleExport}
+                            className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-all shadow-sm group"
+                            title="Export to Excel"
+                        >
+                            <svg className="w-5 h-5 text-[#00B4D8] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </button>
+
+
+
+                        <button
+                            onClick={handleAddResource}
+                            className="bg-[#00B4D8] text-white px-4 py-2.5 rounded-xl font-bold text-xs hover:opacity-90 transition-all shadow-md shadow-cyan-100 whitespace-nowrap"
+                            style={{ fontFamily: 'SF Pro Display' }}
+                        >
+                            + Resource
+                        </button>
                     </div>
                 </div>
 

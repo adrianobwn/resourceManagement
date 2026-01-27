@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Builder
 public class AssignmentRequestResponse {
     private Integer id;
+    private Integer assignmentId; // ID of the assignment this request is for (EXTEND/RELEASE)
     private String type; // EXTEND, RELEASE
     private String status;
     private String requester;

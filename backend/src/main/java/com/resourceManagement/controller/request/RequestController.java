@@ -40,6 +40,15 @@ public class RequestController {
         return ResponseEntity.ok(responses);
     }
 
+    @GetMapping("/project/{projectId}/pending")
+    public ResponseEntity<List<AssignmentRequestResponse>> getPendingRequestsByProject(@PathVariable Integer projectId) {
+        List<AssignmentRequestResponse> responses = requestService.getPendingRequestsByProject(projectId)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
+    }
+
     @PostMapping("/project")
     public ResponseEntity<String> submitProjectProposal(@RequestBody ProjectProposalRequest request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -70,6 +79,7 @@ public class RequestController {
     private AssignmentRequestResponse mapToResponse(AssignmentRequest req) {
         AssignmentRequestResponse.AssignmentRequestResponseBuilder builder = AssignmentRequestResponse.builder()
                 .id(req.getRequestId())
+                .assignmentId(req.getAssignmentId()) // Add assignmentId for EXTEND/RELEASE matching
                 .type(req.getRequestType().name())
                 .status(req.getStatus().name())
                 .requester(req.getRequester().getName())

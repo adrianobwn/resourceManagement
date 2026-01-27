@@ -102,6 +102,7 @@ public class ProjectService {
                 .projectName(project.getProjectName())
                 .clientName(project.getClientName())
                 .pmName(project.getPm().getName())
+                .pmId(project.getPm().getUserId())
                 .memberCount((int) memberCount)
                 .status(project.getStatus().name())
                 .build();
