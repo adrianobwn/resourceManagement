@@ -47,7 +47,7 @@ public class HistoryLogService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<HistoryLog> logs;
-        if (user.getUserType() == com.resourceManagement.model.enums.UserType.ADMIN) {
+        if (user.getUserType() == com.resourceManagement.model.enums.UserType.Admin) {
             logs = historyLogRepository.findAllByOrderByTimestampDesc();
         } else {
             logs = historyLogRepository.findByPerformedBy_UserIdOrProject_DevMan_UserIdOrderByTimestampDesc(user.getUserId(), user.getUserId());

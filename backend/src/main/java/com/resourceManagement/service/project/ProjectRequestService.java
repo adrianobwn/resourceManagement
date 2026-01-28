@@ -34,9 +34,9 @@ public class ProjectRequestService {
         request.setRequestedAt(LocalDateTime.now());
         ProjectRequest savedRequest = requestRepository.save(request);
 
-        // Notify ADMIN
+        // Notify Admin
         List<User> admins = userRepository.findAll().stream()
-                .filter(user -> user.getUserType().name().equals("ADMIN"))
+                .filter(user -> user.getUserType().name().equals("Admin"))
                 .toList();
         for (User admin : admins) {
             notificationService.createNotification(admin, NotificationType.PROJECT_REQUEST,

@@ -46,7 +46,7 @@ public class DashboardService {
         long availableResources = resourceRepository.countByStatus(ResourceStatus.AVAILABLE);
         
         long activeProjects;
-        if (user.getUserType() == UserType.ADMIN) {
+        if (user.getUserType() == UserType.Admin) {
             activeProjects = projectRepository.countByStatus(ProjectStatus.ON_GOING);
         } else {
             activeProjects = projectRepository.countByDevMan_UserIdAndStatus(user.getUserId(), ProjectStatus.ON_GOING);
@@ -68,7 +68,7 @@ public class DashboardService {
         LocalDate endDate = today.plusDays(days);
 
         List<ResourceAssignment> assignments;
-        if (user.getUserType() == UserType.ADMIN) {
+        if (user.getUserType() == UserType.Admin) {
             assignments = assignmentRepository
                     .findByStatusAndEndDateBetween(AssignmentStatus.ACTIVE, today, endDate);
         } else {
@@ -91,7 +91,7 @@ public class DashboardService {
     public List<ActiveProjectResponse> getActiveProjects() {
         User user = getCurrentUser();
         List<Project> projects;
-        if (user.getUserType() == UserType.ADMIN) {
+        if (user.getUserType() == UserType.Admin) {
             projects = projectRepository.findByStatus(ProjectStatus.ON_GOING);
         } else {
             projects = projectRepository.findByDevMan_UserIdAndStatus(user.getUserId(), ProjectStatus.ON_GOING);

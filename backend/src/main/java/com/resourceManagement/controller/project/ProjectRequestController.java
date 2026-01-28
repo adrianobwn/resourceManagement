@@ -26,21 +26,21 @@ public class ProjectRequestController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<List<ProjectRequest>> getAllRequests() {
         List<ProjectRequest> requests = requestService.getAllRequests();
         return ResponseEntity.ok(requests);
     }
 
     @PutMapping("/{requestId}/approve")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<ProjectRequest> approveRequest(@PathVariable Integer requestId) {
         ProjectRequest approvedRequest = requestService.approveProjectRequest(requestId);
         return ResponseEntity.ok(approvedRequest);
     }
 
     @PutMapping("/{requestId}/reject")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<ProjectRequest> rejectRequest(@PathVariable Integer requestId) {
         ProjectRequest rejectedRequest = requestService.rejectProjectRequest(requestId);
         return ResponseEntity.ok(rejectedRequest);

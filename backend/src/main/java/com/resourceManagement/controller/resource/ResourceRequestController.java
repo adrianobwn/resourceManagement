@@ -26,21 +26,21 @@ public class ResourceRequestController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<List<ResourceRequest>> getAllRequests() {
         List<ResourceRequest> requests = requestService.getAllRequests();
         return ResponseEntity.ok(requests);
     }
 
     @PutMapping("/{requestId}/approve")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<ResourceRequest> approveRequest(@PathVariable Integer requestId) {
         ResourceRequest approvedRequest = requestService.approveResourceRequest(requestId);
         return ResponseEntity.ok(approvedRequest);
     }
 
     @PutMapping("/{requestId}/reject")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<ResourceRequest> rejectRequest(@PathVariable Integer requestId) {
         ResourceRequest rejectedRequest = requestService.rejectResourceRequest(requestId);
         return ResponseEntity.ok(rejectedRequest);

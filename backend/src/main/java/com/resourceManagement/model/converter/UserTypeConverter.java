@@ -30,6 +30,11 @@ public class UserTypeConverter implements AttributeConverter<UserType, String> {
             return UserType.DEV_MANAGER;
         }
         
+        // Backward compatibility: Convert old ADMIN to Admin
+        if ("ADMIN".equals(dbData)) {
+            return UserType.Admin;
+        }
+        
         return UserType.valueOf(dbData);
     }
 }

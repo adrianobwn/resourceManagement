@@ -1,6 +1,6 @@
 package com.resourceManagement.model.enums;
 
 public enum UserType {
-    ADMIN,
+    Admin,
     DEV_MANAGER
 }

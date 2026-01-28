@@ -968,28 +968,6 @@ const DevmanResources = () => {
                                 </svg>
                             </div>
 
-                            {/* Date Range Pickers */}
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="date"
-                                    placeholder="Start Date"
-                                    value={dateFilter.startDate}
-                                    onChange={(e) => handleDateFilterChange('startDate', e.target.value)}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
-                                    style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
-                                />
-                                <span className="text-gray-500 font-medium" style={{ fontFamily: 'SF Pro Display' }}>to</span>
-                                <input
-                                    type="date"
-                                    placeholder="End Date"
-                                    value={dateFilter.endDate}
-                                    onChange={(e) => handleDateFilterChange('endDate', e.target.value)}
-                                    min={dateFilter.startDate || undefined}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
-                                    style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
-                                />
-                            </div>
-
                             {/* Role Filter Dropdown */}
                             <div className="relative">
                                 <select

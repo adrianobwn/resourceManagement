@@ -139,7 +139,7 @@ public class AssignmentRequestService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (user.getUserType() == UserType.ADMIN) {
+        if (user.getUserType() == UserType.Admin) {
             return requestRepository.findByStatus(RequestStatus.PENDING);
         } else {
             // Re-use current behavior: only show what they requested? 
@@ -154,7 +154,7 @@ public class AssignmentRequestService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (user.getUserType() == UserType.ADMIN) {
+        if (user.getUserType() == UserType.Admin) {
             return requestRepository.findAll();
         } else {
             return requestRepository.findByRequester_UserIdOrProject_DevMan_UserId(user.getUserId(), user.getUserId());

@@ -191,39 +191,59 @@ const Activities = () => {
                         <div className="flex bg-[#F5F5F5] rounded-lg p-1">
                             <button
                                 onClick={() => setActiveTab('extend')}
-                                className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg ${activeTab === 'extend'
+                                className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg flex items-center gap-2 ${activeTab === 'extend'
                                     ? 'bg-white text-black'
                                     : 'text-black hover:bg-gray-200'
                                     }`}
                             >
                                 Extend
+                                {activities.filter(a => a.type === 'EXTEND').length > 0 && (
+                                    <span className="bg-[#00B4D8] text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                        {activities.filter(a => a.type === 'EXTEND').length}
+                                    </span>
+                                )}
                             </button>
                             <button
                                 onClick={() => setActiveTab('release')}
-                                className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg ${activeTab === 'release'
+                                className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg flex items-center gap-2 ${activeTab === 'release'
                                     ? 'bg-white text-black'
                                     : 'text-black hover:bg-gray-200'
                                     }`}
                             >
                                 Release
+                                {activities.filter(a => a.type === 'RELEASE').length > 0 && (
+                                    <span className="bg-[#00B4D8] text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                        {activities.filter(a => a.type === 'RELEASE').length}
+                                    </span>
+                                )}
                             </button>
                             <button
                                 onClick={() => setActiveTab('assignment')}
-                                className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg ${activeTab === 'assignment'
+                                className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg flex items-center gap-2 ${activeTab === 'assignment'
                                     ? 'bg-white text-black'
                                     : 'text-black hover:bg-gray-200'
                                     }`}
                             >
                                 Assignment
+                                {activities.filter(a => a.type === 'ASSIGN').length > 0 && (
+                                    <span className="bg-[#00B4D8] text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                        {activities.filter(a => a.type === 'ASSIGN').length}
+                                    </span>
+                                )}
                             </button>
                             <button
                                 onClick={() => setActiveTab('project')}
-                                className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg ${activeTab === 'project'
+                                className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg flex items-center gap-2 ${activeTab === 'project'
                                     ? 'bg-white text-black'
                                     : 'text-black hover:bg-gray-200'
                                     }`}
                             >
                                 Project
+                                {activities.filter(a => a.type === 'PROJECT').length > 0 && (
+                                    <span className="bg-[#00B4D8] text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                        {activities.filter(a => a.type === 'PROJECT').length}
+                                    </span>
+                                )}
                             </button>
                         </div>
                         <button
@@ -283,7 +303,12 @@ const Activities = () => {
                                                     <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.newEndDate)}</span>
                                                 </td>
                                                 <td className="py-4 px-6">
-                                                    <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.reason}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <svg className="w-4 h-4 text-[#00B4D8] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                        </svg>
+                                                        <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.reason}</span>
+                                                    </div>
                                                 </td>
                                                 <td className="py-4 px-6">
                                                     <div className="flex justify-center">
@@ -351,7 +376,12 @@ const Activities = () => {
                                                     <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.newEndDate)}</span>
                                                 </td>
                                                 <td className="py-4 px-6">
-                                                    <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.reason}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <svg className="w-4 h-4 text-[#00B4D8] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                        </svg>
+                                                        <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.reason}</span>
+                                                    </div>
                                                 </td>
                                                 <td className="py-4 px-6">
                                                     <div className="flex justify-center">
@@ -471,7 +501,12 @@ const Activities = () => {
                                                     <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.clientName}</span>
                                                 </td>
                                                 <td className="py-4 px-6">
-                                                    <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.description}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <svg className="w-4 h-4 text-[#00B4D8] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                        </svg>
+                                                        <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.description}</span>
+                                                    </div>
                                                 </td>
                                                 <td className="py-4 px-6">
                                                     <div className="flex justify-center">
