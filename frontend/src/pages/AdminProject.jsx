@@ -243,7 +243,7 @@ const AdminProject = () => {
             await api.post('/projects', {
                 projectName: newProject.projectName,
                 clientName: newProject.clientName,
-                devManId: parseInt(newProject.devManId)
+                devManId: parseInt(newProject.devManId, 10)
             });
             setShowNewProjectModal(false);
             setNewProject({ projectName: '', clientName: '', devManId: '' });
@@ -251,6 +251,9 @@ const AdminProject = () => {
             fetchProjects();
         } catch (error) {
             console.error('Error creating project:', error);
+            if (error.response && error.response.data) {
+                console.error('Backend validation errors:', JSON.stringify(error.response.data, null, 2));
+            }
             showNotification('Failed to create project', 'error');
         }
     };
@@ -403,7 +406,7 @@ const AdminProject = () => {
                             placeholder="Find projects..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 pr-4 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B4D8] font-medium"
+                            className="pl-10 pr-4 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAF0F8] font-medium"
                         />
                     </div>
 
@@ -414,25 +417,16 @@ const AdminProject = () => {
                                 <button
                                     key={tab}
                                     onClick={() => setActiveFilter(tab)}
-                                    className={`px-6 py-2 rounded-md font-bold transition-all ${activeFilter === tab ? 'bg-[#00B4D8] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+                                    className={`px-6 py-2 rounded-md font-bold transition-all ${activeFilter === tab ? 'bg-[#CAF0F8] text-black shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
                                 >
                                     {tab}
                                 </button>
                             ))}
                         </div>
 
-                        {/* Separator */}
-                        <div className="h-10 w-px bg-gray-200 mx-2"></div>
-
-                        <button
-                            onClick={handleExport}
-                            className="px-6 py-2 bg-white text-gray-700 rounded-lg font-bold border border-gray-200 hover:bg-gray-50"
-                        >
-                            Export
-                        </button>
                         <button
                             onClick={() => setShowNewProjectModal(true)}
-                            className="px-6 py-2 bg-[#00B4D8] text-white rounded-lg font-bold hover:opacity-90"
+                            className="px-6 py-2 bg-[#CAF0F8] text-black rounded-lg font-bold hover:opacity-90"
                         >
                             + New Project
                         </button>
@@ -472,7 +466,9 @@ const AdminProject = () => {
                                         >
                                             {getStatusLabel(project.status)}
                                         </span>
-                                        <p className="text-gray-400 text-sm mt-2 font-medium">{project.memberCount} Members</p>
+                                        <div className="text-gray-400 text-sm mt-2 font-medium flex items-center justify-end gap-2">
+                                            <Users className="w-4 h-4" /> {project.memberCount}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -582,51 +578,59 @@ const AdminProject = () => {
                     </div>
 
                     {/* Extend Sidebar */}
-                    <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-400px-20px)] w-[400px] h-fit bg-[#F5F5F5] shadow-2xl z-60 transition-all duration-300 rounded-3xl p-6 flex flex-col ${showExtendModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
+                    <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-350px)] w-[700px] h-fit bg-[#F5F5F5] shadow-2xl z-60 transition-all duration-300 rounded-3xl p-6 flex flex-col ${showExtendModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
                         <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Extend Assignment</h3>
 
                         <div className="border-b border-gray-300 mb-6 mt-4"></div>
 
-                        <div className="space-y-6 flex-1">
-                            <div>
-                                <div className="flex justify-between mb-2">
-                                    <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Resource</span>
-                                    <span className="text-black">: {selectedResourceForAction?.resourceName}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Current Date</span>
-                                    <span className="text-black">: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                        <div className="grid grid-cols-2 gap-8 flex-1">
+                            <div className="space-y-4">
+                                <h4 className="font-bold text-lg mb-4">Assignment Details</h4>
+                                <div className="space-y-2">
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Resource Name</span>
+                                        <span className="text-black font-bold text-lg">{selectedResourceForAction?.resourceName}</span>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Current End Date</span>
+                                        <span className="text-black font-bold text-lg">{selectedResourceForAction?.endDate ? formatDate(selectedResourceForAction.endDate) : '-'}</span>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Today's Date</span>
+                                        <span className="text-black font-bold text-lg">{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>New End Date</label>
-                                <div className="relative">
-                                    <input
-                                        type="date"
-                                        value={actionDate}
-                                        min={minDate}
-                                        onChange={(e) => setActionDate(e.target.value)}
-                                        className="w-full px-4 py-3 bg-[#F5F5F5] border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black"
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>New End Date</label>
+                                    <div className="relative">
+                                        <input
+                                            type="date"
+                                            value={actionDate}
+                                            min={minDate}
+                                            onChange={(e) => setActionDate(e.target.value)}
+                                            className="w-full px-4 py-3 bg-white border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black"
+                                            style={{ fontFamily: 'SF Pro Display' }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Reason for Extension</label>
+                                    <textarea
+                                        rows="4"
+                                        value={actionReason}
+                                        onChange={(e) => setActionReason(e.target.value)}
+                                        className="w-full px-4 py-3 bg-white border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black resize-none"
                                         style={{ fontFamily: 'SF Pro Display' }}
-                                    />
-                                    {/* Calendar icon logic if custom input needed, but native date picker usually suffices or shows icon */}
+                                    ></textarea>
                                 </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Reason for Extension</label>
-                                <textarea
-                                    rows="6"
-                                    value={actionReason}
-                                    onChange={(e) => setActionReason(e.target.value)}
-                                    className="w-full px-4 py-3 bg-[#F5F5F5] border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black resize-none"
-                                    style={{ fontFamily: 'SF Pro Display' }}
-                                ></textarea>
                             </div>
                         </div>
 
-                        <div className="flex gap-4 mt-auto pt-4">
+                        <div className="flex gap-4 mt-8 pt-4 border-t border-gray-200">
                             <button
                                 onClick={() => setShowExtendModal(false)}
                                 className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
@@ -645,36 +649,45 @@ const AdminProject = () => {
                     </div>
 
                     {/* Release Sidebar */}
-                    <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-400px-20px)] w-[400px] h-fit bg-[#F5F5F5] shadow-2xl z-60 transition-all duration-300 rounded-3xl p-6 flex flex-col ${showReleaseModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
+                    <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-350px)] w-[700px] h-fit bg-[#F5F5F5] shadow-2xl z-60 transition-all duration-300 rounded-3xl p-6 flex flex-col ${showReleaseModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
                         <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Release Assignment</h3>
 
                         <div className="border-b border-gray-300 mb-6 mt-4"></div>
 
-                        <div className="space-y-6 flex-1">
-                            <div>
-                                <div className="flex justify-between mb-2">
-                                    <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Resource</span>
-                                    <span className="text-black">: {selectedResourceForAction?.resourceName}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Current Date</span>
-                                    <span className="text-black">: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                        <div className="grid grid-cols-2 gap-8 flex-1">
+                            <div className="space-y-4">
+                                <h4 className="font-bold text-lg mb-4">Assignment Details</h4>
+                                <div className="space-y-2">
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Resource Name</span>
+                                        <span className="text-black font-bold text-lg">{selectedResourceForAction?.resourceName}</span>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Current End Date</span>
+                                        <span className="text-black font-bold text-lg">{selectedResourceForAction?.endDate ? formatDate(selectedResourceForAction.endDate) : '-'}</span>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Today's Date</span>
+                                        <span className="text-black font-bold text-lg">{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Reason for Extension</label>
-                                <textarea
-                                    rows="6"
-                                    value={actionReason}
-                                    onChange={(e) => setActionReason(e.target.value)}
-                                    className="w-full px-4 py-3 bg-[#F5F5F5] border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#FF0000] outline-none text-black resize-none"
-                                    style={{ fontFamily: 'SF Pro Display' }}
-                                ></textarea>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Reason for Release</label>
+                                    <textarea
+                                        rows="6"
+                                        value={actionReason}
+                                        onChange={(e) => setActionReason(e.target.value)}
+                                        className="w-full px-4 py-3 bg-white border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#FF0000] outline-none text-black resize-none"
+                                        style={{ fontFamily: 'SF Pro Display' }}
+                                    ></textarea>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="flex gap-4 mt-auto pt-4">
+                        <div className="flex gap-4 mt-8 pt-4 border-t border-gray-200">
                             <button
                                 onClick={() => setShowReleaseModal(false)}
                                 className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"

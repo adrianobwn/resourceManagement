@@ -259,7 +259,7 @@ const DevmanProject = () => {
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Projects');
             XLSX.writeFile(wb, `DevMan_Projects_${new Date().toISOString().split('T')[0]}.xlsx`);
-            
+
             showNotification('Project data exported successfully!', 'success');
         } catch (error) {
             console.error('Error exporting data:', error);
@@ -283,7 +283,7 @@ const DevmanProject = () => {
             case 'CLOSED':
                 return { backgroundColor: 'rgba(255, 0, 0, 0.2)', color: '#FF0000' };
             default:
-                return { backgroundColor: 'rgba(0, 180, 216, 0.2)', color: '#00B4D8' };
+                return { backgroundColor: '#CAF0F8', color: '#000000' };
         }
     };
 
@@ -327,8 +327,8 @@ const DevmanProject = () => {
                         : 'opacity-100 translate-x-0 animate-slide-in'
                         }`}
                     style={{
-                        backgroundColor: notification.type === 'success' ? 'rgba(6, 208, 1, 0.2)' : notification.type === 'error' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 180, 216, 0.2)',
-                        borderColor: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8'
+                        backgroundColor: notification.type === 'success' ? 'rgba(6, 208, 1, 0.2)' : notification.type === 'error' ? 'rgba(255, 0, 0, 0.2)' : '#CAF0F8',
+                        borderColor: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#CAF0F8'
                     }}
                 >
                     {notification.type === 'success' ? (
@@ -336,12 +336,12 @@ const DevmanProject = () => {
                     ) : notification.type === 'error' ? (
                         <svg className="w-5 h-5" fill="none" stroke="#FF0000" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     ) : (
-                        <svg className="w-5 h-5" fill="none" stroke="#00B4D8" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <svg className="w-5 h-5" fill="none" stroke="#000000" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     )}
-                    <span className="font-bold" style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8', fontSize: '14px' }}>
+                    <span className="font-bold" style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#000000', fontSize: '14px' }}>
                         {notification.message}
                     </span>
-                    <button onClick={closeNotification} className="ml-2 hover:opacity-70 transition-opacity" style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8' }}>
+                    <button onClick={closeNotification} className="ml-2 hover:opacity-70 transition-opacity" style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#000000' }}>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
@@ -358,22 +358,17 @@ const DevmanProject = () => {
                     {/* Left: Search */}
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input type="text" placeholder="Find projects..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 pr-4 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B4D8]" />
+                        <input type="text" placeholder="Find projects..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 pr-4 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAF0F8]" />
                     </div>
 
                     {/* Right: Filters & Actions */}
                     <div className="flex items-center gap-4">
                         <div className="flex bg-white rounded-lg p-1 shadow-sm border border-gray-100">
                             {filterTabs.map(tab => (
-                                <button key={tab} onClick={() => setActiveFilter(tab)} className={`px-6 py-2 rounded-md font-bold transition-colors ${activeFilter === tab ? 'bg-[#00B4D8] text-white shadow-md' : 'text-gray-500 hover:bg-gray-100'}`}>{tab}</button>
+                                <button key={tab} onClick={() => setActiveFilter(tab)} className={`px-6 py-2 rounded-md font-bold transition-colors ${activeFilter === tab ? 'bg-[#CAF0F8] text-black shadow-md' : 'text-gray-500 hover:bg-gray-100'}`}>{tab}</button>
                             ))}
                         </div>
-
-                        {/* Separator */}
-                        <div className="h-10 w-px bg-gray-200 mx-2"></div>
-
-                        <button onClick={handleExport} className="px-6 py-2 bg-white text-gray-700 rounded-lg font-bold border border-gray-200 hover:bg-gray-50 transition-colors">Export</button>
-                        <button onClick={() => setShowNewProjectModal(true)} className="px-6 py-2 bg-[#00B4D8] text-white rounded-lg font-bold hover:bg-[#009ac7] transition-colors">+ Propose Project</button>
+                        <button onClick={() => setShowNewProjectModal(true)} className="px-6 py-2 bg-[#CAF0F8] text-black rounded-lg font-bold hover:bg-[#b8e8ef] transition-colors">+ Propose Project</button>
                     </div>
                 </div>
 
@@ -387,20 +382,20 @@ const DevmanProject = () => {
                         filteredProjects.map(project => (
                             <div key={project.projectId} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
                                 <div className="flex items-center gap-6">
-                                    <div className="w-10 h-10 bg-[#CAF0F8] rounded-lg flex items-center justify-center">
-                                        <svg className="w-6 h-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                                        </svg>
+                                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <Folder className="w-6 h-6 text-blue-500" />
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-gray-800 mb-1">{project.projectName}</h3>
-                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-gray-500 font-bold">DevMan: {project.devManName}</span></p>
+                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-[#0059FF] font-bold">DevMan: {project.devManName}</span></p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-8">
                                     <div className="text-right">
-                                        <span className="text-xs px-3 py-1 rounded-full font-bold" style={getStatusBadgeStyle(project.status)}>{getStatusLabel(project.status)}</span>
-                                        <p className="text-gray-400 text-sm mt-2 font-medium">{project.memberCount} Members</p>
+                                        <span className="text-xs px-3 py-1 rounded-full font-bold inline-block" style={getStatusBadgeStyle(project.status)}>{getStatusLabel(project.status)}</span>
+                                        <div className="text-black text-sm mt-2 font-medium flex items-center justify-end gap-2">
+                                            <Users className="w-4 h-4" /> {project.memberCount}
+                                        </div>
                                     </div>
                                     <button
                                         onClick={() => handleViewDetail(project)}
@@ -491,113 +486,113 @@ const DevmanProject = () => {
 
             {/* Extend Sidebar */}
             <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-400px-20px)] w-[400px] h-fit bg-[#F5F5F5] shadow-2xl z-60 transition-all duration-300 rounded-3xl p-6 flex flex-col ${showExtendModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
-                        <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Extend Assignment</h3>
+                <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Extend Assignment</h3>
 
-                        <div className="border-b border-gray-300 mb-6 mt-4"></div>
+                <div className="border-b border-gray-300 mb-6 mt-4"></div>
 
-                        <div className="space-y-6 flex-1">
-                            <div>
-                                <div className="flex justify-between mb-2">
-                                    <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Resource</span>
-                                    <span className="text-black">: {selectedResourceForAction?.resourceName}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Current Date</span>
-                                    <span className="text-black">: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>New End Date</label>
-                                <div className="relative">
-                                    <input
-                                        type="date"
-                                        value={actionDate}
-                                        min={minDate}
-                                        onChange={(e) => setActionDate(e.target.value)}
-                                        className="w-full px-4 py-3 bg-[#F5F5F5] border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black"
-                                        style={{ fontFamily: 'SF Pro Display' }}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Reason for Extension</label>
-                                <textarea
-                                    rows="6"
-                                    value={actionReason}
-                                    onChange={(e) => setActionReason(e.target.value)}
-                                    className="w-full px-4 py-3 bg-[#F5F5F5] border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black resize-none"
-                                    style={{ fontFamily: 'SF Pro Display' }}
-                                ></textarea>
-                            </div>
+                <div className="space-y-6 flex-1">
+                    <div>
+                        <div className="flex justify-between mb-2">
+                            <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Resource</span>
+                            <span className="text-black">: {selectedResourceForAction?.resourceName}</span>
                         </div>
-
-                        <div className="flex gap-4 mt-auto pt-4">
-                            <button
-                                onClick={() => setShowExtendModal(false)}
-                                className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
-                                style={{ fontFamily: 'SF Pro Display' }}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleExtendSubmit}
-                                className="flex-1 py-3 bg-[#0057FF] text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
-                                style={{ fontFamily: 'SF Pro Display' }}
-                            >
-                                Confirm Extension
-                            </button>
+                        <div className="flex justify-between">
+                            <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Current Date</span>
+                            <span className="text-black">: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                         </div>
                     </div>
+
+                    <div>
+                        <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>New End Date</label>
+                        <div className="relative">
+                            <input
+                                type="date"
+                                value={actionDate}
+                                min={minDate}
+                                onChange={(e) => setActionDate(e.target.value)}
+                                className="w-full px-4 py-3 bg-[#F5F5F5] border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black"
+                                style={{ fontFamily: 'SF Pro Display' }}
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Reason for Extension</label>
+                        <textarea
+                            rows="6"
+                            value={actionReason}
+                            onChange={(e) => setActionReason(e.target.value)}
+                            className="w-full px-4 py-3 bg-[#F5F5F5] border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black resize-none"
+                            style={{ fontFamily: 'SF Pro Display' }}
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div className="flex gap-4 mt-auto pt-4">
+                    <button
+                        onClick={() => setShowExtendModal(false)}
+                        className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
+                        style={{ fontFamily: 'SF Pro Display' }}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleExtendSubmit}
+                        className="flex-1 py-3 bg-[#0057FF] text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                        style={{ fontFamily: 'SF Pro Display' }}
+                    >
+                        Confirm Extension
+                    </button>
+                </div>
+            </div>
 
             {/* Release Sidebar */}
             <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-400px-20px)] w-[400px] h-fit bg-[#F5F5F5] shadow-2xl z-60 transition-all duration-300 rounded-3xl p-6 flex flex-col ${showReleaseModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
-                        <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Release Assignment</h3>
+                <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Release Assignment</h3>
 
-                        <div className="border-b border-gray-300 mb-6 mt-4"></div>
+                <div className="border-b border-gray-300 mb-6 mt-4"></div>
 
-                        <div className="space-y-6 flex-1">
-                            <div>
-                                <div className="flex justify-between mb-2">
-                                    <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Resource</span>
-                                    <span className="text-black">: {selectedResourceForAction?.resourceName}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Current Date</span>
-                                    <span className="text-black">: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Reason for Early Release</label>
-                                <textarea
-                                    rows="6"
-                                    value={actionReason}
-                                    onChange={(e) => setActionReason(e.target.value)}
-                                    className="w-full px-4 py-3 bg-[#F5F5F5] border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#FF0000] outline-none text-black resize-none"
-                                    style={{ fontFamily: 'SF Pro Display' }}
-                                ></textarea>
-                            </div>
+                <div className="space-y-6 flex-1">
+                    <div>
+                        <div className="flex justify-between mb-2">
+                            <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Resource</span>
+                            <span className="text-black">: {selectedResourceForAction?.resourceName}</span>
                         </div>
-
-                        <div className="flex gap-4 mt-auto pt-4">
-                            <button
-                                onClick={() => setShowReleaseModal(false)}
-                                className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
-                                style={{ fontFamily: 'SF Pro Display' }}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleReleaseSubmit}
-                                className="flex-1 py-3 bg-[#FF0000] text-white rounded-xl font-bold hover:bg-red-700 transition-colors"
-                                style={{ fontFamily: 'SF Pro Display' }}
-                            >
-                                Confirm Release
-                            </button>
+                        <div className="flex justify-between">
+                            <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Current Date</span>
+                            <span className="text-black">: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                         </div>
                     </div>
+
+                    <div>
+                        <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Reason for Early Release</label>
+                        <textarea
+                            rows="6"
+                            value={actionReason}
+                            onChange={(e) => setActionReason(e.target.value)}
+                            className="w-full px-4 py-3 bg-[#F5F5F5] border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#FF0000] outline-none text-black resize-none"
+                            style={{ fontFamily: 'SF Pro Display' }}
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div className="flex gap-4 mt-auto pt-4">
+                    <button
+                        onClick={() => setShowReleaseModal(false)}
+                        className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
+                        style={{ fontFamily: 'SF Pro Display' }}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleReleaseSubmit}
+                        className="flex-1 py-3 bg-[#FF0000] text-white rounded-xl font-bold hover:bg-red-700 transition-colors"
+                        style={{ fontFamily: 'SF Pro Display' }}
+                    >
+                        Confirm Release
+                    </button>
+                </div>
+            </div>
 
             {/* Propose Project Modal (Styled) */}
             {showNewProjectModal && (

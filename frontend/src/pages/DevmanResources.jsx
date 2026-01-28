@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import api from '../utils/api';
+import * as XLSX from 'xlsx';
 
 const DevmanResources = () => {
     const navigate = useNavigate();
@@ -65,6 +66,29 @@ const DevmanResources = () => {
             setProjects(response.data);
         } catch (error) {
             console.error('Error fetching projects:', error);
+        }
+    };
+
+    const handleExport = () => {
+        try {
+            const exportData = filteredResources.map(resource => ({
+                'Resource Name': resource.resourceName,
+                'Status': resource.status,
+                'Current Project': resource.currentAssignments?.[0]?.projectName || '-',
+                'Role': resource.currentAssignments?.[0]?.projectRole || '-',
+                'Start Date': resource.currentAssignments?.[0]?.startDate || '-',
+                'End Date': resource.currentAssignments?.[0]?.endDate || '-'
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Resources');
+            XLSX.writeFile(wb, `DevMan_Resources_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+            showNotification('Resources data exported successfully!', 'success');
+        } catch (error) {
+            console.error('Error exporting data:', error);
+            showNotification('Failed to export data', 'error');
         }
     };
 
@@ -233,7 +257,7 @@ const DevmanResources = () => {
 
     const handleViewDetail = async (resource) => {
         if (resource.status === 'AVAILABLE') {
-            showNotification(`${resource.resourceName} Currently Available for Assignment`);
+            showNotification(`${resource.resourceName} Currently Available for Assignment`, 'info');
         } else {
             try {
                 const response = await api.get(`/resources/${resource.resourceId}/assignments`);
@@ -388,9 +412,9 @@ const DevmanResources = () => {
                                     className="px-3 py-1 rounded-full font-bold whitespace-nowrap"
                                     style={{
                                         fontSize: '12px',
-                                        color: '#00B4D8',
-                                        backgroundColor: 'rgba(0, 180, 216, 0.2)',
-                                        border: '1px solid #00B4D8'
+                                        color: '#000000',
+                                        backgroundColor: '#CAF0F8',
+                                        border: '1px solid #CAF0F8'
                                     }}
                                 >
                                     ACTIVE IN {detailModal.projects.length} PROJECTS
@@ -480,8 +504,8 @@ const DevmanResources = () => {
                             >
                                 {/* Left side: Profile picture and name */}
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-[#00B4D8] flex items-center justify-center">
-                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div className="w-10 h-10 rounded-full bg-[#CAF0F8] flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
                                     </div>
@@ -547,7 +571,7 @@ const DevmanResources = () => {
                                         <select
                                             value={assignmentData.project}
                                             onChange={(e) => setAssignmentData(prev => ({ ...prev, project: e.target.value }))}
-                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full appearance-none"
+                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#CAF0F8] w-full appearance-none"
                                             style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 35px 0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
                                         >
                                             <option value="">Select project</option>
@@ -580,7 +604,7 @@ const DevmanResources = () => {
                                             <select
                                                 value={assignmentData.role}
                                                 onChange={(e) => setAssignmentData(prev => ({ ...prev, role: e.target.value }))}
-                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full appearance-none"
+                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#CAF0F8] w-full appearance-none"
                                                 style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 35px 0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
                                             >
                                                 <option value="">Select role</option>
@@ -606,7 +630,7 @@ const DevmanResources = () => {
                                                     type="date"
                                                     value={assignmentData.startDate}
                                                     onChange={(e) => setAssignmentData(prev => ({ ...prev, startDate: e.target.value }))}
-                                                    className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                    className="bg-white focus:outline-none focus:ring-1 focus:ring-[#CAF0F8] w-full"
                                                     style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
                                                 />
                                             </div>
@@ -617,7 +641,7 @@ const DevmanResources = () => {
                                                     value={assignmentData.endDate}
                                                     min={assignmentData.startDate || ''}
                                                     onChange={(e) => setAssignmentData(prev => ({ ...prev, endDate: e.target.value }))}
-                                                    className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                    className="bg-white focus:outline-none focus:ring-1 focus:ring-[#CAF0F8] w-full"
                                                     style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
                                                 />
                                             </div>
@@ -724,25 +748,23 @@ const DevmanResources = () => {
                                             const date = new Date(currentYear, currentMonth + i, 1);
                                             const monthName = monthNames[date.getMonth()];
                                             const year = date.getFullYear();
-                                            months.push(`${monthName} ${year}`);
+                                            months.push({ name: `${monthName} ${year}`, isCurrent: i === 0 });
                                         }
-
-                                        const currentMonthStr = `${monthNames[currentMonth]} ${currentYear}`;
 
                                         return months.map((month, index) => (
                                             <div
-                                                key={month}
+                                                key={index}
                                                 className="text-center py-3 font-bold border border-gray-300"
                                                 style={{
                                                     fontSize: '20px',
                                                     fontFamily: 'SF Pro Display',
-                                                    backgroundColor: month === currentMonthStr ? '#0059FF' : 'rgba(0, 180, 216, 0.2)',
-                                                    color: month === currentMonthStr ? '#FFFFFF' : '#000000',
+                                                    backgroundColor: month.isCurrent ? '#0059FF' : 'rgba(0, 180, 216, 0.2)',
+                                                    color: month.isCurrent ? '#FFFFFF' : '#000000',
                                                     borderTopLeftRadius: index === 0 ? '8px' : '0',
                                                     borderTopRightRadius: index === 8 ? '8px' : '0'
                                                 }}
                                             >
-                                                {month}
+                                                {month.name}
                                             </div>
                                         ));
                                     })()}
@@ -757,6 +779,7 @@ const DevmanResources = () => {
                                             const currentYear = now.getFullYear();
                                             const startDate = new Date(currentYear, currentMonth - 4, 1);
                                             const assignments = trackRecordModal.resource?.currentAssignments || [];
+                                            // Ensure at least 4 rows to fill the height nicely if empty, or just map assignments
                                             const totalRows = Math.max(4, assignments.length);
 
                                             // Function to calculate position based on date
@@ -766,121 +789,105 @@ const DevmanResources = () => {
                                                 return Math.max(0, Math.min(9, monthDiff));
                                             };
 
-                                            // Function to get project color based on status
                                             const getProjectColor = (assignment) => {
-                                                if (assignment.projectStatus === 'CLOSED' || assignment.assignmentStatus === 'RELEASED') {
-                                                    return '#FF0000'; // Closed
-                                                }
-                                                if (assignment.projectStatus === 'HOLD') {
-                                                    return '#F97316'; // Hold
-                                                }
-                                                return '#06D001'; // Ongoing
+                                                if (assignment.projectStatus === 'CLOSED' || assignment.assignmentStatus === 'RELEASED') return '#FF0000';
+                                                if (assignment.projectStatus === 'HOLD') return '#F97316';
+                                                return '#06D001';
                                             };
 
-                                            // Create dynamic rows
                                             const rows = [];
                                             for (let i = 0; i < totalRows; i++) {
                                                 const assignment = assignments[i];
-                                                if (assignment) {
-                                                    const startPos = getMonthPosition(assignment.startDate);
-                                                    const endPos = getMonthPosition(assignment.endDate) + 1;
-                                                    const width = ((endPos - startPos) / 9) * 100;
-                                                    const left = (startPos / 9) * 100;
-                                                    const color = getProjectColor(assignment);
-                                                    const startDateObj = new Date(assignment.startDate);
-                                                    const endDateObj = new Date(assignment.endDate);
-                                                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-                                                    rows.push(
-                                                        <div key={i} className="relative" style={{ height: '117.6px' }}>
-                                                            <div className="grid grid-cols-9 h-full">
-                                                                {Array.from({ length: 9 }).map((_, index) => (
-                                                                    <div
-                                                                        key={index}
-                                                                        className="border-r border-b border-l border-gray-300"
-                                                                        style={{
-                                                                            borderBottomLeftRadius: i === totalRows - 1 && index === 0 ? '8px' : '0',
-                                                                            borderBottomRightRadius: i === totalRows - 1 && index === 8 ? '8px' : '0'
-                                                                        }}
-                                                                    ></div>
-                                                                ))}
-                                                            </div>
-                                                            <div
-                                                                className="absolute flex items-center justify-center rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                                                style={{
-                                                                    left: `${left}%`,
-                                                                    width: `${Math.min(width, 100 - left)}%`,
-                                                                    height: '60px',
-                                                                    top: '50%',
-                                                                    transform: 'translateY(-50%)',
-                                                                    backgroundColor: color
-                                                                }}
-                                                                onMouseEnter={() => setHoveredProject(`project${i}`)}
-                                                                onMouseLeave={() => setHoveredProject(null)}
-                                                            >
-                                                                <span className="font-bold text-white text-center px-4 truncate" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
-                                                                    {assignment.projectName} • {assignment.projectRole}
-                                                                </span>
+                                                rows.push(
+                                                    <div key={i} className="relative" style={{ height: '117.6px' }}>
+                                                        {/* Grid Background for Row */}
+                                                        <div className="grid grid-cols-9 h-full">
+                                                            {Array.from({ length: 9 }).map((_, index) => (
+                                                                <div
+                                                                    key={index}
+                                                                    className="border-r border-b border-l border-gray-300"
+                                                                    style={{
+                                                                        borderBottomLeftRadius: i === totalRows - 1 && index === 0 ? '8px' : '0',
+                                                                        borderBottomRightRadius: i === totalRows - 1 && index === 8 ? '8px' : '0'
+                                                                    }}
+                                                                ></div>
+                                                            ))}
+                                                        </div>
 
-                                                                {/* Tooltip */}
-                                                                {hoveredProject === `project${i}` && (
-                                                                    <div
-                                                                        className="absolute z-10 bg-white rounded-lg shadow-xl p-4 border border-gray-200"
-                                                                        style={{
-                                                                            top: '-120px',
-                                                                            left: '50%',
-                                                                            transform: 'translateX(-50%)',
-                                                                            width: '300px',
-                                                                            fontFamily: 'SF Pro Display'
-                                                                        }}
-                                                                    >
-                                                                        <div className="space-y-2">
-                                                                            <h4 className="font-bold text-black" style={{ fontSize: '16px' }}>{assignment.projectName}</h4>
-                                                                            <div className="text-sm text-gray-700">
-                                                                                <p><span className="font-semibold">Role:</span> {assignment.projectRole}</p>
-                                                                                <p><span className="font-semibold">Start:</span> {monthNames[startDateObj.getMonth()]} {startDateObj.getFullYear()}</p>
-                                                                                <p><span className="font-semibold">End:</span> {monthNames[endDateObj.getMonth()]} {endDateObj.getFullYear()}</p>
-                                                                                <p><span className="font-semibold">Status:</span> <span className={endDateObj < now ? 'text-red-600 font-bold' : 'text-green-600 font-bold'}>{endDateObj < now ? 'Closed' : 'Ongoing'}</span></p>
-                                                                            </div>
-                                                                        </div>
-                                                                        {/* Arrow */}
+                                                        {/* Project Bar (if assignment exists) */}
+                                                        {assignment && (() => {
+                                                            const startPos = getMonthPosition(assignment.startDate);
+                                                            const endPos = getMonthPosition(assignment.endDate) + 1; // +1 to cover the full month
+                                                            const width = ((endPos - startPos) / 9) * 100;
+                                                            const left = (startPos / 9) * 100;
+                                                            const color = getProjectColor(assignment);
+                                                            const startDateObj = new Date(assignment.startDate);
+                                                            const endDateObj = new Date(assignment.endDate);
+                                                            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+                                                            // Only render if visible in the 9-month window
+                                                            if (width <= 0) return null;
+
+                                                            return (
+                                                                <div
+                                                                    className="absolute flex items-center justify-center rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                                                    style={{
+                                                                        left: `${left}%`,
+                                                                        width: `${Math.min(width, 100 - left)}%`,
+                                                                        height: '60px',
+                                                                        top: '50%',
+                                                                        transform: 'translateY(-50%)',
+                                                                        backgroundColor: color
+                                                                    }}
+                                                                    onMouseEnter={() => setHoveredProject(`project${i}`)}
+                                                                    onMouseLeave={() => setHoveredProject(null)}
+                                                                >
+                                                                    <span className="font-bold text-white text-center px-4 truncate" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
+                                                                        {assignment.projectName} • {assignment.projectRole}
+                                                                    </span>
+
+                                                                    {/* Tooltip */}
+                                                                    {hoveredProject === `project${i}` && (
                                                                         <div
-                                                                            className="absolute"
+                                                                            className="absolute z-10 bg-white rounded-lg shadow-xl p-4 border border-gray-200"
                                                                             style={{
-                                                                                bottom: '-8px',
+                                                                                top: '-120px',
                                                                                 left: '50%',
                                                                                 transform: 'translateX(-50%)',
-                                                                                width: '0',
-                                                                                height: '0',
-                                                                                borderLeft: '8px solid transparent',
-                                                                                borderRight: '8px solid transparent',
-                                                                                borderTop: '8px solid white'
+                                                                                width: '300px',
+                                                                                fontFamily: 'SF Pro Display'
                                                                             }}
-                                                                        ></div>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                } else {
-                                                    // Empty row
-                                                    rows.push(
-                                                        <div key={i} className="relative" style={{ height: '117.6px' }}>
-                                                            <div className="grid grid-cols-9 h-full">
-                                                                {Array.from({ length: 9 }).map((_, index) => (
-                                                                    <div
-                                                                        key={index}
-                                                                        className="border-r border-b border-l border-gray-300"
-                                                                        style={{
-                                                                            borderBottomLeftRadius: i === totalRows - 1 && index === 0 ? '8px' : '0',
-                                                                            borderBottomRightRadius: i === totalRows - 1 && index === 8 ? '8px' : '0'
-                                                                        }}
-                                                                    ></div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                }
+                                                                        >
+                                                                            <div className="space-y-2">
+                                                                                <h4 className="font-bold text-black" style={{ fontSize: '16px' }}>{assignment.projectName}</h4>
+                                                                                <div className="text-sm text-gray-700">
+                                                                                    <p><span className="font-semibold">Role:</span> {assignment.projectRole}</p>
+                                                                                    <p><span className="font-semibold">Start:</span> {monthNames[startDateObj.getMonth()]} {startDateObj.getFullYear()}</p>
+                                                                                    <p><span className="font-semibold">End:</span> {monthNames[endDateObj.getMonth()]} {endDateObj.getFullYear()}</p>
+                                                                                    <p><span className="font-semibold">Status:</span> <span className={endDateObj < now ? 'text-red-600 font-bold' : 'text-green-600 font-bold'}>{endDateObj < now ? 'Closed' : 'Ongoing'}</span></p>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div
+                                                                                className="absolute"
+                                                                                style={{
+                                                                                    bottom: '-8px',
+                                                                                    left: '50%',
+                                                                                    transform: 'translateX(-50%)',
+                                                                                    width: '0',
+                                                                                    height: '0',
+                                                                                    borderLeft: '8px solid transparent',
+                                                                                    borderRight: '8px solid transparent',
+                                                                                    borderTop: '8px solid white'
+                                                                                }}
+                                                                            ></div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                );
                                             }
                                             return rows;
                                         })()}
@@ -918,63 +925,54 @@ const DevmanResources = () => {
                     <h1 className="text-4xl font-bold text-gray-800 mb-8">Resources</h1>
 
                     {/* Toolbar */}
-                    <div className="flex items-center justify-between mb-6 gap-3">
-                        {/* Search Bar */}
+                    <div className="flex items-center justify-between mb-8">
+                        {/* Left: Search */}
                         <div className="relative">
-                            <svg
-                                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                />
+                            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
+                            <input
+                                type="text"
+                                placeholder="Find resources..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-10 pr-4 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAF0F8]"
+                            />
                         </div>
 
-                        {/* Single Date Picker */}
-                        <input
-                            type="date"
-                            value={dateFilter}
-                            onChange={handleDateFilterChange}
-                            className="px-3 py-2 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold"
-                            style={{ fontSize: '13px', fontFamily: 'SF Pro Display' }}
-                        />
-
-                        <div className="flex items-center gap-3">
-                            {/* Status Filter Dropdown */}
-                            <div className="relative">
-                                <select
-                                    value={activeFilter}
-                                    onChange={(e) => setActiveFilter(e.target.value)}
-                                    className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
-                                    style={{ fontSize: '13px', minWidth: '120px', fontFamily: 'SF Pro Display' }}
-                                >
-                                    <option value="all">Status</option>
-                                    <option value="available">Available</option>
-                                    <option value="assigned">Assigned</option>
-                                </select>
-                                <svg
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                </svg>
+                        {/* Right: Filters */}
+                        <div className="flex items-center gap-4">
+                            {/* Status Filter Tabs */}
+                            <div className="flex bg-white rounded-lg p-1 shadow-sm border border-gray-100">
+                                {['all', 'available', 'assigned'].map((status) => (
+                                    <button
+                                        key={status}
+                                        onClick={() => setActiveFilter(status)}
+                                        className={`px-6 py-2 rounded-md font-bold transition-colors ${activeFilter === status
+                                            ? 'bg-[#CAF0F8] text-black shadow-md'
+                                            : 'text-gray-500 hover:bg-gray-100'
+                                            }`}
+                                        style={{ textTransform: 'capitalize' }}
+                                    >
+                                        {status}
+                                    </button>
+                                ))}
                             </div>
+                            {/* Single Date Picker */}
+                            <input
+                                type="date"
+                                value={dateFilter}
+                                onChange={handleDateFilterChange}
+                                className="px-4 py-2 bg-white text-gray-700 rounded-lg font-bold border border-gray-200 hover:bg-gray-50 transition-colors"
+                            />
 
                             {/* Role Filter Dropdown */}
                             <div className="relative">
                                 <select
                                     value={roleFilter}
                                     onChange={(e) => setRoleFilter(e.target.value)}
-                                    className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
-                                    style={{ fontSize: '13px', minWidth: '150px', fontFamily: 'SF Pro Display' }}
+                                    className="px-4 py-2 pr-8 bg-white text-gray-700 rounded-lg font-bold border border-gray-200 hover:bg-gray-50 transition-colors appearance-none cursor-pointer"
+                                    style={{ minWidth: '150px' }}
                                 >
                                     <option value="all">All Roles</option>
                                     <option value="Team Lead">Team Lead</option>
@@ -982,12 +980,7 @@ const DevmanResources = () => {
                                     <option value="Frontend Developer">Frontend Developer</option>
                                     <option value="Quality Assurance">Quality Assurance</option>
                                 </select>
-                                <svg
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
+                                <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </div>
@@ -1005,10 +998,10 @@ const DevmanResources = () => {
                                 <table className="w-full relative">
                                     <thead className="sticky top-0 z-10 bg-[#CAF0F8] shadow-sm">
                                         <tr className="border-b border-gray-200">
-                                            <th className="text-left py-4 px-6 font-bold text-black bg-[#CAF0F8]" style={{ fontSize: '20px' }}>Name</th>
-                                            <th className="text-left py-4 px-6 font-bold text-black bg-[#CAF0F8]" style={{ fontSize: '20px' }}>Status</th>
-                                            <th className="text-center py-4 px-6 font-bold text-black bg-[#CAF0F8]" style={{ fontSize: '20px' }}>Detail</th>
-                                            <th className="text-center py-4 px-6 font-bold text-black bg-[#CAF0F8]" style={{ fontSize: '20px' }}>Track Record</th>
+                                            <th className="text-left py-4 px-6 font-bold text-black bg-[#CAF0F8]">Name</th>
+                                            <th className="text-left py-4 px-6 font-bold text-black bg-[#CAF0F8]">Status</th>
+                                            <th className="text-center py-4 px-6 font-bold text-black bg-[#CAF0F8]">Detail</th>
+                                            <th className="text-center py-4 px-6 font-bold text-black bg-[#CAF0F8]">Track Record</th>
                                             <th className="text-right py-4 px-6 font-bold text-black bg-[#CAF0F8]"></th>
                                         </tr>
                                     </thead>
@@ -1026,15 +1019,14 @@ const DevmanResources = () => {
                                                     className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                                                 >
                                                     <td className="py-4 px-6">
-                                                        <span className="font-bold text-gray-800" style={{ fontSize: '20px' }}>
+                                                        <span className="font-bold text-gray-800">
                                                             {resource.resourceName}
                                                         </span>
                                                     </td>
                                                     <td className="py-4 px-6">
                                                         <span
-                                                            className="px-3 py-1 rounded-full font-bold"
+                                                            className="px-3 py-1 rounded-full font-bold text-xs"
                                                             style={{
-                                                                fontSize: '12px',
                                                                 color: resource.status === 'AVAILABLE' ? '#06D001' : '#FF0000',
                                                                 backgroundColor: resource.status === 'AVAILABLE' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(255, 0, 0, 0.2)',
                                                                 border: resource.status === 'AVAILABLE' ? '1px solid #06D001' : '1px solid #FF0000'

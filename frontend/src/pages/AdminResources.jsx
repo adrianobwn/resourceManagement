@@ -1172,113 +1172,92 @@ const AdminResources = () => {
                     <h1 className="text-4xl font-bold text-gray-800 mb-8">Resources</h1>
 
                     {/* Toolbar */}
-                    <div className="flex items-center justify-between mb-6 gap-3">
-                        {/* Search Bar */}
+                    {/* Toolbar */}
+                    {/* Toolbar */}
+                    <div className="flex items-center justify-between mb-8">
+                        {/* Search Bar - Left Side */}
                         <div className="relative">
-                            <svg
-                                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                />
+                            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                             <input
                                 type="text"
-                                placeholder="Search resources..."
+                                placeholder="Find resources..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10 pr-4 py-2 w-[200px] h-[40px] border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent placeholder:italic placeholder:font-light"
-                                style={{ fontSize: '15px' }}
+                                className="pl-10 pr-4 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAF0F8]"
                             />
                         </div>
 
-                        {/* Status Filter Dropdown */}
-                        <div className="relative">
-                            <select
-                                value={activeFilter}
-                                onChange={(e) => setActiveFilter(e.target.value)}
-                                className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
-                                style={{ fontSize: '13px', minWidth: '120px', fontFamily: 'SF Pro Display' }}
-                            >
-                                <option value="all">Status</option>
-                                <option value="available">Available</option>
-                                <option value="assigned">Assigned</option>
-                            </select>
-                            <svg
-                                className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </div>
+                        {/* Filters & Actions - Right Side Grouped */}
+                        <div className="flex items-center gap-4">
+                            {/* Status Filter Dropdown */}
+                            <div className="relative">
+                                <select
+                                    value={activeFilter}
+                                    onChange={(e) => setActiveFilter(e.target.value)}
+                                    className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#CAF0F8] focus:border-transparent font-bold appearance-none cursor-pointer"
+                                    style={{ minWidth: '150px', fontFamily: 'SF Pro Display' }}
+                                >
+                                    <option value="all">Status</option>
+                                    <option value="available">Available</option>
+                                    <option value="assigned">Assigned</option>
+                                </select>
+                                <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
 
-                        {/* Date Range Pickers */}
-                        <div className="flex items-center gap-2">
+                            {/* Export Button */}
+                            <button
+                                className="px-4 py-2 bg-white text-gray-700 rounded-lg font-bold border border-gray-200 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                                title="Export to Excel"
+                                onClick={handleExport}
+                            >
+                                <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Export
+                            </button>
+
+                            {/* Date Filter */}
                             <input
                                 type="date"
                                 value={dateFilter}
                                 onChange={handleDateFilterChange}
-                                className="px-3 py-1.5 border-none bg-transparent focus:ring-0 font-bold text-xs"
-                                style={{ fontFamily: 'SF Pro Display' }}
+                                className="px-4 py-2 bg-white text-gray-700 rounded-lg font-bold border border-gray-200 hover:bg-gray-50 transition-colors"
                             />
-                        </div>
 
-                        {/* Role Filter Dropdown */}
-                        <div className="relative">
-                            <select
-                                value={roleFilter}
-                                onChange={(e) => setRoleFilter(e.target.value)}
-                                className="px-4 py-2 pr-8 border border-gray-300 rounded-lg bg-[#F5F5F5] focus:outline-none focus:ring-2 focus:ring-[#00B4A6] focus:border-transparent font-bold appearance-none cursor-pointer"
-                                style={{ fontSize: '13px', minWidth: '150px', fontFamily: 'SF Pro Display' }}
+                            {/* Role Filter */}
+                            <div className="relative">
+                                <select
+                                    value={roleFilter}
+                                    onChange={(e) => setRoleFilter(e.target.value)}
+                                    className="px-4 py-2 pr-8 bg-white text-gray-700 rounded-lg font-bold border border-gray-200 hover:bg-gray-50 transition-colors appearance-none cursor-pointer"
+                                    style={{ minWidth: '150px' }}
+                                >
+                                    <option value="all">All Roles</option>
+                                    <option value="Team Lead">Team Lead</option>
+                                    <option value="Backend Developer">Backend Developer</option>
+                                    <option value="Frontend Developer">Frontend Developer</option>
+                                    <option value="Quality Assurance">Quality Assurance</option>
+                                </select>
+                                <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+
+                            {/* Add Resource Button */}
+                            <button
+                                className="bg-[#CAF0F8] text-black px-4 py-2.5 rounded-xl font-bold text-base hover:opacity-90 transition-all whitespace-nowrap"
+                                style={{ fontFamily: 'SF Pro Display' }}
+                                onClick={handleAddResource}
                             >
-                                <option value="all">All Roles</option>
-                                <option value="Team Lead">Team Lead</option>
-                                <option value="Backend Developer">Backend Developer</option>
-                                <option value="Frontend Developer">Frontend Developer</option>
-                                <option value="Quality Assurance">Quality Assurance</option>
-                            </select>
-                            <svg
-                                className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                            </svg>
+                                + Resource
+                            </button>
                         </div>
-
-                        {/* Main Actions */}
-                        <div className="h-10 w-px bg-gray-200 mx-2"></div>
-
-                        <button
-                            onClick={handleExport}
-                            className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-all shadow-sm group"
-                            title="Export to Excel"
-                        >
-                            <svg className="w-5 h-5 text-[#00B4D8] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                        </button>
-
-
-
-                        <button
-                            onClick={handleAddResource}
-                            className="bg-[#00B4D8] text-white px-4 py-2.5 rounded-xl font-bold text-xs hover:opacity-90 transition-all shadow-md shadow-cyan-100 whitespace-nowrap"
-                            style={{ fontFamily: 'SF Pro Display' }}
-                        >
-                            + Resource
-                        </button>
                     </div>
-                </div>
+                </div> {/* Added missing closing div for "p-8 pb-0" */}
 
                 {/* Table */}
                 <div className="px-8 pb-8 flex-1 overflow-hidden">
@@ -1288,13 +1267,13 @@ const AdminResources = () => {
                         ) : (
                             <div className="overflow-y-auto flex-1 custom-scrollbar">
                                 <table className="w-full relative">
-                                    <thead className="sticky top-0 z-10 bg-white shadow-sm">
+                                    <thead className="sticky top-0 z-10 bg-[#CAF0F8] shadow-sm">
                                         <tr className="border-b border-gray-200">
-                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-white" style={{ fontSize: '20px' }}>Name</th>
-                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-white" style={{ fontSize: '20px' }}>Status</th>
-                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-white" style={{ fontSize: '20px' }}>Detail</th>
-                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-white" style={{ fontSize: '20px' }}>Track Record</th>
-                                            <th className="text-right py-4 px-6 font-bold text-gray-700 bg-white"></th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Name</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Status</th>
+                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Detail</th>
+                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Track Record</th>
+                                            <th className="text-right py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1311,15 +1290,14 @@ const AdminResources = () => {
                                                     className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                                                 >
                                                     <td className="py-4 px-6">
-                                                        <span className="font-bold text-gray-800" style={{ fontSize: '20px' }}>
+                                                        <span className="font-bold text-gray-800">
                                                             {resource.resourceName}
                                                         </span>
                                                     </td>
                                                     <td className="py-4 px-6">
                                                         <span
-                                                            className="px-3 py-1 rounded-full font-bold"
+                                                            className="px-3 py-1 rounded-full font-bold text-xs"
                                                             style={{
-                                                                fontSize: '12px',
                                                                 color: resource.status === 'AVAILABLE' ? '#06D001' : '#FF0000',
                                                                 backgroundColor: resource.status === 'AVAILABLE' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(255, 0, 0, 0.2)',
                                                                 border: resource.status === 'AVAILABLE' ? '1px solid #06D001' : '1px solid #FF0000'

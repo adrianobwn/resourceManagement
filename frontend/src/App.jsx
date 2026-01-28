@@ -56,6 +56,8 @@ const ActivitiesWrapper = () => {
 };
 
 function App() {
+  const { isDevman } = useUserRole();
+
   return (
     <BrowserRouter>
       <Routes>
@@ -64,9 +66,7 @@ function App() {
         <Route path="/Login" element={<Login />} />
         <Route path="/dashboard" element={<DashboardWrapper />} />
         <Route path="/project" element={<ProjectWrapper />} />
-        <Route path="/devman" element={
-          useUserRole().isDevman ? <Navigate to="/dashboard" /> : <AdminDevman />
-        } />
+        <Route path="/devman" element={<AdminDevman />} />
         <Route path="/resources" element={<ResourcesWrapper />} />
         <Route path="/activities" element={<ActivitiesWrapper />} />
       </Routes>

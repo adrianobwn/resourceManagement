@@ -136,11 +136,6 @@ const DevmanActivities = () => {
                                     }`}
                             >
                                 Extend
-                                {activities.filter(a => a.type === 'EXTEND').length > 0 && (
-                                    <span className="bg-[#00B4D8] text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                        {activities.filter(a => a.type === 'EXTEND').length}
-                                    </span>
-                                )}
                             </button>
                             <button
                                 onClick={() => setActiveTab('release')}
@@ -150,11 +145,6 @@ const DevmanActivities = () => {
                                     }`}
                             >
                                 Release
-                                {activities.filter(a => a.type === 'RELEASE').length > 0 && (
-                                    <span className="bg-[#00B4D8] text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                        {activities.filter(a => a.type === 'RELEASE').length}
-                                    </span>
-                                )}
                             </button>
                             <button
                                 onClick={() => setActiveTab('assignment')}
@@ -164,11 +154,6 @@ const DevmanActivities = () => {
                                     }`}
                             >
                                 Assignment
-                                {activities.filter(a => a.type === 'ASSIGN').length > 0 && (
-                                    <span className="bg-[#00B4D8] text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                        {activities.filter(a => a.type === 'ASSIGN').length}
-                                    </span>
-                                )}
                             </button>
                             <button
                                 onClick={() => setActiveTab('project')}

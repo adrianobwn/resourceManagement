@@ -197,11 +197,6 @@ const Activities = () => {
                                     }`}
                             >
                                 Extend
-                                {activities.filter(a => a.type === 'EXTEND').length > 0 && (
-                                    <span className="bg-[#00B4D8] text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                        {activities.filter(a => a.type === 'EXTEND').length}
-                                    </span>
-                                )}
                             </button>
                             <button
                                 onClick={() => setActiveTab('release')}
@@ -211,11 +206,6 @@ const Activities = () => {
                                     }`}
                             >
                                 Release
-                                {activities.filter(a => a.type === 'RELEASE').length > 0 && (
-                                    <span className="bg-[#00B4D8] text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                        {activities.filter(a => a.type === 'RELEASE').length}
-                                    </span>
-                                )}
                             </button>
                             <button
                                 onClick={() => setActiveTab('assignment')}
@@ -225,11 +215,6 @@ const Activities = () => {
                                     }`}
                             >
                                 Assignment
-                                {activities.filter(a => a.type === 'ASSIGN').length > 0 && (
-                                    <span className="bg-[#00B4D8] text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                        {activities.filter(a => a.type === 'ASSIGN').length}
-                                    </span>
-                                )}
                             </button>
                             <button
                                 onClick={() => setActiveTab('project')}
@@ -239,11 +224,6 @@ const Activities = () => {
                                     }`}
                             >
                                 Project
-                                {activities.filter(a => a.type === 'PROJECT').length > 0 && (
-                                    <span className="bg-[#00B4D8] text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                        {activities.filter(a => a.type === 'PROJECT').length}
-                                    </span>
-                                )}
                             </button>
                         </div>
                         <button

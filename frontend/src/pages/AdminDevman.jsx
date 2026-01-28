@@ -117,26 +117,82 @@ const AdminDevman = () => {
             {/* Notification */}
             {notification.show && (
                 <div
-                    className={`fixed top-4 right-4 z-[100] px-4 py-3 rounded-lg border flex items-center gap-2 shadow-lg animate-fade-in`}
+                    className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-300 ease-in-out ${notification.closing
+                        ? 'opacity-0 translate-x-full'
+                        : 'opacity-100 translate-x-0 animate-slide-in'
+                        }`}
                     style={{
-                        backgroundColor: notification.type === 'error' ? 'rgba(255, 0, 0, 0.1)' : 'rgba(6, 208, 1, 0.1)',
-                        borderColor: notification.type === 'error' ? '#FF0000' : '#06D001',
-                        color: notification.type === 'error' ? '#FF0000' : '#06D001'
+                        backgroundColor: notification.type === 'success' ? 'rgba(6, 208, 1, 0.2)' : notification.type === 'error' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 180, 216, 0.2)',
+                        borderColor: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8'
                     }}
                 >
-                    <span className="font-bold">{notification.message}</span>
+                    {notification.type === 'success' ? (
+                        <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="#06D001"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M5 13l4 4L19 7"
+                            />
+                        </svg>
+                    ) : notification.type === 'error' ? (
+                        <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="#FF0000"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                    ) : (
+                        <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="#00B4D8"
+                            viewBox="0 0 24 24"
+                            style={{ color: '#00B4D8' }}
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                    )}
+                    <span
+                        className="font-bold"
+                        style={{
+                            color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8',
+                            fontSize: '14px'
+                        }}
+                    >
+                        {notification.message}
+                    </span>
+                    <button
+                        onClick={closeNotification}
+                        className="ml-2 hover:opacity-70 transition-opacity"
+                        style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8' }}
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
             )}
-
             <div className="flex-1 p-8 ml-[267px]">
-                <div className="flex justify-between items-center mb-8">
+                <div className="mb-8">
                     <h1 className="text-4xl font-bold text-gray-800">DevMan Management</h1>
-                    <button
-                        onClick={() => setShowCreateModal(true)}
-                        className="bg-[#CAF0F8] text-[#00B4D8] px-6 py-2.5 rounded-xl font-bold hover:bg-[#b8e8ef] transition-colors shadow-sm"
-                    >
-                        + Create DevMan
-                    </button>
                 </div>
 
                 {/* Toolbar */}
@@ -151,17 +207,23 @@ const AdminDevman = () => {
                             className="pl-10 pr-4 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B4D8] font-medium"
                         />
                     </div>
+                    <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="bg-[#CAF0F8] text-black px-6 py-2.5 rounded-xl font-bold hover:bg-[#b8e8ef] transition-colors shadow-sm"
+                    >
+                        + Create DevMan
+                    </button>
                 </div>
 
                 {/* Table */}
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                     <table className="w-full">
-                        <thead className="bg-gray-50 border-b border-gray-100">
+                        <thead className="bg-[#CAF0F8] border-b border-gray-100">
                             <tr>
-                                <th className="text-left py-4 px-6 font-bold text-gray-700">Name</th>
-                                <th className="text-left py-4 px-6 font-bold text-gray-700">Email</th>
-                                <th className="text-center py-4 px-6 font-bold text-gray-700">Status</th>
-                                <th className="text-center py-4 px-6 font-bold text-gray-700">Detail</th>
+                                <th className="text-left py-4 px-6 font-bold text-black">Name</th>
+                                <th className="text-left py-4 px-6 font-bold text-black">Email</th>
+                                <th className="text-center py-4 px-6 font-bold text-black">Status</th>
+                                <th className="text-center py-4 px-6 font-bold text-black">Detail</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -176,10 +238,12 @@ const AdminDevman = () => {
                                         <td className="py-4 px-6 text-gray-600">{devMan.email}</td>
                                         <td className="py-4 px-6 text-center">
                                             <span
-                                                className={`px-3 py-1 rounded-full text-xs font-bold border ${getDevManStatus(devMan.userId) === 'AVAILABLE'
-                                                        ? 'bg-green-50 text-green-500 border-green-500'
-                                                        : 'bg-red-50 text-red-500 border-red-500'
-                                                    }`}
+                                                className="px-3 py-1 rounded-full text-xs font-bold"
+                                                style={{
+                                                    color: getDevManStatus(devMan.userId) === 'AVAILABLE' ? '#06D001' : '#FF0000',
+                                                    backgroundColor: getDevManStatus(devMan.userId) === 'AVAILABLE' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(255, 0, 0, 0.2)',
+                                                    border: getDevManStatus(devMan.userId) === 'AVAILABLE' ? '1px solid #06D001' : '1px solid #FF0000'
+                                                }}
                                             >
                                                 {getDevManStatus(devMan.userId)}
                                             </span>
@@ -187,9 +251,13 @@ const AdminDevman = () => {
                                         <td className="py-4 px-6 text-center">
                                             <button
                                                 onClick={() => handleViewDetail(devMan)}
-                                                className="text-gray-500 hover:text-[#00B4D8] transition-colors"
+                                                className="inline-flex items-center gap-1 text-gray-600 hover:text-[#0059FF] transition-colors"
                                             >
-                                                <Eye className="w-5 h-5 mx-auto" />
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                                <span style={{ fontSize: '15px' }}>View Detail</span>
                                             </button>
                                         </td>
                                     </tr>
