@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import api from '../utils/api';
 import * as XLSX from 'xlsx';
+import { Trash2, AlertTriangle } from 'lucide-react';
 
 const AdminResources = () => {
     const navigate = useNavigate();
@@ -18,6 +19,7 @@ const AdminResources = () => {
     const [addResourceModal, setAddResourceModal] = useState({ show: false });
     const [assignModal, setAssignModal] = useState({ show: false, resource: null });
     const [trackRecordModal, setTrackRecordModal] = useState({ show: false, resource: null });
+    const [deleteModal, setDeleteModal] = useState({ show: false, resource: null });
     const [newResource, setNewResource] = useState({
         fullName: '',
         email: ''
@@ -43,7 +45,7 @@ const AdminResources = () => {
 
     // Body scroll locking
     useEffect(() => {
-        if (detailModal.show || addResourceModal.show || assignModal.show || trackRecordModal.show) {
+        if (detailModal.show || addResourceModal.show || assignModal.show || trackRecordModal.show || deleteModal.show) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'auto';
@@ -52,7 +54,7 @@ const AdminResources = () => {
         return () => {
             document.body.style.overflow = 'auto';
         };
-    }, [detailModal.show, addResourceModal.show, assignModal.show, trackRecordModal.show]);
+    }, [detailModal.show, addResourceModal.show, assignModal.show, trackRecordModal.show, deleteModal.show]);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -318,7 +320,25 @@ const AdminResources = () => {
                 text: '#FF0000'
             };
         }
-    };;
+    };
+
+    const handleDeleteClick = (resource) => {
+        setDeleteModal({ show: true, resource });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteModal.resource) return;
+
+        try {
+            await api.delete(`/resources/${deleteModal.resource.resourceId}`);
+            showNotification('Resource deleted successfully!', 'success');
+            setDeleteModal({ show: false, resource: null });
+            fetchResources();
+        } catch (error) {
+            console.error('Error deleting resource:', error);
+            showNotification('Failed to delete resource', 'error');
+        }
+    };
 
     const handleAddResource = () => {
         setAddResourceModal({ show: true });
@@ -1261,7 +1281,7 @@ const AdminResources = () => {
 
                 {/* Table */}
                 <div className="px-8 pb-8 flex-1 overflow-hidden">
-                    <div className="bg-white rounded-xl shadow-sm overflow-hidden h-full flex flex-col">
+                    <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
                         {isLoading ? (
                             <div className="p-8 text-center text-gray-500">Loading...</div>
                         ) : (
@@ -1273,7 +1293,7 @@ const AdminResources = () => {
                                             <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Status</th>
                                             <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Detail</th>
                                             <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Track Record</th>
-                                            <th className="text-right py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]"></th>
+                                            <th className="text-right py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1330,13 +1350,22 @@ const AdminResources = () => {
                                                         </button>
                                                     </td>
                                                     <td className="py-4 px-6 text-right">
-                                                        <button
-                                                            onClick={() => handleAssignToProject(resource)}
-                                                            className="px-4 py-2 bg-[#CAF0F8] text-black rounded-lg hover:bg-[#b8e8ef] transition-colors font-bold"
-                                                            style={{ fontSize: '15px' }}
-                                                        >
-                                                            Assign to Project
-                                                        </button>
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <button
+                                                                onClick={() => handleAssignToProject(resource)}
+                                                                className="px-4 py-2 bg-[#CAF0F8] text-black rounded-lg hover:bg-[#b8e8ef] transition-colors font-bold"
+                                                                style={{ fontSize: '15px' }}
+                                                            >
+                                                                Assign to Project
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteClick(resource)}
+                                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                                title="Delete Resource"
+                                                            >
+                                                                <Trash2 size={20} />
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))
@@ -1347,7 +1376,44 @@ const AdminResources = () => {
                         )}
                     </div>
                 </div>
+
             </div>
+            {/* Delete Confirmation Modal */}
+            {deleteModal.show && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
+                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+                >
+                    <div
+                        className="bg-white rounded-2xl relative flex flex-col items-center p-8 animate-scale-in"
+                        style={{ width: '400px' }}
+                    >
+                        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                            <AlertTriangle className="w-8 h-8 text-red-500" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Delete Resource?</h2>
+                        <p className="text-gray-600 text-center mb-8">
+                            Are you sure you want to delete <span className="font-bold text-gray-800">{deleteModal.resource?.resourceName}</span>?
+                            This action cannot be undone.
+                        </p>
+                        <div className="flex items-center gap-4 w-full">
+                            <button
+                                onClick={() => setDeleteModal({ show: false, resource: null })}
+                                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-colors"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Hoisted Tooltip */}
             {tooltipState.show && tooltipState.data && (
                 <div

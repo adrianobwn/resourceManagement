@@ -9,6 +9,7 @@ const DevmanActivities = () => {
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [notification, setNotification] = useState({ show: false, message: '', type: 'info', closing: false });
+    const [reasonModal, setReasonModal] = useState({ show: false, reason: '' });
 
     useEffect(() => {
         fetchActivities();
@@ -222,7 +223,7 @@ const DevmanActivities = () => {
                                                     </div>
                                                 </td>
                                                 <td className="py-4 px-6">
-                                                    <div className="flex justify-center">
+                                                    <div className="flex justify-center items-center gap-2">
                                                         <span
                                                             className="px-3 py-1 rounded-full font-semibold"
                                                             style={{
@@ -234,6 +235,17 @@ const DevmanActivities = () => {
                                                         >
                                                             {item.status}
                                                         </span>
+                                                        {item.status === 'REJECTED' && (
+                                                            <button
+                                                                onClick={() => setReasonModal({ show: true, reason: item.reason || 'No reason provided' })}
+                                                                className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                                                                title="View Rejection Reason"
+                                                            >
+                                                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                                </svg>
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -295,7 +307,7 @@ const DevmanActivities = () => {
                                                     </div>
                                                 </td>
                                                 <td className="py-4 px-6">
-                                                    <div className="flex justify-center">
+                                                    <div className="flex justify-center items-center gap-2">
                                                         <span
                                                             className="px-3 py-1 rounded-full font-semibold"
                                                             style={{
@@ -307,6 +319,17 @@ const DevmanActivities = () => {
                                                         >
                                                             {item.status}
                                                         </span>
+                                                        {item.status === 'REJECTED' && (
+                                                            <button
+                                                                onClick={() => setReasonModal({ show: true, reason: item.reason || 'No reason provided' })}
+                                                                className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                                                                title="View Rejection Reason"
+                                                            >
+                                                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                                </svg>
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -359,7 +382,7 @@ const DevmanActivities = () => {
                                                     <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.newEndDate)}</span>
                                                 </td>
                                                 <td className="py-4 px-6">
-                                                    <div className="flex justify-center">
+                                                    <div className="flex justify-center items-center gap-2">
                                                         <span
                                                             className="px-3 py-1 rounded-full font-semibold"
                                                             style={{
@@ -371,6 +394,17 @@ const DevmanActivities = () => {
                                                         >
                                                             {item.status}
                                                         </span>
+                                                        {item.status === 'REJECTED' && (
+                                                            <button
+                                                                onClick={() => setReasonModal({ show: true, reason: item.reason || 'No reason provided' })}
+                                                                className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                                                                title="View Rejection Reason"
+                                                            >
+                                                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                                </svg>
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -420,7 +454,7 @@ const DevmanActivities = () => {
                                                     </div>
                                                 </td>
                                                 <td className="py-4 px-6">
-                                                    <div className="flex justify-center">
+                                                    <div className="flex justify-center items-center gap-2">
                                                         <span
                                                             className="px-3 py-1 rounded-full font-semibold"
                                                             style={{
@@ -432,6 +466,17 @@ const DevmanActivities = () => {
                                                         >
                                                             {item.status}
                                                         </span>
+                                                        {item.status === 'REJECTED' && (
+                                                            <button
+                                                                onClick={() => setReasonModal({ show: true, reason: item.reason || 'No reason provided' })}
+                                                                className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                                                                title="View Rejection Reason"
+                                                            >
+                                                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                                </svg>
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -443,6 +488,33 @@ const DevmanActivities = () => {
                     )}
                 </div>
             </div>
+            {/* Rejection Reason Modal */}
+            {reasonModal.show && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
+                    <div className="bg-white rounded-xl p-6 w-[400px] animate-scale-in relative">
+                        <button
+                            onClick={() => setReasonModal({ show: false, reason: '' })}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <h3 className="text-xl font-bold mb-4 text-gray-800">Rejection Reason</h3>
+                        <div className="bg-red-50 p-4 rounded-lg border border-red-100 text-gray-700 italic">
+                            "{reasonModal.reason}"
+                        </div>
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                onClick={() => setReasonModal({ show: false, reason: '' })}
+                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-bold"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

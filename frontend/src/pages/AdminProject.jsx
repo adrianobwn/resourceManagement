@@ -448,7 +448,7 @@ const AdminProject = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-gray-800 mb-1">{project.projectName}</h3>
-                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-[#00B4D8] font-bold">{project.devManName}</span></p>
+                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-[#0059FF] font-bold">{project.devManName}</span></p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-8">
@@ -470,6 +470,16 @@ const AdminProject = () => {
                                             <Users className="w-4 h-4" /> {project.memberCount}
                                         </div>
                                     </div>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteClick(project);
+                                        }}
+                                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                        title="Delete Project"
+                                    >
+                                        <Trash2 className="w-5 h-5" />
+                                    </button>
                                 </div>
                             </div>
                         ))

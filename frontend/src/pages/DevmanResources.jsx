@@ -990,7 +990,7 @@ const DevmanResources = () => {
 
                 {/* Table */}
                 <div className="px-8 pb-8 flex-1 overflow-hidden">
-                    <div className="bg-white rounded-xl shadow-sm overflow-hidden h-full flex flex-col">
+                    <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
                         {isLoading ? (
                             <div className="p-8 text-center text-gray-500">Loading...</div>
                         ) : (

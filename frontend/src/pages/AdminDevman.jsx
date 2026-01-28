@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import api from '../utils/api';
-import { Search, UserPlus, X, Eye } from 'lucide-react';
+import { Search, UserPlus, X, Eye, Trash2, AlertTriangle } from 'lucide-react';
 
 const AdminDevman = () => {
     const navigate = useNavigate();
@@ -23,6 +23,9 @@ const AdminDevman = () => {
     // Detail Modal State
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedDevMan, setSelectedDevMan] = useState(null);
+
+    // Delete Modal State
+    const [deleteModal, setDeleteModal] = useState({ show: false, devMan: null });
 
     // Notification State
     const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
@@ -78,6 +81,24 @@ const AdminDevman = () => {
         } catch (error) {
             console.error('Error creating DevMan:', error);
             showNotification('Failed to create DevMan', 'error');
+        }
+    };
+
+    const handleDeleteClick = (devMan) => {
+        setDeleteModal({ show: true, devMan });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteModal.devMan) return;
+
+        try {
+            await api.delete(`/users/${deleteModal.devMan.userId}`);
+            showNotification('DevMan deleted successfully!', 'success');
+            setDeleteModal({ show: false, devMan: null });
+            fetchData();
+        } catch (error) {
+            console.error('Error deleting DevMan:', error);
+            showNotification('Failed to delete DevMan', 'error');
         }
     };
 
@@ -223,7 +244,7 @@ const AdminDevman = () => {
                                 <th className="text-left py-4 px-6 font-bold text-black">Name</th>
                                 <th className="text-left py-4 px-6 font-bold text-black">Email</th>
                                 <th className="text-center py-4 px-6 font-bold text-black">Status</th>
-                                <th className="text-center py-4 px-6 font-bold text-black">Detail</th>
+                                <th className="text-center py-4 px-6 font-bold text-black">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -249,16 +270,25 @@ const AdminDevman = () => {
                                             </span>
                                         </td>
                                         <td className="py-4 px-6 text-center">
-                                            <button
-                                                onClick={() => handleViewDetail(devMan)}
-                                                className="inline-flex items-center gap-1 text-gray-600 hover:text-[#0059FF] transition-colors"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                </svg>
-                                                <span style={{ fontSize: '15px' }}>View Detail</span>
-                                            </button>
+                                            <div className="flex justify-center items-center gap-2">
+                                                <button
+                                                    onClick={() => handleViewDetail(devMan)}
+                                                    className="inline-flex items-center gap-1 text-gray-600 hover:text-[#0059FF] transition-colors"
+                                                    title="View Detail"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteClick(devMan)}
+                                                    className="p-1 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Delete DevMan"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -365,6 +395,36 @@ const AdminDevman = () => {
                                 className="w-full py-2 bg-gray-100 font-bold rounded-lg hover:bg-gray-200 transition-colors"
                             >
                                 Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Delete Confirmation Modal */}
+            {deleteModal.show && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
+                    <div className="bg-[#F5F5F5] rounded-2xl p-8 w-[400px] flex flex-col items-center animate-scale-in">
+                        <div className="mb-4">
+                            <AlertTriangle className="w-16 h-16 text-[#FBCD3F]" fill="#FBCD3F" stroke="#ffffff" />
+                        </div>
+                        <h2 className="text-3xl font-bold text-black mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Are you sure?</h2>
+                        <p className="text-black text-center mb-8" style={{ fontFamily: 'SF Pro Display' }}>
+                            You will not be able to recover this DevMan
+                        </p>
+                        <div className="flex gap-4 w-full">
+                            <button
+                                onClick={() => setDeleteModal({ show: false, devMan: null })}
+                                className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
+                                style={{ fontFamily: 'SF Pro Display' }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="flex-1 py-3 bg-[#FF0000] text-white rounded-xl font-bold hover:bg-red-600 transition-colors"
+                                style={{ fontFamily: 'SF Pro Display' }}
+                            >
+                                Yes, delete it!
                             </button>
                         </div>
                     </div>

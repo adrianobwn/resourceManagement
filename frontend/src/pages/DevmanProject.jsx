@@ -26,7 +26,7 @@ const DevmanProject = () => {
     // Notification state
     const [notification, setNotification] = useState({ show: false, message: '', closing: false, type: 'success' });
 
-    const filterTabs = ['All', 'Ongoing', 'Hold', 'Closed'];
+    const filterTabs = ['All', 'ONGOING', 'HOLD', 'CLOSED'];
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
@@ -302,9 +302,9 @@ const DevmanProject = () => {
 
     const filteredProjects = projects.filter(p => {
         const matchesStatus = activeFilter === 'All' ||
-            (activeFilter === 'Ongoing' && p.status === 'ON_GOING') ||
-            (activeFilter === 'Hold' && p.status === 'HOLD') ||
-            (activeFilter === 'Closed' && p.status === 'CLOSED');
+            (activeFilter === 'ONGOING' && p.status === 'ON_GOING') ||
+            (activeFilter === 'HOLD' && p.status === 'HOLD') ||
+            (activeFilter === 'CLOSED' && p.status === 'CLOSED');
 
         const matchesSearch = !searchQuery.trim() ||
             p.projectName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -413,7 +413,7 @@ const DevmanProject = () => {
             {/* Detail Modal */}
             {showDetailModal && selectedProject && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-                    <div className={`bg-white rounded-2xl p-8 w-[800px] relative transition-transform duration-300 animate-scale-in ${showExtendModal || showReleaseModal ? '-translate-x-[20%]' : ''}`}>
+                    <div className={`bg-white rounded-2xl p-8 w-[800px] relative transition-transform duration-300 animate-scale-in ${showExtendModal || showReleaseModal ? '-translate-x-[50%]' : ''}`}>
                         <button onClick={() => setShowDetailModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
                             <X className="w-6 h-6" />
                         </button>
