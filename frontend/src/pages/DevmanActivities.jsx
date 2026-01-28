@@ -258,17 +258,7 @@ const DevmanActivities = () => {
                                                 </td>
                                                 <td className="py-4 px-6">
                                                     <div className="flex justify-center items-center gap-2">
-                                                        <span
-                                                            className="px-3 py-1 rounded-full font-semibold"
-                                                            style={{
-                                                                fontSize: '12px',
-                                                                backgroundColor: getStatusColor(item.status).bg,
-                                                                color: getStatusColor(item.status).text,
-                                                                border: `1px solid ${getStatusColor(item.status).border}`
-                                                            }}
-                                                        >
-                                                            {item.status}
-                                                        </span>
+                                                        <StatusBadge status={item.status} />
                                                         {item.status === 'REJECTED' && (
                                                             <button
                                                                 onClick={() => setReasonModal({ show: true, reason: item.adminReason || item.rejectionReason || item.rejectReason || 'No reason provided' })}
@@ -333,17 +323,7 @@ const DevmanActivities = () => {
                                                 </td>
                                                 <td className="py-4 px-6">
                                                     <div className="flex justify-center items-center gap-2">
-                                                        <span
-                                                            className="px-3 py-1 rounded-full font-semibold"
-                                                            style={{
-                                                                fontSize: '12px',
-                                                                backgroundColor: getStatusColor(item.status).bg,
-                                                                color: getStatusColor(item.status).text,
-                                                                border: `1px solid ${getStatusColor(item.status).border}`
-                                                            }}
-                                                        >
-                                                            {item.status}
-                                                        </span>
+                                                        <StatusBadge status={item.status} />
                                                         {item.status === 'REJECTED' && (
                                                             <button
                                                                 onClick={() => setReasonModal({ show: true, reason: item.adminReason || item.rejectionReason || item.rejectReason || 'No reason provided' })}
@@ -400,17 +380,7 @@ const DevmanActivities = () => {
                                                 </td>
                                                 <td className="py-4 px-6">
                                                     <div className="flex justify-center items-center gap-2">
-                                                        <span
-                                                            className="px-3 py-1 rounded-full font-semibold"
-                                                            style={{
-                                                                fontSize: '12px',
-                                                                backgroundColor: getStatusColor(item.status).bg,
-                                                                color: getStatusColor(item.status).text,
-                                                                border: `1px solid ${getStatusColor(item.status).border}`
-                                                            }}
-                                                        >
-                                                            {item.status}
-                                                        </span>
+                                                        <StatusBadge status={item.status} />
                                                         {item.status === 'REJECTED' && (
                                                             <button
                                                                 onClick={() => setReasonModal({ show: true, reason: item.adminReason || item.rejectionReason || item.rejectReason || 'No reason provided' })}

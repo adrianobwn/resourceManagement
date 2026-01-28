@@ -373,7 +373,7 @@ const DevmanProject = () => {
             {/* Detail Modal Container - Wraps both Project Detail and Action Modals */}
             {showDetailModal && selectedProject && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-auto animate-fade-in">
-                    <div className="flex items-center gap-6 transition-all duration-300 min-w-min">
+                    <div className="flex items-center gap-6 transition-smooth-layout min-w-min">
                         {/* Project Detail Modal */}
                         <div className="bg-white rounded-2xl p-8 w-[800px] flex-shrink-0 relative shadow-xl">
                             <button onClick={() => setShowDetailModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
@@ -437,7 +437,7 @@ const DevmanProject = () => {
 
                         {/* Extend/Release Actions - Rendered Side-by-Side */}
                         {(showExtendModal || showReleaseModal) && (
-                            <div className="w-[400px] h-fit bg-[#F5F5F5] shadow-2xl rounded-3xl p-6 flex flex-col animate-scale-in">
+                            <div className="w-[400px] h-fit bg-[#F5F5F5] shadow-2xl rounded-3xl p-6 flex flex-col animate-slide-reveal">
 
                                 {showExtendModal && (
                                     <>
