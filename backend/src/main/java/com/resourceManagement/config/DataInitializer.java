@@ -28,6 +28,16 @@ public class DataInitializer implements CommandLineRunner {
 
         @Override
         public void run(String... args) {
-                // Data initialization disabled - no dummy data seeded
+                if (userRepository.findByEmail("admin@inteleq.com").isEmpty()) {
+                        User admin = User.builder()
+                                        .name("Admin")
+                                        .email("admin@inteleq.com")
+                                        .password(passwordEncoder.encode("password123"))
+                                        .userType(UserType.Admin)
+                                        .accountStatus(AccountStatus.ACTIVE)
+                                        .build();
+                        userRepository.save(admin);
+                        System.out.println("Admin user created: admin@inteleq.com / password123");
+                }
         }
 }
