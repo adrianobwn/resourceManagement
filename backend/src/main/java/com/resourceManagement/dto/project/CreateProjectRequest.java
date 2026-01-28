@@ -18,5 +18,5 @@ public class CreateProjectRequest {
     private String clientName;
 
     @NotNull(message = "DevMan ID is required")
-    private Integer pmId;
+    private Integer devManId;
 }

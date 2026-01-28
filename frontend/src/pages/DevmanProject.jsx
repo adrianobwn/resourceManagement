@@ -251,7 +251,7 @@ const DevmanProject = () => {
                 'Project Name': project.projectName,
                 'Client': project.clientName,
                 'Status': project.status,
-                'DevMan': project.pmName || '-',
+                'DevMan': project.devManName || '-',
                 'Active Resources': project.activeResourceCount || 0
             }));
 
@@ -395,7 +395,7 @@ const DevmanProject = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-gray-800 mb-1">{project.projectName}</h3>
-                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-gray-500 font-bold">DevMan: {project.pmName}</span></p>
+                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-gray-500 font-bold">DevMan: {project.devManName}</span></p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-8">
@@ -437,7 +437,7 @@ const DevmanProject = () => {
 
                         <div className="flex gap-8 mb-6">
                             <div className="text-sm font-medium text-gray-500">Client Name : <span className="text-gray-800 font-bold">{selectedProject.clientName}</span></div>
-                            <div className="text-sm font-medium text-gray-500">DevMan : <span className="text-gray-800 font-bold">{selectedProject.pmName}</span></div>
+                            <div className="text-sm font-medium text-gray-500">DevMan : <span className="text-gray-800 font-bold">{selectedProject.devManName}</span></div>
                         </div>
 
                         <div className="border-t border-gray-100 my-6"></div>

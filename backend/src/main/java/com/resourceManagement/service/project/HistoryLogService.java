@@ -50,7 +50,7 @@ public class HistoryLogService {
         if (user.getUserType() == com.resourceManagement.model.enums.UserType.ADMIN) {
             logs = historyLogRepository.findAllByOrderByTimestampDesc();
         } else {
-            logs = historyLogRepository.findByPerformedBy_UserIdOrProject_Pm_UserIdOrderByTimestampDesc(user.getUserId(), user.getUserId());
+            logs = historyLogRepository.findByPerformedBy_UserIdOrProject_DevMan_UserIdOrderByTimestampDesc(user.getUserId(), user.getUserId());
         }
 
         return logs.stream().map(this::mapToResponse).collect(java.util.stream.Collectors.toList());

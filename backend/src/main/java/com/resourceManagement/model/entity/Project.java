@@ -25,8 +25,8 @@ public class Project {
     private String clientName;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pm_id", nullable = false)
-    private User pm;
+    @JoinColumn(name = "dev_man_id", nullable = false)
+    private User devMan;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -51,7 +51,7 @@ public class ProjectService {
 
         List<Project> projects;
         if (currentUser.getUserType() == UserType.DEV_MANAGER) {
-            projects = projectRepository.findByPm_UserId(currentUser.getUserId());
+            projects = projectRepository.findByDevMan_UserId(currentUser.getUserId());
         } else {
             projects = projectRepository.findAll();
         }
@@ -62,13 +62,13 @@ public class ProjectService {
     }
 
     public ProjectListResponse createProject(CreateProjectRequest request) {
-        User pm = userRepository.findById(request.getPmId())
-                .orElseThrow(() -> new RuntimeException("DevMan not found with id: " + request.getPmId()));
+        User devMan = userRepository.findById(request.getDevManId())
+                .orElseThrow(() -> new RuntimeException("DevMan not found with id: " + request.getDevManId()));
 
         Project project = Project.builder()
                 .projectName(request.getProjectName())
                 .clientName(request.getClientName())
-                .pm(pm)
+                .devMan(devMan)
                 .status(ProjectStatus.ON_GOING)
                 .build();
 
@@ -101,8 +101,8 @@ public class ProjectService {
                 .projectId(project.getProjectId())
                 .projectName(project.getProjectName())
                 .clientName(project.getClientName())
-                .pmName(project.getPm().getName())
-                .pmId(project.getPm().getUserId())
+                .devManName(project.getDevMan().getName())
+                .devManId(project.getDevMan().getUserId())
                 .memberCount((int) memberCount)
                 .status(project.getStatus().name())
                 .build();

@@ -11,8 +11,8 @@ public class ProjectListResponse {
     private Integer projectId;
     private String projectName;
     private String clientName;
-    private String pmName;
-    private Integer pmId;
+    private String devManName;
+    private Integer devManId;
     private Integer memberCount;
     private String status;
 }

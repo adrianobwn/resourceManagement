@@ -16,7 +16,7 @@ public interface AssignmentRequestRepository extends JpaRepository<AssignmentReq
     
     List<AssignmentRequest> findByRequester_UserIdAndStatus(Integer requesterId, RequestStatus status);
 
-    List<AssignmentRequest> findByRequester_UserIdOrProject_Pm_UserId(Integer userId, Integer pmId);
+    List<AssignmentRequest> findByRequester_UserIdOrProject_DevMan_UserId(Integer userId, Integer devManId);
 
     List<AssignmentRequest> findByProject_ProjectIdAndStatus(Integer projectId, RequestStatus status);
 }

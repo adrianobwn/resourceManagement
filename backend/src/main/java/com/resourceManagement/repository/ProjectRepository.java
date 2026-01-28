@@ -10,13 +10,13 @@ import java.util.List;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Integer> {
 
-    List<Project> findByPm_UserId(Integer pmId);
+    List<Project> findByDevMan_UserId(Integer devManId);
 
     List<Project> findByStatus(ProjectStatus status);
 
-    List<Project> findByPm_UserIdAndStatus(Integer pmId, ProjectStatus status);
+    List<Project> findByDevMan_UserIdAndStatus(Integer devManId, ProjectStatus status);
 
     long countByStatus(ProjectStatus status);
 
-    long countByPm_UserIdAndStatus(Integer pmId, ProjectStatus status);
+    long countByDevMan_UserIdAndStatus(Integer devManId, ProjectStatus status);
 }

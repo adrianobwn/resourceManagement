@@ -157,7 +157,7 @@ public class AssignmentRequestService {
         if (user.getUserType() == UserType.ADMIN) {
             return requestRepository.findAll();
         } else {
-            return requestRepository.findByRequester_UserIdOrProject_Pm_UserId(user.getUserId(), user.getUserId());
+            return requestRepository.findByRequester_UserIdOrProject_DevMan_UserId(user.getUserId(), user.getUserId());
         }
     }
 
@@ -211,7 +211,7 @@ public class AssignmentRequestService {
              Project project = Project.builder()
                      .projectName(req.getProjectName())
                      .clientName(req.getClientName())
-                     .pm(req.getRequester())
+                     .devMan(req.getRequester())
                      .status(ProjectStatus.ON_GOING)
                      .build();
              Project savedProject = projectRepository.save(project);

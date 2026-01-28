@@ -69,7 +69,7 @@ public class ProjectRequestService {
         Project project = Project.builder()
                 .projectName(request.getProjectName())
                 .clientName(request.getClientName())
-                .pm(request.getRequestedBy())
+                .devMan(request.getRequestedBy())
                 .status(ProjectStatus.ON_GOING)
                 .build();
 

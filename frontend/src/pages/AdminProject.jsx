@@ -10,7 +10,7 @@ const AdminProject = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [projects, setProjects] = useState([]);
-    const [pmList, setPmList] = useState([]);
+    const [devManList, setDevManList] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
 
@@ -19,7 +19,7 @@ const AdminProject = () => {
     const [newProject, setNewProject] = useState({
         projectName: '',
         clientName: '',
-        pmId: ''
+        devManId: ''
     });
 
     // Notification state
@@ -64,7 +64,7 @@ const AdminProject = () => {
     const fetchPmList = async () => {
         try {
             const response = await api.get('/users/pms');
-            setPmList(response.data);
+            setDevManList(response.data);
         } catch (error) {
             console.error('Error fetching DevMan list:', error);
         }
@@ -222,7 +222,7 @@ const AdminProject = () => {
         const dataToExport = projects.map(project => ({
             'Project Name': project.projectName,
             'Client': project.clientName,
-            'PM': project.pmName,
+            'DevMan': project.devManName,
             'Status': project.status
         }));
 
@@ -234,7 +234,7 @@ const AdminProject = () => {
     };
 
     const handleCreateProject = async () => {
-        if (!newProject.projectName.trim() || !newProject.clientName.trim() || !newProject.pmId) {
+        if (!newProject.projectName.trim() || !newProject.clientName.trim() || !newProject.devManId) {
             showNotification('Please fill all fields', 'error');
             return;
         }
@@ -243,10 +243,10 @@ const AdminProject = () => {
             await api.post('/projects', {
                 projectName: newProject.projectName,
                 clientName: newProject.clientName,
-                pmId: parseInt(newProject.pmId)
+                devManId: parseInt(newProject.devManId)
             });
             setShowNewProjectModal(false);
-            setNewProject({ projectName: '', clientName: '', pmId: '' });
+            setNewProject({ projectName: '', clientName: '', devManId: '' });
             showNotification('Project created successfully!', 'success');
             fetchProjects();
         } catch (error) {
@@ -348,7 +348,7 @@ const AdminProject = () => {
         const matchesSearch = !searchQuery.trim() ||
             p.projectName.toLowerCase().includes(searchQuery.toLowerCase()) ||
             p.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.pmName.toLowerCase().includes(searchQuery.toLowerCase());
+            p.devManName.toLowerCase().includes(searchQuery.toLowerCase());
 
         return matchesStatus && matchesSearch;
     });
@@ -454,7 +454,7 @@ const AdminProject = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-gray-800 mb-1">{project.projectName}</h3>
-                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-[#00B4D8] font-bold">{project.pmName}</span></p>
+                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-[#00B4D8] font-bold">{project.devManName}</span></p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-8">
@@ -514,7 +514,7 @@ const AdminProject = () => {
 
                         <div className="flex gap-8 mb-6">
                             <div className="text-sm font-medium text-gray-500">Client Name : <span className="text-gray-800 font-bold">{selectedProject.clientName}</span></div>
-                            <div className="text-sm font-medium text-gray-500">DevMan : <span className="text-gray-800 font-bold">{selectedProject.pmName}</span></div>
+                            <div className="text-sm font-medium text-gray-500">DevMan : <span className="text-gray-800 font-bold">{selectedProject.devManName}</span></div>
                         </div>
 
                         <div className="border-t border-gray-100 my-6"></div>
@@ -738,14 +738,14 @@ const AdminProject = () => {
                                 <label className="block text-sm font-bold text-black mb-2" style={{ fontFamily: 'SF Pro Display' }}>DevMan Name</label>
                                 <div className="relative">
                                     <select
-                                        value={newProject.pmId}
-                                        onChange={(e) => setNewProject({ ...newProject, pmId: e.target.value })}
+                                        value={newProject.devManId}
+                                        onChange={(e) => setNewProject({ ...newProject, devManId: e.target.value })}
                                         className="w-full px-4 py-3 bg-white border border-black rounded-xl focus:ring-2 focus:ring-[#CAF0F8] outline-none appearance-none cursor-pointer"
                                         style={{ fontFamily: 'SF Pro Display' }}
                                     >
                                         <option value="">Select DevMan</option>
-                                        {pmList.map(pm => (
-                                            <option key={pm.userId} value={pm.userId}>{pm.name}</option>
+                                        {devManList.map(devMan => (
+                                            <option key={devMan.userId} value={devMan.userId}>{devMan.name}</option>
                                         ))}
                                     </select>
                                     <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">

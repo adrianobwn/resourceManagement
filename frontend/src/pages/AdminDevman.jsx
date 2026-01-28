@@ -8,7 +8,7 @@ const AdminDevman = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [pms, setPms] = useState([]);
+    const [devManagers, setDevManagers] = useState([]);
     const [projects, setProjects] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -22,7 +22,7 @@ const AdminDevman = () => {
 
     // Detail Modal State
     const [showDetailModal, setShowDetailModal] = useState(false);
-    const [selectedPm, setSelectedPm] = useState(null);
+    const [selectedDevMan, setSelectedDevMan] = useState(null);
 
     // Notification State
     const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
@@ -43,12 +43,12 @@ const AdminDevman = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [pmsRes, projectsRes] = await Promise.all([
+            const [devManagersRes, projectsRes] = await Promise.all([
                 api.get('/users/pms'),
                 api.get('/projects')
             ]);
 
-            setPms(pmsRes.data);
+            setDevManagers(devManagersRes.data);
             setProjects(projectsRes.data);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -86,28 +86,28 @@ const AdminDevman = () => {
         setTimeout(() => setNotification({ show: false, message: '', type: 'success' }), 4000);
     };
 
-    const getPmStatus = (pmId) => {
+    const getDevManStatus = (devManId) => {
         const activeProjects = projects.filter(p =>
-            p.pmId === pmId && (p.status === 'ON_GOING' || p.status === 'HOLD')
+            p.devManId === devManId && (p.status === 'ON_GOING' || p.status === 'HOLD')
         );
         return activeProjects.length > 0 ? 'UNAVAILABLE' : 'AVAILABLE';
     };
 
-    const getPmProjects = (pmId) => {
+    const getDevManProjects = (devManId) => {
         return projects.filter(p =>
-            p.pmId === pmId && (p.status === 'ON_GOING' || p.status === 'HOLD')
+            p.devManId === devManId && (p.status === 'ON_GOING' || p.status === 'HOLD')
         );
     };
 
-    const handleViewDetail = (pm) => {
-        const pmProjects = getPmProjects(pm.userId);
-        setSelectedPm({ ...pm, activeProjects: pmProjects });
+    const handleViewDetail = (devMan) => {
+        const devManProjects = getDevManProjects(devMan.userId);
+        setSelectedDevMan({ ...devMan, activeProjects: devManProjects });
         setShowDetailModal(true);
     };
 
-    const filteredPms = pms.filter(pm =>
-        pm.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        pm.email.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredDevManagers = devManagers.filter(devMan =>
+        devMan.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        devMan.email.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
@@ -167,26 +167,26 @@ const AdminDevman = () => {
                         <tbody>
                             {loading ? (
                                 <tr><td colSpan="4" className="py-8 text-center text-gray-500 font-bold">Loading...</td></tr>
-                            ) : filteredPms.length === 0 ? (
+                            ) : filteredDevManagers.length === 0 ? (
                                 <tr><td colSpan="4" className="py-8 text-center text-gray-500 font-bold">No DevMan found</td></tr>
                             ) : (
-                                filteredPms.map(pm => (
-                                    <tr key={pm.userId} className="border-b border-gray-50 hover:bg-gray-50">
-                                        <td className="py-4 px-6 font-bold text-gray-800">{pm.name}</td>
-                                        <td className="py-4 px-6 text-gray-600">{pm.email}</td>
+                                filteredDevManagers.map(devMan => (
+                                    <tr key={devMan.userId} className="border-b border-gray-50 hover:bg-gray-50">
+                                        <td className="py-4 px-6 font-bold text-gray-800">{devMan.name}</td>
+                                        <td className="py-4 px-6 text-gray-600">{devMan.email}</td>
                                         <td className="py-4 px-6 text-center">
                                             <span
-                                                className={`px-3 py-1 rounded-full text-xs font-bold border ${getPmStatus(pm.userId) === 'AVAILABLE'
+                                                className={`px-3 py-1 rounded-full text-xs font-bold border ${getDevManStatus(devMan.userId) === 'AVAILABLE'
                                                         ? 'bg-green-50 text-green-500 border-green-500'
                                                         : 'bg-red-50 text-red-500 border-red-500'
                                                     }`}
                                             >
-                                                {getPmStatus(pm.userId)}
+                                                {getDevManStatus(devMan.userId)}
                                             </span>
                                         </td>
                                         <td className="py-4 px-6 text-center">
                                             <button
-                                                onClick={() => handleViewDetail(pm)}
+                                                onClick={() => handleViewDetail(devMan)}
                                                 className="text-gray-500 hover:text-[#00B4D8] transition-colors"
                                             >
                                                 <Eye className="w-5 h-5 mx-auto" />
@@ -254,25 +254,25 @@ const AdminDevman = () => {
             )}
 
             {/* Detail Modal */}
-            {showDetailModal && selectedPm && (
+            {showDetailModal && selectedDevMan && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <div className="bg-white rounded-2xl w-[600px] animate-scale-in">
                         <div className="flex justify-between items-center px-8 py-6 border-b border-gray-100">
                             <div>
-                                <h2 className="text-2xl font-bold">{selectedPm.name}</h2>
-                                <p className="text-gray-500">{selectedPm.email}</p>
+                                <h2 className="text-2xl font-bold">{selectedDevMan.name}</h2>
+                                <p className="text-gray-500">{selectedDevMan.email}</p>
                             </div>
                             <button onClick={() => setShowDetailModal(false)} className="text-gray-400 hover:text-gray-600">
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
                         <div className="p-8">
-                            <h3 className="font-bold text-lg mb-4">Active Projects ({selectedPm.activeProjects.length})</h3>
-                            {selectedPm.activeProjects.length === 0 ? (
+                            <h3 className="font-bold text-lg mb-4">Active Projects ({selectedDevMan.activeProjects.length})</h3>
+                            {selectedDevMan.activeProjects.length === 0 ? (
                                 <p className="text-gray-500 italic">No active projects currently.</p>
                             ) : (
                                 <div className="space-y-3">
-                                    {selectedPm.activeProjects.map(proj => (
+                                    {selectedDevMan.activeProjects.map(proj => (
                                         <div key={proj.projectId} className="p-4 bg-[#F8FBFC] rounded-lg border border-gray-100">
                                             <div className="flex justify-between items-start">
                                                 <div>

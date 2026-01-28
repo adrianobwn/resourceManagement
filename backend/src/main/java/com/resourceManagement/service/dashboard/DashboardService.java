@@ -49,7 +49,7 @@ public class DashboardService {
         if (user.getUserType() == UserType.ADMIN) {
             activeProjects = projectRepository.countByStatus(ProjectStatus.ON_GOING);
         } else {
-            activeProjects = projectRepository.countByPm_UserIdAndStatus(user.getUserId(), ProjectStatus.ON_GOING);
+            activeProjects = projectRepository.countByDevMan_UserIdAndStatus(user.getUserId(), ProjectStatus.ON_GOING);
         }
         
         long pendingRequests = requestService.getPendingRequests(user.getEmail()).size();
@@ -73,7 +73,7 @@ public class DashboardService {
                     .findByStatusAndEndDateBetween(AssignmentStatus.ACTIVE, today, endDate);
         } else {
             assignments = assignmentRepository
-                    .findByStatusAndProject_Pm_UserIdAndEndDateBetween(AssignmentStatus.ACTIVE, user.getUserId(), today, endDate);
+                    .findByStatusAndProject_DevMan_UserIdAndEndDateBetween(AssignmentStatus.ACTIVE, user.getUserId(), today, endDate);
         }
 
         return assignments.stream()
@@ -94,7 +94,7 @@ public class DashboardService {
         if (user.getUserType() == UserType.ADMIN) {
             projects = projectRepository.findByStatus(ProjectStatus.ON_GOING);
         } else {
-            projects = projectRepository.findByPm_UserIdAndStatus(user.getUserId(), ProjectStatus.ON_GOING);
+            projects = projectRepository.findByDevMan_UserIdAndStatus(user.getUserId(), ProjectStatus.ON_GOING);
         }
 
         return projects.stream()
