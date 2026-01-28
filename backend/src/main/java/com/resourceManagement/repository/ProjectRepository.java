@@ -3,6 +3,8 @@ package com.resourceManagement.repository;
 import com.resourceManagement.model.entity.Project;
 import com.resourceManagement.model.enums.ProjectStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -19,4 +21,8 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
     long countByStatus(ProjectStatus status);
 
     long countByDevMan_UserIdAndStatus(Integer devManId, ProjectStatus status);
+    
+    @Modifying
+    @Query(value = "UPDATE projects SET status = 'ONGOING' WHERE status = 'ON_GOING'", nativeQuery = true)
+    int migrateOnGoingToOngoing();
 }

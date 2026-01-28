@@ -69,7 +69,7 @@ public class ProjectService {
                 .projectName(request.getProjectName())
                 .clientName(request.getClientName())
                 .devMan(devMan)
-                .status(ProjectStatus.ON_GOING)
+                .status(ProjectStatus.ONGOING)
                 .build();
 
         Project savedProject = projectRepository.save(project);

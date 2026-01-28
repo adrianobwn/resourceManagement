@@ -1,7 +1,7 @@
 package com.resourceManagement.model.enums;
 
 public enum ProjectStatus {
-    ON_GOING,
+    ONGOING,
     HOLD,
     CLOSED
 }

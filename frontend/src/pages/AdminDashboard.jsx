@@ -730,7 +730,7 @@ const Dashboard = () => {
                                     </div>
                                 ) : (
                                     activeProjects
-                                        .filter(project => ['ON_GOING', 'HOLD'].includes(project.status))
+                                        .filter(project => ['ONGOING', 'HOLD'].includes(project.status))
                                         .map((project) => (
                                             <div
                                                 key={project.projectId}

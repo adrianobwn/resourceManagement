@@ -27,4 +27,10 @@ public class UserController {
     public ResponseEntity<List<PmListResponse>> getAllPms() {
         return ResponseEntity.ok(userService.getAllPms());
     }
+
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Integer userId) {
+        userService.deleteUser(userId);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
@@ -28,6 +29,9 @@ public class DataInitializer implements CommandLineRunner {
 
         @Override
         public void run(String... args) {
+                // Migrate old ON_GOING status to ONGOING
+                migrateProjectStatus();
+                
                 if (userRepository.findByEmail("admin@inteleq.com").isEmpty()) {
                         User admin = User.builder()
                                         .name("Admin")
@@ -38,6 +42,18 @@ public class DataInitializer implements CommandLineRunner {
                                         .build();
                         userRepository.save(admin);
                         System.out.println("Admin user created: admin@inteleq.com / password123");
+                }
+        }
+        
+        @Transactional
+        private void migrateProjectStatus() {
+                try {
+                        int updated = projectRepository.migrateOnGoingToOngoing();
+                        if (updated > 0) {
+                                System.out.println("✓ Migrated " + updated + " project(s) from ON_GOING to ONGOING");
+                        }
+                } catch (Exception e) {
+                        System.err.println("Error during project status migration: " + e.getMessage());
                 }
         }
 }

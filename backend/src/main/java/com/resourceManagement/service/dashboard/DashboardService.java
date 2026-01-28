@@ -47,9 +47,9 @@ public class DashboardService {
         
         long activeProjects;
         if (user.getUserType() == UserType.Admin) {
-            activeProjects = projectRepository.countByStatus(ProjectStatus.ON_GOING);
+            activeProjects = projectRepository.countByStatus(ProjectStatus.ONGOING);
         } else {
-            activeProjects = projectRepository.countByDevMan_UserIdAndStatus(user.getUserId(), ProjectStatus.ON_GOING);
+            activeProjects = projectRepository.countByDevMan_UserIdAndStatus(user.getUserId(), ProjectStatus.ONGOING);
         }
         
         long pendingRequests = requestService.getPendingRequests(user.getEmail()).size();
@@ -92,9 +92,9 @@ public class DashboardService {
         User user = getCurrentUser();
         List<Project> projects;
         if (user.getUserType() == UserType.Admin) {
-            projects = projectRepository.findByStatus(ProjectStatus.ON_GOING);
+            projects = projectRepository.findByStatus(ProjectStatus.ONGOING);
         } else {
-            projects = projectRepository.findByDevMan_UserIdAndStatus(user.getUserId(), ProjectStatus.ON_GOING);
+            projects = projectRepository.findByDevMan_UserIdAndStatus(user.getUserId(), ProjectStatus.ONGOING);
         }
 
         return projects.stream()

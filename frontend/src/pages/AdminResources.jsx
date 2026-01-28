@@ -1293,7 +1293,7 @@ const AdminResources = () => {
                                             <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Status</th>
                                             <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Detail</th>
                                             <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Track Record</th>
-                                            <th className="text-right py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Actions</th>
+                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1309,7 +1309,7 @@ const AdminResources = () => {
                                                     key={resource.resourceId}
                                                     className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                                                 >
-                                                    <td className="py-4 px-6">
+                                                    <td className="py-4 px-6 ">
                                                         <span className="font-bold text-gray-800">
                                                             {resource.resourceName}
                                                         </span>
@@ -1349,8 +1349,8 @@ const AdminResources = () => {
                                                             <span style={{ fontSize: '15px' }}>View Track Record</span>
                                                         </button>
                                                     </td>
-                                                    <td className="py-4 px-6 text-right">
-                                                        <div className="flex items-center justify-end gap-2">
+                                                    <td className="py-4 px-6 text-center">
+                                                        <div className="flex items-center justify-center gap-10">
                                                             <button
                                                                 onClick={() => handleAssignToProject(resource)}
                                                                 className="px-4 py-2 bg-[#CAF0F8] text-black rounded-lg hover:bg-[#b8e8ef] transition-colors font-bold"
@@ -1380,34 +1380,29 @@ const AdminResources = () => {
             </div>
             {/* Delete Confirmation Modal */}
             {deleteModal.show && (
-                <div
-                    className="fixed inset-0 z-[60] flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
-                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-                >
-                    <div
-                        className="bg-white rounded-2xl relative flex flex-col items-center p-8 animate-scale-in"
-                        style={{ width: '400px' }}
-                    >
-                        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
-                            <AlertTriangle className="w-8 h-8 text-red-500" />
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
+                    <div className="bg-[#F5F5F5] rounded-2xl p-8 w-[400px] flex flex-col items-center animate-scale-in">
+                        <div className="mb-4">
+                            <AlertTriangle className="w-16 h-16 text-[#FBCD3F]" fill="#FBCD3F" stroke="#ffffff" />
                         </div>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Delete Resource?</h2>
-                        <p className="text-gray-600 text-center mb-8">
-                            Are you sure you want to delete <span className="font-bold text-gray-800">{deleteModal.resource?.resourceName}</span>?
-                            This action cannot be undone.
+                        <h2 className="text-3xl font-bold text-black mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Are you sure?</h2>
+                        <p className="text-black text-center mb-8" style={{ fontFamily: 'SF Pro Display' }}>
+                            You will not be able to recover this resource
                         </p>
-                        <div className="flex items-center gap-4 w-full">
+                        <div className="flex gap-4 w-full">
                             <button
                                 onClick={() => setDeleteModal({ show: false, resource: null })}
-                                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                                className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
+                                style={{ fontFamily: 'SF Pro Display' }}
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmDelete}
-                                className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-colors"
+                                className="flex-1 py-3 bg-[#FF0000] text-white rounded-xl font-bold hover:bg-red-600 transition-colors"
+                                style={{ fontFamily: 'SF Pro Display' }}
                             >
-                                Delete
+                                Yes, delete it!
                             </button>
                         </div>
                     </div>

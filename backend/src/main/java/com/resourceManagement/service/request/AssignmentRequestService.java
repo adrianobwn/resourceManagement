@@ -212,7 +212,7 @@ public class AssignmentRequestService {
                      .projectName(req.getProjectName())
                      .clientName(req.getClientName())
                      .devMan(req.getRequester())
-                     .status(ProjectStatus.ON_GOING)
+                     .status(ProjectStatus.ONGOING)
                      .build();
              Project savedProject = projectRepository.save(project);
 

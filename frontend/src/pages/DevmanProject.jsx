@@ -26,7 +26,7 @@ const DevmanProject = () => {
     // Notification state
     const [notification, setNotification] = useState({ show: false, message: '', closing: false, type: 'success' });
 
-    const filterTabs = ['All', 'ONGOING', 'HOLD', 'CLOSED'];
+    const filterTabs = ['All', 'Ongoing', 'Hold', 'Closed'];
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
@@ -276,7 +276,7 @@ const DevmanProject = () => {
 
     const getStatusBadgeStyle = (status) => {
         switch (status) {
-            case 'ON_GOING':
+            case 'ONGOING':
                 return { backgroundColor: 'rgba(6, 208, 1, 0.2)', color: '#06D001' };
             case 'HOLD':
                 return { backgroundColor: 'rgba(251, 205, 63, 0.2)', color: '#FBCD3F' };
@@ -289,7 +289,7 @@ const DevmanProject = () => {
 
     const getStatusLabel = (status) => {
         switch (status) {
-            case 'ON_GOING':
+            case 'ONGOING':
                 return 'ONGOING';
             case 'HOLD':
                 return 'HOLD';
@@ -302,9 +302,9 @@ const DevmanProject = () => {
 
     const filteredProjects = projects.filter(p => {
         const matchesStatus = activeFilter === 'All' ||
-            (activeFilter === 'ONGOING' && p.status === 'ON_GOING') ||
-            (activeFilter === 'HOLD' && p.status === 'HOLD') ||
-            (activeFilter === 'CLOSED' && p.status === 'CLOSED');
+            (activeFilter === 'Ongoing' && p.status === 'ONGOING') ||
+            (activeFilter === 'Hold' && p.status === 'HOLD') ||
+            (activeFilter === 'Closed' && p.status === 'CLOSED');
 
         const matchesSearch = !searchQuery.trim() ||
             p.projectName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -387,7 +387,7 @@ const DevmanProject = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-gray-800 mb-1">{project.projectName}</h3>
-                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-[#0059FF] font-bold">DevMan: {project.devManName}</span></p>
+                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-[#00B4D8] font-bold">{project.devManName}</span></p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-8">
@@ -485,7 +485,7 @@ const DevmanProject = () => {
             )}
 
             {/* Extend Sidebar */}
-            <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-400px-20px)] w-[400px] h-fit bg-[#F5F5F5] shadow-2xl z-60 transition-all duration-300 rounded-3xl p-6 flex flex-col ${showExtendModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
+            <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-400px-20px)] w-[400px] h-fit bg-[#F5F5F5] shadow-2xl z-[100] transition-all duration-300 rounded-3xl p-6 flex flex-col ${showExtendModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
                 <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Extend Assignment</h3>
 
                 <div className="border-b border-gray-300 mb-6 mt-4"></div>
@@ -547,7 +547,7 @@ const DevmanProject = () => {
             </div>
 
             {/* Release Sidebar */}
-            <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-400px-20px)] w-[400px] h-fit bg-[#F5F5F5] shadow-2xl z-60 transition-all duration-300 rounded-3xl p-6 flex flex-col ${showReleaseModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
+            <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-400px-20px)] w-[400px] h-fit bg-[#F5F5F5] shadow-2xl z-[100] transition-all duration-300 rounded-3xl p-6 flex flex-col ${showReleaseModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
                 <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Release Assignment</h3>
 
                 <div className="border-b border-gray-300 mb-6 mt-4"></div>

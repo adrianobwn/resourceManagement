@@ -56,4 +56,13 @@ public class UserService {
                         .build())
                 .collect(Collectors.toList());
     }
+
+    public void deleteUser(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        
+        // Optionally check if user has any active projects before deletion
+        // For now, we'll just delete the user
+        userRepository.delete(user);
+    }
 }

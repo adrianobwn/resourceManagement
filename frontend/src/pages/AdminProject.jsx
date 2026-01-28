@@ -331,7 +331,7 @@ const AdminProject = () => {
 
     const getStatusLabel = (status) => {
         switch (status) {
-            case 'ON_GOING':
+            case 'ONGOING':
                 return 'ONGOING';
             case 'HOLD':
                 return 'HOLD';
@@ -344,7 +344,7 @@ const AdminProject = () => {
 
     const filteredProjects = projects.filter(p => {
         const matchesStatus = activeFilter === 'All' ||
-            (activeFilter === 'Ongoing' && p.status === 'ON_GOING') ||
+            (activeFilter === 'Ongoing' && p.status === 'ONGOING') ||
             (activeFilter === 'Hold' && p.status === 'HOLD') ||
             (activeFilter === 'Closed' && p.status === 'CLOSED');
 
@@ -448,7 +448,7 @@ const AdminProject = () => {
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-gray-800 mb-1">{project.projectName}</h3>
-                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-[#0059FF] font-bold">{project.devManName}</span></p>
+                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-[#00B4D8] font-bold">{project.devManName}</span></p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-8">
@@ -462,11 +462,11 @@ const AdminProject = () => {
                                                     handleToggleStatus(project.projectId, project.status);
                                                 }
                                             }}
-                                            title={project.status !== 'CLOSED' ? `Click to switch to ${project.status === 'ON_GOING' ? 'HOLD' : 'ON_GOING'}` : ''}
+                                            title={project.status !== 'CLOSED' ? `Click to switch to ${project.status === 'ONGOING' ? 'HOLD' : 'ONGOING'}` : ''}
                                         >
                                             {getStatusLabel(project.status)}
                                         </span>
-                                        <div className="text-gray-400 text-sm mt-2 font-medium flex items-center justify-end gap-2">
+                                        <div className="text-black text-sm mt-2 font-medium flex items-center justify-end gap-2">
                                             <Users className="w-4 h-4" /> {project.memberCount}
                                         </div>
                                     </div>
@@ -508,8 +508,8 @@ const AdminProject = () => {
                                     onClick={() => handleToggleStatus(selectedProject.projectId, selectedProject.status)}
                                     className="px-3 py-1 rounded-lg text-xs font-bold border transition-colors ml-2"
                                     style={{
-                                        borderColor: selectedProject.status === 'ON_GOING' ? '#FBCD3F' : '#06D001',
-                                        color: selectedProject.status === 'ON_GOING' ? '#FBCD3F' : '#06D001',
+                                        borderColor: selectedProject.status === 'ONGOING' ? '#FBCD3F' : '#06D001',
+                                        color: selectedProject.status === 'ONGOING' ? '#FBCD3F' : '#06D001',
                                         backgroundColor: 'transparent'
                                     }}
                                 >
@@ -587,133 +587,140 @@ const AdminProject = () => {
                         )}
                     </div>
 
-                    {/* Extend Sidebar */}
-                    <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-350px)] w-[700px] h-fit bg-[#F5F5F5] shadow-2xl z-60 transition-all duration-300 rounded-3xl p-6 flex flex-col ${showExtendModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
-                        <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Extend Assignment</h3>
+                    {/* Extend and Release Modals Side by Side */}
+                    {(showExtendModal || showReleaseModal) && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
+                            <div className="flex gap-6 max-w-[1400px] w-full">
+                                {/* Extend Modal */}
+                                <div className={`flex-1 bg-[#F5F5F5] shadow-2xl rounded-3xl p-6 flex flex-col transition-all duration-500 ${showExtendModal ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full pointer-events-none'}`}>
+                                    <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Extend Assignment</h3>
 
-                        <div className="border-b border-gray-300 mb-6 mt-4"></div>
+                                    <div className="border-b border-gray-300 mb-6 mt-4"></div>
 
-                        <div className="grid grid-cols-2 gap-8 flex-1">
-                            <div className="space-y-4">
-                                <h4 className="font-bold text-lg mb-4">Assignment Details</h4>
-                                <div className="space-y-2">
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Resource Name</span>
-                                        <span className="text-black font-bold text-lg">{selectedResourceForAction?.resourceName}</span>
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Current End Date</span>
-                                        <span className="text-black font-bold text-lg">{selectedResourceForAction?.endDate ? formatDate(selectedResourceForAction.endDate) : '-'}</span>
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Today's Date</span>
-                                        <span className="text-black font-bold text-lg">{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                                    </div>
-                                </div>
-                            </div>
+                                    <div className="grid grid-cols-2 gap-8 flex-1">
+                                        <div className="space-y-4">
+                                            <h4 className="font-bold text-lg mb-4">Assignment Details</h4>
+                                            <div className="space-y-2">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Resource Name</span>
+                                                    <span className="text-black font-bold text-lg">{selectedResourceForAction?.resourceName}</span>
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Current End Date</span>
+                                                    <span className="text-black font-bold text-lg">{selectedResourceForAction?.endDate ? formatDate(selectedResourceForAction.endDate) : '-'}</span>
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Today's Date</span>
+                                                    <span className="text-black font-bold text-lg">{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>New End Date</label>
-                                    <div className="relative">
-                                        <input
-                                            type="date"
-                                            value={actionDate}
-                                            min={minDate}
-                                            onChange={(e) => setActionDate(e.target.value)}
-                                            className="w-full px-4 py-3 bg-white border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black"
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>New End Date</label>
+                                                <div className="relative">
+                                                    <input
+                                                        type="date"
+                                                        value={actionDate}
+                                                        min={minDate}
+                                                        onChange={(e) => setActionDate(e.target.value)}
+                                                        className="w-full px-4 py-3 bg-white border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black"
+                                                        style={{ fontFamily: 'SF Pro Display' }}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Reason for Extension</label>
+                                                <textarea
+                                                    rows="4"
+                                                    value={actionReason}
+                                                    onChange={(e) => setActionReason(e.target.value)}
+                                                    className="w-full px-4 py-3 bg-white border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black resize-none"
+                                                    style={{ fontFamily: 'SF Pro Display' }}
+                                                ></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-4 mt-8 pt-4 border-t border-gray-200">
+                                        <button
+                                            onClick={() => setShowExtendModal(false)}
+                                            className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
                                             style={{ fontFamily: 'SF Pro Display' }}
-                                        />
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleExtendSubmit}
+                                            className="flex-1 py-3 bg-[#0057FF] text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                                            style={{ fontFamily: 'SF Pro Display' }}
+                                        >
+                                            Confirm Extension
+                                        </button>
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Reason for Extension</label>
-                                    <textarea
-                                        rows="4"
-                                        value={actionReason}
-                                        onChange={(e) => setActionReason(e.target.value)}
-                                        className="w-full px-4 py-3 bg-white border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black resize-none"
-                                        style={{ fontFamily: 'SF Pro Display' }}
-                                    ></textarea>
+                                {/* Release Modal */}
+                                <div className={`flex-1 bg-[#F5F5F5] shadow-2xl rounded-3xl p-6 flex flex-col transition-all duration-500 ${showReleaseModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full pointer-events-none'}`}>
+                                    <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Release Assignment</h3>
+
+                                    <div className="border-b border-gray-300 mb-6 mt-4"></div>
+
+                                    <div className="grid grid-cols-2 gap-8 flex-1">
+                                        <div className="space-y-4">
+                                            <h4 className="font-bold text-lg mb-4">Assignment Details</h4>
+                                            <div className="space-y-2">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Resource Name</span>
+                                                    <span className="text-black font-bold text-lg">{selectedResourceForAction?.resourceName}</span>
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Current End Date</span>
+                                                    <span className="text-black font-bold text-lg">{selectedResourceForAction?.endDate ? formatDate(selectedResourceForAction.endDate) : '-'}</span>
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Today's Date</span>
+                                                    <span className="text-black font-bold text-lg">{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Reason for Release</label>
+                                                <textarea
+                                                    rows="6"
+                                                    value={actionReason}
+                                                    onChange={(e) => setActionReason(e.target.value)}
+                                                    className="w-full px-4 py-3 bg-white border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#FF0000] outline-none text-black resize-none"
+                                                    style={{ fontFamily: 'SF Pro Display' }}
+                                                ></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-4 mt-8 pt-4 border-t border-gray-200">
+                                        <button
+                                            onClick={() => setShowReleaseModal(false)}
+                                            className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
+                                            style={{ fontFamily: 'SF Pro Display' }}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleReleaseSubmit}
+                                            className="flex-1 py-3 bg-[#FF0000] text-white rounded-xl font-bold hover:bg-red-700 transition-colors"
+                                            style={{ fontFamily: 'SF Pro Display' }}
+                                        >
+                                            Confirm Release
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-
-                        <div className="flex gap-4 mt-8 pt-4 border-t border-gray-200">
-                            <button
-                                onClick={() => setShowExtendModal(false)}
-                                className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
-                                style={{ fontFamily: 'SF Pro Display' }}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleExtendSubmit}
-                                className="flex-1 py-3 bg-[#0057FF] text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
-                                style={{ fontFamily: 'SF Pro Display' }}
-                            >
-                                Confirm Extension
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Release Sidebar */}
-                    <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-350px)] w-[700px] h-fit bg-[#F5F5F5] shadow-2xl z-60 transition-all duration-300 rounded-3xl p-6 flex flex-col ${showReleaseModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
-                        <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Release Assignment</h3>
-
-                        <div className="border-b border-gray-300 mb-6 mt-4"></div>
-
-                        <div className="grid grid-cols-2 gap-8 flex-1">
-                            <div className="space-y-4">
-                                <h4 className="font-bold text-lg mb-4">Assignment Details</h4>
-                                <div className="space-y-2">
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Resource Name</span>
-                                        <span className="text-black font-bold text-lg">{selectedResourceForAction?.resourceName}</span>
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Current End Date</span>
-                                        <span className="text-black font-bold text-lg">{selectedResourceForAction?.endDate ? formatDate(selectedResourceForAction.endDate) : '-'}</span>
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Today's Date</span>
-                                        <span className="text-black font-bold text-lg">{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Reason for Release</label>
-                                    <textarea
-                                        rows="6"
-                                        value={actionReason}
-                                        onChange={(e) => setActionReason(e.target.value)}
-                                        className="w-full px-4 py-3 bg-white border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#FF0000] outline-none text-black resize-none"
-                                        style={{ fontFamily: 'SF Pro Display' }}
-                                    ></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex gap-4 mt-8 pt-4 border-t border-gray-200">
-                            <button
-                                onClick={() => setShowReleaseModal(false)}
-                                className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
-                                style={{ fontFamily: 'SF Pro Display' }}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleReleaseSubmit}
-                                className="flex-1 py-3 bg-[#FF0000] text-white rounded-xl font-bold hover:bg-red-700 transition-colors"
-                                style={{ fontFamily: 'SF Pro Display' }}
-                            >
-                                Confirm Release
-                            </button>
-                        </div>
-                    </div>
+                    )}
                 </div>
             )}
 

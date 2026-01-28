@@ -25,4 +25,6 @@ public interface ResourceAssignmentRepository extends JpaRepository<ResourceAssi
     long countByProject_ProjectId(Integer projectId);
 
     long countByProject_ProjectIdAndStatus(Integer projectId, AssignmentStatus status);
+
+    void deleteByResource_ResourceId(Integer resourceId);
 }

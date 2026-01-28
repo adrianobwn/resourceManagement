@@ -112,6 +112,30 @@ public class ResourceService {
                                 .collect(Collectors.toList());
         }
 
+        @Transactional
+        public void deleteResource(Integer resourceId) {
+                Resource resource = resourceRepository.findById(resourceId)
+                                .orElseThrow(() -> new RuntimeException("Resource not found with id: " + resourceId));
+
+                // Check if resource has any active assignments
+                List<ResourceAssignment> activeAssignments = assignmentRepository
+                                .findByResource_ResourceId(resourceId)
+                                .stream()
+                                .filter(a -> a.getStatus() == AssignmentStatus.ACTIVE)
+                                .collect(Collectors.toList());
+
+                if (!activeAssignments.isEmpty()) {
+                        throw new RuntimeException(
+                                        "Cannot delete resource with active assignments. Please release all assignments first.");
+                }
+
+                // Delete all assignments (including history/inactive ones)
+                assignmentRepository.deleteByResource_ResourceId(resourceId);
+
+                // Delete the resource
+                resourceRepository.delete(resource);
+        }
+
         private ResourceResponse mapToResourceResponse(Resource resource) {
                 List<ResourceAssignment> assignments = assignmentRepository
                                 .findByResource_ResourceId(resource.getResourceId());

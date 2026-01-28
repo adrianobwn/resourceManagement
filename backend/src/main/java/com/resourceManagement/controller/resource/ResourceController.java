@@ -51,4 +51,11 @@ public class ResourceController {
         List<ResourceResponse.AssignmentInfo> assignments = resourceService.getResourceAssignments(resourceId);
         return ResponseEntity.ok(assignments);
     }
+
+    @DeleteMapping("/{resourceId}")
+    // @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteResource(@PathVariable Integer resourceId) {
+        resourceService.deleteResource(resourceId);
+        return ResponseEntity.ok().build();
+    }
 }
