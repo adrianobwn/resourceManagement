@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import StatusBadge from '../components/StatusBadge';
+import Toast from '../components/Toast';
 import api from '../utils/api';
 import {
     Users,
@@ -99,33 +101,7 @@ const DevmanDashboard = () => {
         return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
 
-    // Get type badge colors based on request type
-    const getTypeBadgeStyle = (type) => {
-        if (type === 'EXTEND') {
-            return {
-                backgroundColor: 'rgba(249, 115, 22, 0.2)',
-                border: '1px solid #F97316',
-                color: '#F97316'
-            };
-        } else if (type === 'RELEASE') {
-            return {
-                backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                border: '1px solid #FF0000',
-                color: '#FF0000'
-            };
-        } else if (type === 'PROJECT') {
-            return {
-                backgroundColor: 'rgba(0, 89, 255, 0.2)',
-                border: '1px solid #0059FF',
-                color: '#0059FF'
-            };
-        }
-        return {
-            backgroundColor: 'rgba(251, 205, 63, 0.2)',
-            border: '1px solid #FBCD3F',
-            color: '#FBCD3F'
-        };
-    };
+
 
     // Handle Accept action
     const handleAccept = (request) => {
@@ -192,50 +168,13 @@ const DevmanDashboard = () => {
             <Sidebar />
 
             {/* Toast Notification */}
-            {notification.show && (
-                <div
-                    className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-300 ease-in-out ${notification.closing
-                        ? 'opacity-0 translate-x-full'
-                        : 'opacity-100 translate-x-0'
-                        }`}
-                    style={{
-                        backgroundColor: notification.type === 'error' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(6, 208, 1, 0.2)',
-                        border: `1px solid ${notification.type === 'error' ? '#FF0000' : '#06D001'}`
-                    }}
-                >
-                    <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke={notification.type === 'error' ? '#FF0000' : '#06D001'}
-                        viewBox="0 0 24 24"
-                    >
-                        {notification.type === 'error' ? (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        ) : (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                        )}
-                    </svg>
-                    <span
-                        className="font-bold"
-                        style={{
-                            color: notification.type === 'error' ? '#FF0000' : '#06D001',
-                            fontSize: '14px',
-                            fontFamily: 'SF Pro Display'
-                        }}
-                    >
-                        {notification.message}
-                    </span>
-                    <button
-                        onClick={closeNotification}
-                        className="ml-2 hover:opacity-70 transition-opacity"
-                        style={{ color: notification.type === 'error' ? '#FF0000' : '#06D001' }}
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-            )}
+            <Toast
+                show={notification.show}
+                message={notification.message}
+                type={notification.type}
+                onClose={closeNotification}
+                closing={notification.closing}
+            />
 
             {/* Decline Reason Modal */}
             {declineModal.show && (
@@ -610,12 +549,7 @@ const DevmanDashboard = () => {
                                 style={{ backgroundColor: '#E8E8E8' }}
                             >
                                 <div className="flex items-center gap-3">
-                                    <span
-                                        className="text-xs px-3 py-1 rounded-full font-bold"
-                                        style={getTypeBadgeStyle(request.type)}
-                                    >
-                                        {request.type}
-                                    </span>
+                                    <StatusBadge status={request.type} />
                                     <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>
                                         {request.type === 'PROJECT' ? request.projectName : request.resource}
                                     </span>
@@ -712,12 +646,7 @@ const DevmanDashboard = () => {
                                                 </div>
                                             </div>
                                             <div className="flex flex-col items-end gap-1" style={{ fontFamily: 'SF Pro Display' }}>
-                                                <span className={`text-xs px-3 py-1 rounded-full font-medium ${project.status === 'ONGOING'
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : 'bg-yellow-100 text-yellow-700'
-                                                    }`}>
-                                                    {project.status === 'ONGOING' ? 'ONGOING' : project.status}
-                                                </span>
+                                                <StatusBadge status={project.status} />
                                                 <div className="flex items-center gap-1 text-black font-bold">
                                                     <Users className="w-4 h-4" />
                                                     <span className="text-sm">{project.memberCount}</span>

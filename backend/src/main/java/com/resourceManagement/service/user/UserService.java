@@ -9,6 +9,8 @@ import com.resourceManagement.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.resourceManagement.model.enums.EntityType;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,6 +21,8 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final com.resourceManagement.repository.ProjectRepository projectRepository;
+    private final com.resourceManagement.service.project.HistoryLogService historyLogService;
 
     public void createPm(CreatePmRequest request) {
         System.out.println("Attempting to create DevMan: " + request.getName() + " (" + request.getEmail() + ")");
@@ -57,12 +61,28 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void deleteUser(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        
-        // Optionally check if user has any active projects before deletion
-        // For now, we'll just delete the user
+
+        // Check if user manages any projects
+        if (projectRepository.existsByDevMan_UserId(userId)) {
+            throw new RuntimeException(
+                    "Cannot delete DevMan associated with existing projects. Please reassign or delete the projects first.");
+        }
+
+        // Log deletion
+        String currentPrincipalName = SecurityContextHolder.getContext().getAuthentication().getName();
+        User performedBy = userRepository.findByEmail(currentPrincipalName)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+        historyLogService.logActivity(
+                EntityType.USER,
+                "DELETE",
+                "Deleted DevMan: " + user.getName(),
+                performedBy);
+
         userRepository.delete(user);
     }
 }

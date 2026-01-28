@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import StatusBadge from '../components/StatusBadge';
+import Toast from '../components/Toast';
 import api from '../utils/api';
 import * as XLSX from 'xlsx';
 import { Search, Users, Trash2, X, Calendar, AlertTriangle, Folder, Edit2 } from 'lucide-react';
@@ -266,14 +268,13 @@ const AdminProject = () => {
         if (!deleteModal.project) return;
 
         try {
-            // Assuming endpoint is DELETE /projects/:id
             await api.delete(`/projects/${deleteModal.project.projectId}`);
             showNotification('Project deleted successfully!', 'success');
             setDeleteModal({ show: false, project: null });
             fetchProjects();
         } catch (error) {
             console.error('Error deleting project:', error);
-            showNotification('Failed to delete project', 'error');
+            showNotification(error.response?.data?.message || 'Failed to delete project', 'error');
         }
     };
 
@@ -300,47 +301,7 @@ const AdminProject = () => {
         }, 300);
     };
 
-    const getStatusBadgeStyle = (status) => {
-        switch (status) {
-            case 'ONGOING':
-                return {
-                    backgroundColor: 'rgba(6, 208, 1, 0.2)',
-                    color: '#06D001',
-                    border: '1px solid #06D001'
-                };
-            case 'HOLD':
-                return {
-                    backgroundColor: 'rgba(249, 115, 22, 0.2)', // #F97316
-                    color: '#F97316',
-                    border: '1px solid #F97316'
-                };
-            case 'CLOSED':
-                return {
-                    backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                    color: '#FF0000',
-                    border: '1px solid #FF0000'
-                };
-            default:
-                return {
-                    backgroundColor: 'rgba(0, 180, 216, 0.2)',
-                    color: '#00B4D8',
-                    border: '1px solid #00B4D8'
-                };
-        }
-    };
 
-    const getStatusLabel = (status) => {
-        switch (status) {
-            case 'ONGOING':
-                return 'ONGOING';
-            case 'HOLD':
-                return 'HOLD';
-            case 'CLOSED':
-                return 'CLOSED';
-            default:
-                return status;
-        }
-    };
 
     const filteredProjects = projects.filter(p => {
         const matchesStatus = activeFilter === 'All' ||
@@ -362,33 +323,14 @@ const AdminProject = () => {
         <div className="flex min-h-screen bg-[#E6F2F1] font-['SF_Pro_Display']">
             <Sidebar />
 
-            {/* Notification */}
-            {notification.show && (
-                <div
-                    className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-300 ease-in-out ${notification.closing
-                        ? 'opacity-0 translate-x-full'
-                        : 'opacity-100 translate-x-0 animate-slide-in'
-                        }`}
-                    style={{
-                        backgroundColor: notification.type === 'success' ? 'rgba(6, 208, 1, 0.2)' : notification.type === 'error' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 180, 216, 0.2)',
-                        borderColor: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8'
-                    }}
-                >
-                    {notification.type === 'success' ? (
-                        <svg className="w-5 h-5" fill="none" stroke="#06D001" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                    ) : notification.type === 'error' ? (
-                        <svg className="w-5 h-5" fill="none" stroke="#FF0000" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                    ) : (
-                        <svg className="w-5 h-5" fill="none" stroke="#00B4D8" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    )}
-                    <span className="font-bold" style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8', fontSize: '14px' }}>
-                        {notification.message}
-                    </span>
-                    <button onClick={closeNotification} className="ml-2 hover:opacity-70 transition-opacity" style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8' }}>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                </div>
-            )}
+            {/* Notification Toast */}
+            <Toast
+                show={notification.show}
+                message={notification.message}
+                type={notification.type}
+                onClose={() => setNotification(prev => ({ ...prev, closing: true }))}
+                closing={notification.closing}
+            />
 
             {/* Main Content */}
             <div className="flex-1 p-8 ml-[267px]">
@@ -453,19 +395,21 @@ const AdminProject = () => {
                                 </div>
                                 <div className="flex items-center gap-8">
                                     <div className="text-right">
-                                        <span
-                                            className="text-xs px-3 py-1 rounded-full font-bold cursor-pointer hover:opacity-80 transition-opacity inline-block"
-                                            style={getStatusBadgeStyle(project.status)}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (project.status !== 'CLOSED') {
-                                                    handleToggleStatus(project.projectId, project.status);
-                                                }
-                                            }}
-                                            title={project.status !== 'CLOSED' ? `Click to switch to ${project.status === 'ONGOING' ? 'HOLD' : 'ONGOING'}` : ''}
-                                        >
-                                            {getStatusLabel(project.status)}
-                                        </span>
+                                        <div className="flex items-center justify-end gap-2">
+                                            <StatusBadge status={project.status} />
+                                            {project.status !== 'CLOSED' && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleToggleStatus(project.projectId, project.status);
+                                                    }}
+                                                    className="p-1 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-full transition-colors"
+                                                    title={`Change to ${project.status === 'ONGOING' ? 'HOLD' : 'ONGOING'}`}
+                                                >
+                                                    <Edit2 className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </div>
                                         <div className="text-black text-sm mt-2 font-medium flex items-center justify-end gap-2">
                                             <Users className="w-4 h-4" /> {project.memberCount}
                                         </div>
@@ -487,136 +431,111 @@ const AdminProject = () => {
                 </div>
             </div>
 
-            {/* Detail Modal */}
+            {/* Detail Modal Container - Wraps both Project Detail and Action Modals */}
             {showDetailModal && selectedProject && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto animate-fade-in">
-                    <div className={`bg-white rounded-2xl p-8 w-[800px] relative transition-transform duration-300 animate-scale-in ${showExtendModal || showReleaseModal ? '-translate-x-[20%]' : ''}`}>
-                        <button onClick={() => setShowDetailModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
-                            <X className="w-6 h-6" />
-                        </button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-auto animate-fade-in">
+                    <div className="flex items-start gap-6 transition-all duration-300 min-w-min">
+                        {/* Project Detail Modal */}
+                        <div className="bg-white rounded-2xl p-8 w-[800px] flex-shrink-0 relative shadow-xl">
+                            <button onClick={() => setShowDetailModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
+                                <X className="w-6 h-6" />
+                            </button>
 
-                        <div className="flex items-center gap-4 mb-2">
-                            <h2 className="text-3xl font-bold text-gray-800">{selectedProject.projectName}</h2>
-                            <span
-                                className="px-3 py-1 rounded-full text-xs font-bold"
-                                style={getStatusBadgeStyle(selectedProject.status)}
-                            >
-                                {getStatusLabel(selectedProject.status)}
-                            </span>
-                            {selectedProject.status !== 'CLOSED' && (
-                                <button
-                                    onClick={() => handleToggleStatus(selectedProject.projectId, selectedProject.status)}
-                                    className="px-3 py-1 rounded-lg text-xs font-bold border transition-colors ml-2"
-                                    style={{
-                                        borderColor: selectedProject.status === 'ONGOING' ? '#FBCD3F' : '#06D001',
-                                        color: selectedProject.status === 'ONGOING' ? '#FBCD3F' : '#06D001',
-                                        backgroundColor: 'transparent'
-                                    }}
-                                >
-                                    {selectedProject.status === 'ONGOING' ? 'Change to Hold' : 'Change to Ongoing'}
-                                </button>
+                            <div className="flex items-center gap-4 mb-2">
+                                <h2 className="text-3xl font-bold text-gray-800">{selectedProject.projectName}</h2>
+                                <h2 className="text-3xl font-bold text-gray-800">{selectedProject.projectName}</h2>
+                                <StatusBadge status={selectedProject.status} />
+                                {selectedProject.status !== 'CLOSED' && (
+                                    <button
+                                        onClick={() => handleToggleStatus(selectedProject.projectId, selectedProject.status)}
+                                        className="p-1.5 rounded-full text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors ml-1"
+                                        title={`Change to ${selectedProject.status === 'ONGOING' ? 'HOLD' : 'ONGOING'}`}
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="flex gap-8 mb-6">
+                                <div className="text-sm font-medium text-gray-500">Client Name : <span className="text-gray-800 font-bold">{selectedProject.clientName}</span></div>
+                                <div className="text-sm font-medium text-gray-500">DevMan : <span className="text-gray-800 font-bold">{selectedProject.devManName}</span></div>
+                            </div>
+
+                            <div className="border-t border-gray-100 my-6"></div>
+
+                            <h3 className="text-xl font-bold text-gray-800 mb-4">Assigned Resources</h3>
+
+                            {loadingResources ? (
+                                <p className="text-center py-8 text-gray-500 font-bold">Loading resources...</p>
+                            ) : projectResources.length === 0 ? (
+                                <p className="text-center py-8 text-gray-500 font-bold">No resources assigned.</p>
+                            ) : (
+                                <div className="bg-[#F8FBFC] rounded-xl overflow-hidden">
+                                    <table className="w-full">
+                                        <thead className="bg-[#E6F2F1] border-b border-gray-200 text-left">
+                                            <tr>
+                                                <th className="px-6 py-4 font-bold text-gray-700 text-center">Name</th>
+                                                <th className="px-6 py-4 font-bold text-center text-gray-700">Role</th>
+                                                <th className="px-6 py-4 font-bold text-center text-gray-700">Period</th>
+                                                <th className="px-6 py-4 font-bold text-center text-gray-700">Status</th>
+                                                <th className="px-6 py-4 font-bold text-center text-gray-700 rounded-tr-xl">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-[#E6F2F1]">
+                                            {projectResources.map((res, idx) => (
+                                                <tr key={idx} className="border-b border-gray-200 last:border-none">
+                                                    <td className="px-6 py-6 font-bold text-gray-800">{res.resourceName}</td>
+                                                    <td className="px-6 py-6 text-center font-bold text-gray-600">{res.role}</td>
+                                                    <td className="px-6 py-6 text-center font-bold text-gray-800">{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
+                                                    <td className="px-6 py-6 text-center">
+                                                        <StatusBadge status={res.status === 'ACTIVE' ? 'ACTIVE' : 'RELEASED'} className="text-[10px]" />
+                                                    </td>
+                                                    <td className="px-6 py-6 text-center">
+                                                        <div className="flex justify-center gap-2">
+                                                            {res.status === 'RELEASED' ? (
+                                                                // Show dash for released assignments
+                                                                <span className="text-gray-400 text-xs font-bold">-</span>
+                                                            ) : pendingRequests.some(req => req.assignmentId && String(req.assignmentId) === String(res.assignmentId)) ? (
+                                                                // Show "Pending" badge if there's any pending request for this assignment
+                                                                <StatusBadge status="PENDING" className="text-[10px]" />
+                                                            ) : res.status === 'ACTIVE' ? (
+                                                                // Show buttons only if ACTIVE and no pending requests
+                                                                <>
+                                                                    <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] hover:bg-[#F97316]/20">EXTEND</button>
+                                                                    <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] hover:bg-[#FF0000]/20">RELEASE</button>
+                                                                </>
+                                                            ) : null}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             )}
                         </div>
 
-                        <div className="flex gap-8 mb-6">
-                            <div className="text-sm font-medium text-gray-500">Client Name : <span className="text-gray-800 font-bold">{selectedProject.clientName}</span></div>
-                            <div className="text-sm font-medium text-gray-500">DevMan : <span className="text-gray-800 font-bold">{selectedProject.devManName}</span></div>
-                        </div>
+                        {/* Extend/Release Actions - Rendered Side-by-Side */}
+                        {(showExtendModal || showReleaseModal) && (
+                            <div className="w-[400px] h-fit bg-[#F5F5F5] shadow-2xl rounded-3xl p-6 flex flex-col animate-scale-in">
 
-                        <div className="border-t border-gray-100 my-6"></div>
+                                {showExtendModal && (
+                                    <>
+                                        <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Extend Assignment</h3>
+                                        <div className="border-b border-gray-300 mb-6 mt-4"></div>
 
-                        <h3 className="text-xl font-bold text-gray-800 mb-4">Assigned Resources</h3>
-
-                        {loadingResources ? (
-                            <p className="text-center py-8 text-gray-500 font-bold">Loading resources...</p>
-                        ) : projectResources.length === 0 ? (
-                            <p className="text-center py-8 text-gray-500 font-bold">No resources assigned.</p>
-                        ) : (
-                            <div className="bg-[#F8FBFC] rounded-xl overflow-hidden">
-                                <table className="w-full">
-                                    <thead className="bg-[#E6F2F1] border-b border-gray-200 text-left">
-                                        <tr>
-                                            <th className="px-6 py-4 font-bold text-gray-700 text-center">Name</th>
-                                            <th className="px-6 py-4 font-bold text-center text-gray-700">Role</th>
-                                            <th className="px-6 py-4 font-bold text-center text-gray-700">Period</th>
-                                            <th className="px-6 py-4 font-bold text-center text-gray-700">Status</th>
-                                            <th className="px-6 py-4 font-bold text-center text-gray-700 rounded-tr-xl">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-[#E6F2F1]">
-                                        {projectResources.map((res, idx) => (
-                                            <tr key={idx} className="border-b border-gray-200 last:border-none">
-                                                <td className="px-6 py-6 font-bold text-gray-800">{res.resourceName}</td>
-                                                <td className="px-6 py-6 text-center font-bold text-gray-600">{res.role}</td>
-                                                <td className="px-6 py-6 text-center font-bold text-gray-800">{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
-                                                <td className="px-6 py-6 text-center">
-                                                    <span
-                                                        className="px-4 py-1 rounded-full text-[10px] font-bold"
-                                                        style={{
-                                                            backgroundColor: res.status === 'ACTIVE' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(255, 0, 0, 0.2)',
-                                                            color: res.status === 'ACTIVE' ? '#06D001' : '#FF0000',
-                                                        }}
-                                                    >
-                                                        {res.status === 'ACTIVE' ? 'ACTIVE' : 'RELEASED'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-6 text-center">
-                                                    <div className="flex justify-center gap-2">
-                                                        {res.status === 'RELEASED' ? (
-                                                            // Show dash for released assignments
-                                                            <span className="text-gray-400 text-xs font-bold">-</span>
-                                                        ) : pendingRequests.some(req => req.assignmentId && String(req.assignmentId) === String(res.assignmentId)) ? (
-                                                            // Show "Pending" badge if there's any pending request for this assignment
-                                                            <span className="px-4 py-1.5 rounded-full bg-yellow-100 text-yellow-700 font-bold text-[10px]">
-                                                                PENDING
-                                                            </span>
-                                                        ) : res.status === 'ACTIVE' ? (
-                                                            // Show buttons only if ACTIVE and no pending requests
-                                                            <>
-                                                                <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] hover:bg-[#F97316]/20">EXTEND</button>
-                                                                <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] hover:bg-[#FF0000]/20">RELEASE</button>
-                                                            </>
-                                                        ) : null}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Extend and Release Modals Side by Side */}
-                    {(showExtendModal || showReleaseModal) && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-                            <div className="flex gap-6 max-w-[1400px] w-full">
-                                {/* Extend Modal */}
-                                <div className={`flex-1 bg-[#F5F5F5] shadow-2xl rounded-3xl p-6 flex flex-col transition-all duration-500 ${showExtendModal ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full pointer-events-none'}`}>
-                                    <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Extend Assignment</h3>
-
-                                    <div className="border-b border-gray-300 mb-6 mt-4"></div>
-
-                                    <div className="grid grid-cols-2 gap-8 flex-1">
-                                        <div className="space-y-4">
-                                            <h4 className="font-bold text-lg mb-4">Assignment Details</h4>
+                                        <div className="space-y-6 flex-1">
                                             <div className="space-y-2">
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Resource Name</span>
-                                                    <span className="text-black font-bold text-lg">{selectedResourceForAction?.resourceName}</span>
+                                                <div className="flex justify-between mb-2">
+                                                    <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Resource</span>
+                                                    <span className="text-black">: {selectedResourceForAction?.resourceName}</span>
                                                 </div>
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Current End Date</span>
-                                                    <span className="text-black font-bold text-lg">{selectedResourceForAction?.endDate ? formatDate(selectedResourceForAction.endDate) : '-'}</span>
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Today's Date</span>
-                                                    <span className="text-black font-bold text-lg">{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                                <div className="flex justify-between">
+                                                    <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Current Date</span>
+                                                    <span className="text-black">: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div className="space-y-4">
                                             <div>
                                                 <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>New End Date</label>
                                                 <div className="relative">
@@ -625,7 +544,7 @@ const AdminProject = () => {
                                                         value={actionDate}
                                                         min={minDate}
                                                         onChange={(e) => setActionDate(e.target.value)}
-                                                        className="w-full px-4 py-3 bg-white border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black"
+                                                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black shadow-sm"
                                                         style={{ fontFamily: 'SF Pro Display' }}
                                                     />
                                                 </div>
@@ -637,90 +556,81 @@ const AdminProject = () => {
                                                     rows="4"
                                                     value={actionReason}
                                                     onChange={(e) => setActionReason(e.target.value)}
-                                                    className="w-full px-4 py-3 bg-white border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black resize-none"
+                                                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black resize-none shadow-sm"
                                                     style={{ fontFamily: 'SF Pro Display' }}
                                                 ></textarea>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <div className="flex gap-4 mt-8 pt-4 border-t border-gray-200">
-                                        <button
-                                            onClick={() => setShowExtendModal(false)}
-                                            className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
-                                            style={{ fontFamily: 'SF Pro Display' }}
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            onClick={handleExtendSubmit}
-                                            className="flex-1 py-3 bg-[#0057FF] text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
-                                            style={{ fontFamily: 'SF Pro Display' }}
-                                        >
-                                            Confirm Extension
-                                        </button>
-                                    </div>
-                                </div>
+                                        <div className="flex gap-4 mt-8 pt-4">
+                                            <button
+                                                onClick={() => setShowExtendModal(false)}
+                                                className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
+                                                style={{ fontFamily: 'SF Pro Display' }}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={handleExtendSubmit}
+                                                className="flex-1 py-3 bg-[#0057FF] text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                                                style={{ fontFamily: 'SF Pro Display' }}
+                                            >
+                                                Confirm Extension
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
 
-                                {/* Release Modal */}
-                                <div className={`flex-1 bg-[#F5F5F5] shadow-2xl rounded-3xl p-6 flex flex-col transition-all duration-500 ${showReleaseModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full pointer-events-none'}`}>
-                                    <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Release Assignment</h3>
+                                {showReleaseModal && (
+                                    <>
+                                        <h3 className="text-2xl font-bold mb-2 text-center text-red-600" style={{ fontFamily: 'SF Pro Display' }}>Release Assignment</h3>
+                                        <div className="border-b border-gray-300 mb-6 mt-4"></div>
 
-                                    <div className="border-b border-gray-300 mb-6 mt-4"></div>
-
-                                    <div className="grid grid-cols-2 gap-8 flex-1">
-                                        <div className="space-y-4">
-                                            <h4 className="font-bold text-lg mb-4">Assignment Details</h4>
+                                        <div className="space-y-6 flex-1">
                                             <div className="space-y-2">
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Resource Name</span>
-                                                    <span className="text-black font-bold text-lg">{selectedResourceForAction?.resourceName}</span>
+                                                <div className="flex justify-between mb-2">
+                                                    <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Resource</span>
+                                                    <span className="text-black">: {selectedResourceForAction?.resourceName}</span>
                                                 </div>
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Current End Date</span>
-                                                    <span className="text-black font-bold text-lg">{selectedResourceForAction?.endDate ? formatDate(selectedResourceForAction.endDate) : '-'}</span>
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-gray-600 text-sm" style={{ fontFamily: 'SF Pro Display' }}>Today's Date</span>
-                                                    <span className="text-black font-bold text-lg">{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                                <div className="flex justify-between">
+                                                    <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Current Date</span>
+                                                    <span className="text-black">: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div className="space-y-4">
                                             <div>
                                                 <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Reason for Release</label>
                                                 <textarea
-                                                    rows="6"
+                                                    rows="4"
                                                     value={actionReason}
                                                     onChange={(e) => setActionReason(e.target.value)}
-                                                    className="w-full px-4 py-3 bg-white border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#FF0000] outline-none text-black resize-none"
+                                                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-black resize-none shadow-sm"
                                                     style={{ fontFamily: 'SF Pro Display' }}
                                                 ></textarea>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <div className="flex gap-4 mt-8 pt-4 border-t border-gray-200">
-                                        <button
-                                            onClick={() => setShowReleaseModal(false)}
-                                            className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
-                                            style={{ fontFamily: 'SF Pro Display' }}
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            onClick={handleReleaseSubmit}
-                                            className="flex-1 py-3 bg-[#FF0000] text-white rounded-xl font-bold hover:bg-red-700 transition-colors"
-                                            style={{ fontFamily: 'SF Pro Display' }}
-                                        >
-                                            Confirm Release
-                                        </button>
-                                    </div>
-                                </div>
+                                        <div className="flex gap-4 mt-8 pt-4">
+                                            <button
+                                                onClick={() => setShowReleaseModal(false)}
+                                                className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
+                                                style={{ fontFamily: 'SF Pro Display' }}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={handleReleaseSubmit}
+                                                className="flex-1 py-3 bg-[#FF0000] text-white rounded-xl font-bold hover:bg-red-700 transition-colors"
+                                                style={{ fontFamily: 'SF Pro Display' }}
+                                            >
+                                                Confirm Release
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             )}
 

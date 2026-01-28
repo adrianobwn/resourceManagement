@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import StatusBadge from '../components/StatusBadge';
+import Toast from '../components/Toast';
 import api from '../utils/api';
 import { Search, UserPlus, X, Eye, Trash2, AlertTriangle } from 'lucide-react';
 
@@ -42,6 +44,18 @@ const AdminDevman = () => {
         setUser(JSON.parse(storedUser));
         fetchData();
     }, [navigate]);
+
+    // Scroll locking for modals
+    useEffect(() => {
+        if (showCreateModal || showDetailModal || deleteModal.show) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [showCreateModal, showDetailModal, deleteModal.show]);
 
     const fetchData = async () => {
         try {
@@ -98,7 +112,7 @@ const AdminDevman = () => {
             fetchData();
         } catch (error) {
             console.error('Error deleting DevMan:', error);
-            showNotification('Failed to delete DevMan', 'error');
+            showNotification(error.response?.data?.message || 'Failed to delete DevMan', 'error');
         }
     };
 
@@ -139,82 +153,14 @@ const AdminDevman = () => {
         <div className="flex min-h-screen bg-[#E6F2F1] font-['SF_Pro_Display']">
             <Sidebar />
 
-            {/* Notification */}
-            {notification.show && (
-                <div
-                    className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-300 ease-in-out ${notification.closing
-                        ? 'opacity-0 translate-x-full'
-                        : 'opacity-100 translate-x-0 animate-slide-in'
-                        }`}
-                    style={{
-                        backgroundColor: notification.type === 'success' ? 'rgba(6, 208, 1, 0.2)' : notification.type === 'error' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 180, 216, 0.2)',
-                        borderColor: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8'
-                    }}
-                >
-                    {notification.type === 'success' ? (
-                        <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="#06D001"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M5 13l4 4L19 7"
-                            />
-                        </svg>
-                    ) : notification.type === 'error' ? (
-                        <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="#FF0000"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
-                    ) : (
-                        <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="#00B4D8"
-                            viewBox="0 0 24 24"
-                            style={{ color: '#00B4D8' }}
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
-                    )}
-                    <span
-                        className="font-bold"
-                        style={{
-                            color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8',
-                            fontSize: '14px'
-                        }}
-                    >
-                        {notification.message}
-                    </span>
-                    <button
-                        onClick={closeNotification}
-                        className="ml-2 hover:opacity-70 transition-opacity"
-                        style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8' }}
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-            )}
+            {/* Notification Toast */}
+            <Toast
+                show={notification.show}
+                message={notification.message}
+                type={notification.type}
+                onClose={closeNotification}
+                closing={notification.closing}
+            />
             <div className="flex-1 ml-[267px] flex flex-col h-screen overflow-hidden bg-[#E6F2F1]">
                 <div className="p-8 pb-4">
                     <h1 className="text-4xl font-bold text-gray-800 mb-6">DevMan Management</h1>
@@ -269,16 +215,10 @@ const AdminDevman = () => {
                                                     <td className="py-4 px-6 font-bold text-gray-800">{devMan.name}</td>
                                                     <td className="py-4 px-6 text-gray-600">{devMan.email}</td>
                                                     <td className="py-4 px-6 text-center">
-                                                        <span
-                                                            className="px-3 py-1 rounded-full text-xs font-bold"
-                                                            style={{
-                                                                color: getDevManStatus(devMan.userId) === 'AVAILABLE' ? '#06D001' : '#FF0000',
-                                                                backgroundColor: getDevManStatus(devMan.userId) === 'AVAILABLE' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(255, 0, 0, 0.2)',
-                                                                border: getDevManStatus(devMan.userId) === 'AVAILABLE' ? '1px solid #06D001' : '1px solid #FF0000'
-                                                            }}
-                                                        >
-                                                            {getDevManStatus(devMan.userId)}
-                                                        </span>
+                                                        <StatusBadge
+                                                            status={getDevManStatus(devMan.userId)}
+                                                            className="text-xs"
+                                                        />
                                                     </td>
                                                     <td className="py-4 px-6 text-center">
                                                         <div className="flex items-center justify-center gap-10">

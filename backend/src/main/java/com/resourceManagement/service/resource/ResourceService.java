@@ -12,6 +12,11 @@ import com.resourceManagement.repository.ProjectRepository;
 import com.resourceManagement.repository.ResourceAssignmentRepository;
 import com.resourceManagement.repository.ResourceRepository;
 import lombok.RequiredArgsConstructor;
+import com.resourceManagement.repository.UserRepository;
+import com.resourceManagement.service.project.HistoryLogService;
+import com.resourceManagement.model.entity.User;
+import com.resourceManagement.model.enums.EntityType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +32,8 @@ public class ResourceService {
         private final ResourceRepository resourceRepository;
         private final ResourceAssignmentRepository assignmentRepository;
         private final ProjectRepository projectRepository;
+        private final UserRepository userRepository;
+        private final HistoryLogService historyLogService;
 
         public List<ResourceResponse> getAllResources() {
                 List<Resource> resources = resourceRepository.findAll();
@@ -131,6 +138,17 @@ public class ResourceService {
 
                 // Delete all assignments (including history/inactive ones)
                 assignmentRepository.deleteByResource_ResourceId(resourceId);
+
+                // Log deletion
+                String currentPrincipalName = SecurityContextHolder.getContext().getAuthentication().getName();
+                User performedBy = userRepository.findByEmail(currentPrincipalName)
+                                .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+                historyLogService.logActivity(
+                                EntityType.RESOURCE,
+                                "DELETE",
+                                "Deleted Resource: " + resource.getResourceName(),
+                                performedBy);
 
                 // Delete the resource
                 resourceRepository.delete(resource);

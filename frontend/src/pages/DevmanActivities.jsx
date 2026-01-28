@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import StatusBadge from '../components/StatusBadge';
+import Toast from '../components/Toast';
 import api from '../utils/api';
 
 const DevmanActivities = () => {
@@ -15,6 +16,18 @@ const DevmanActivities = () => {
     useEffect(() => {
         fetchActivities();
     }, []);
+
+    // Scroll locking for modal
+    useEffect(() => {
+        if (reasonModal.show) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [reasonModal.show]);
 
     const fetchActivities = async () => {
         try {
@@ -61,62 +74,18 @@ const DevmanActivities = () => {
         }, 300);
     };
 
-    const getStatusColor = (status) => {
-        if (status === 'APPROVED') {
-            return {
-                bg: 'rgba(6, 208, 1, 0.2)',
-                text: '#06D001',
-                border: '#06D001'
-            };
-        } else if (status === 'REJECTED') {
-            return {
-                bg: 'rgba(255, 0, 0, 0.2)',
-                text: '#FF0000',
-                border: '#FF0000'
-            };
-        } else if (status === 'PENDING') {
-            return {
-                bg: 'rgba(251, 205, 63, 0.2)', // #FBCD3F with 20% opacity
-                text: '#FBCD3F',
-                border: '#FBCD3F'
-            };
-        }
-        return {
-            bg: 'rgba(169, 169, 169, 0.2)',
-            text: '#A9A9A9',
-            border: '#A9A9A9'
-        };
-    };
+
 
     return (
         <div className="flex min-h-screen bg-[#E6F2F1] font-['SF_Pro_Display']">
             {/* Notification Toast */}
-            {notification.show && (
-                <div
-                    className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-300 ease-in-out ${notification.closing
-                        ? 'opacity-0 translate-x-full'
-                        : 'opacity-100 translate-x-0 animate-slide-in'
-                        }`}
-                    style={{
-                        backgroundColor: notification.type === 'success' ? 'rgba(6, 208, 1, 0.2)' : notification.type === 'error' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 180, 216, 0.2)',
-                        borderColor: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8'
-                    }}
-                >
-                    {notification.type === 'success' ? (
-                        <svg className="w-5 h-5" fill="none" stroke="#06D001" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                    ) : notification.type === 'error' ? (
-                        <svg className="w-5 h-5" fill="none" stroke="#FF0000" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                    ) : (
-                        <svg className="w-5 h-5" fill="none" stroke="#00B4D8" style={{ color: '#00B4D8' }} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    )}
-                    <span className="font-bold" style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8', fontSize: '14px' }}>
-                        {notification.message}
-                    </span>
-                    <button onClick={closeNotification} className="ml-2 hover:opacity-70 transition-opacity" style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8' }}>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                </div>
-            )}
+            <Toast
+                show={notification.show}
+                message={notification.message}
+                type={notification.type}
+                onClose={closeNotification}
+                closing={notification.closing}
+            />
 
             {/* Sidebar */}
             <Sidebar />
@@ -220,24 +189,16 @@ const DevmanActivities = () => {
                                                 </td>
                                                 <td className="py-4 px-6">
                                                     <div className="flex justify-center items-center gap-2">
-                                                        <span
-                                                            className="px-3 py-1 rounded-full font-semibold"
-                                                            style={{
-                                                                fontSize: '12px',
-                                                                backgroundColor: getStatusColor(item.status).bg,
-                                                                color: getStatusColor(item.status).text,
-                                                                border: `1px solid ${getStatusColor(item.status).border}`
-                                                            }}
-                                                        >
-                                                            {item.status}
-                                                        </span>
+                                                        <StatusBadge status={item.status} className="px-3 py-1 font-semibold text-xs" />
                                                         {item.status === 'REJECTED' && (
                                                             <button
                                                                 onClick={() => setReasonModal({ show: true, reason: item.adminReason || item.rejectionReason || item.rejectReason || 'No reason provided' })}
-                                                                className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                                                                className="text-[#00B4D8] hover:text-[#0096B4] focus:outline-none"
                                                                 title="View Rejection Reason"
                                                             >
-                                                                <FileText className="w-5 h-5" />
+                                                                <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                                </svg>
                                                             </button>
                                                         )}
                                                     </div>
@@ -311,10 +272,12 @@ const DevmanActivities = () => {
                                                         {item.status === 'REJECTED' && (
                                                             <button
                                                                 onClick={() => setReasonModal({ show: true, reason: item.adminReason || item.rejectionReason || item.rejectReason || 'No reason provided' })}
-                                                                className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                                                                className="text-[#00B4D8] hover:text-[#0096B4] focus:outline-none"
                                                                 title="View Rejection Reason"
                                                             >
-                                                                <FileText className="w-5 h-5" />
+                                                                <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                                </svg>
                                                             </button>
                                                         )}
                                                     </div>
@@ -473,27 +436,38 @@ const DevmanActivities = () => {
             {/* Rejection Reason Modal */}
             {reasonModal.show && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-                    <div className="bg-[#F5F5F5] rounded-3xl p-6 w-[600px] shadow-2xl animate-scale-in">
-                        <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Rejection Reason</h3>
-                        
-                        <div className="border-b border-gray-300 mb-6 mt-4"></div>
-                        
-                        <div className="space-y-4">
-                            <div className="bg-white p-6 rounded-xl border border-gray-200">
-                                <p className="text-gray-700 text-base leading-relaxed" style={{ fontFamily: 'SF Pro Display' }}>
-                                    {reasonModal.reason}
-                                </p>
+                    <div className="bg-white rounded-3xl w-[500px] shadow-2xl animate-scale-in overflow-hidden">
+                        {/* Header with Red Background */}
+                        <div className="bg-red-50 p-6 flex flex-col items-center justify-center border-b border-red-100">
+                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                                <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
                             </div>
+                            <h3 className="text-2xl font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Request Rejected</h3>
+                            <p className="text-gray-500 mt-2 text-center text-sm" style={{ fontFamily: 'SF Pro Display' }}>
+                                Your request was not approved by the administrator.
+                            </p>
                         </div>
 
-                        <div className="flex justify-center mt-8 pt-4 border-t border-gray-200">
-                            <button
-                                onClick={() => setReasonModal({ show: false, reason: '' })}
-                                className="px-8 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
-                                style={{ fontFamily: 'SF Pro Display' }}
-                            >
-                                Close
-                            </button>
+                        {/* Content */}
+                        <div className="p-8">
+                            <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 font-sf">Reason from Admin</h4>
+                                <p className="text-gray-700 text-lg leading-relaxed italic" style={{ fontFamily: 'SF Pro Display' }}>
+                                    "{reasonModal.reason}"
+                                </p>
+                            </div>
+
+                            <div className="mt-8 flex justify-center">
+                                <button
+                                    onClick={() => setReasonModal({ show: false, reason: '' })}
+                                    className="w-full py-4 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                                    style={{ fontFamily: 'SF Pro Display' }}
+                                >
+                                    <span>Dismiss Message</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

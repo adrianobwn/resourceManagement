@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import StatusBadge from '../components/StatusBadge';
+import Toast from '../components/Toast';
 import api from '../utils/api';
 import * as XLSX from 'xlsx';
 
@@ -13,7 +15,7 @@ const DevmanResources = () => {
     const [roleFilter, setRoleFilter] = useState('all');
     const [dateFilter, setDateFilter] = useState('');
     const [isLoading, setIsLoading] = useState(true);
-    const [notification, setNotification] = useState({ show: false, message: '' });
+    const [notification, setNotification] = useState({ show: false, message: '', type: 'info', closing: false });
     const [detailModal, setDetailModal] = useState({ show: false, resource: null, projects: [] });
 
     const [assignmentData, setAssignmentData] = useState({
@@ -315,82 +317,14 @@ const DevmanResources = () => {
 
     return (
         <div className="flex min-h-screen bg-[#E6F2F1] font-['SF_Pro_Display']">
-            {/* Notification */}
-            {notification.show && (
-                <div
-                    className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-300 ease-in-out ${notification.closing
-                        ? 'opacity-0 translate-x-full'
-                        : 'opacity-100 translate-x-0 animate-slide-in'
-                        }`}
-                    style={{
-                        backgroundColor: notification.type === 'success' ? 'rgba(6, 208, 1, 0.2)' : notification.type === 'error' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 180, 216, 0.2)',
-                        borderColor: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8'
-                    }}
-                >
-                    {notification.type === 'success' ? (
-                        <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="#06D001"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M5 13l4 4L19 7"
-                            />
-                        </svg>
-                    ) : notification.type === 'error' ? (
-                        <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="#FF0000"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
-                    ) : (
-                        <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="#00B4D8"
-                            viewBox="0 0 24 24"
-                            style={{ color: '#00B4D8' }}
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
-                    )}
-                    <span
-                        className="font-bold"
-                        style={{
-                            color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8',
-                            fontSize: '14px'
-                        }}
-                    >
-                        {notification.message}
-                    </span>
-                    <button
-                        onClick={closeNotification}
-                        className="ml-2 hover:opacity-70 transition-opacity"
-                        style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#00B4D8' }}
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-            )}
+            {/* Notification Toast */}
+            <Toast
+                show={notification.show}
+                message={notification.message}
+                type={notification.type}
+                onClose={closeNotification}
+                closing={notification.closing}
+            />
 
             {/* Detail Modal for ASSIGNED resources */}
             {detailModal.show && (
@@ -527,17 +461,11 @@ const DevmanResources = () => {
                                     >
                                         ACTIVE IN {assignModal.resource?.projectCount || 0} PROJECT{assignModal.resource?.projectCount !== 1 ? 'S' : ''}
                                     </span>
-                                    <span
-                                        className="px-2 py-0.5 text-xs font-bold rounded-full"
-                                        style={{
-                                            backgroundColor: assignModal.resource?.status === 'AVAILABLE' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(255, 0, 0, 0.2)',
-                                            color: assignModal.resource?.status === 'AVAILABLE' ? '#06D001' : '#FF0000',
-                                            fontSize: '11px',
-                                            border: assignModal.resource?.status === 'AVAILABLE' ? '1px solid #06D001' : '1px solid #FF0000'
-                                        }}
-                                    >
-                                        {assignModal.resource?.status}
-                                    </span>
+                                    <StatusBadge
+                                        status={assignModal.resource?.status}
+                                        className="text-xs"
+                                        style={{ fontSize: '11px' }}
+                                    />
                                 </div>
                             </div>
 
@@ -840,49 +768,26 @@ const DevmanResources = () => {
                                                                         transform: 'translateY(-50%)',
                                                                         backgroundColor: color
                                                                     }}
-                                                                    onMouseEnter={() => setHoveredProject(`project${i}`)}
-                                                                    onMouseLeave={() => setHoveredProject(null)}
+                                                                    onMouseEnter={(e) => {
+                                                                        const rect = e.currentTarget.getBoundingClientRect();
+                                                                        setTooltipState({
+                                                                            show: true,
+                                                                            x: rect.left + rect.width / 2,
+                                                                            y: rect.top,
+                                                                            data: {
+                                                                                assignment,
+                                                                                startDateObj,
+                                                                                endDateObj,
+                                                                                monthNames,
+                                                                                now: new Date()
+                                                                            }
+                                                                        });
+                                                                    }}
+                                                                    onMouseLeave={() => setTooltipState({ show: false, x: 0, y: 0, data: null })}
                                                                 >
                                                                     <span className="font-bold text-white text-center px-4 truncate" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
                                                                         {assignment.projectName} • {assignment.projectRole}
                                                                     </span>
-
-                                                                    {/* Tooltip */}
-                                                                    {hoveredProject === `project${i}` && (
-                                                                        <div
-                                                                            className="absolute z-10 bg-white rounded-lg shadow-xl p-4 border border-gray-200"
-                                                                            style={{
-                                                                                top: '-120px',
-                                                                                left: '50%',
-                                                                                transform: 'translateX(-50%)',
-                                                                                width: '300px',
-                                                                                fontFamily: 'SF Pro Display'
-                                                                            }}
-                                                                        >
-                                                                            <div className="space-y-2">
-                                                                                <h4 className="font-bold text-black" style={{ fontSize: '16px' }}>{assignment.projectName}</h4>
-                                                                                <div className="text-sm text-gray-700">
-                                                                                    <p><span className="font-semibold">Role:</span> {assignment.projectRole}</p>
-                                                                                    <p><span className="font-semibold">Start:</span> {monthNames[startDateObj.getMonth()]} {startDateObj.getFullYear()}</p>
-                                                                                    <p><span className="font-semibold">End:</span> {monthNames[endDateObj.getMonth()]} {endDateObj.getFullYear()}</p>
-                                                                                    <p><span className="font-semibold">Status:</span> <span className={endDateObj < now ? 'text-red-600 font-bold' : 'text-green-600 font-bold'}>{endDateObj < now ? 'Closed' : 'Ongoing'}</span></p>
-                                                                                </div>
-                                                                            </div>
-                                                                            <div
-                                                                                className="absolute"
-                                                                                style={{
-                                                                                    bottom: '-8px',
-                                                                                    left: '50%',
-                                                                                    transform: 'translateX(-50%)',
-                                                                                    width: '0',
-                                                                                    height: '0',
-                                                                                    borderLeft: '8px solid transparent',
-                                                                                    borderRight: '8px solid transparent',
-                                                                                    borderTop: '8px solid white'
-                                                                                }}
-                                                                            ></div>
-                                                                        </div>
-                                                                    )}
                                                                 </div>
                                                             );
                                                         })()}
@@ -1024,16 +929,7 @@ const DevmanResources = () => {
                                                         </span>
                                                     </td>
                                                     <td className="py-4 px-6">
-                                                        <span
-                                                            className="px-3 py-1 rounded-full font-bold text-xs"
-                                                            style={{
-                                                                color: resource.status === 'AVAILABLE' ? '#06D001' : '#FF0000',
-                                                                backgroundColor: resource.status === 'AVAILABLE' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(255, 0, 0, 0.2)',
-                                                                border: resource.status === 'AVAILABLE' ? '1px solid #06D001' : '1px solid #FF0000'
-                                                            }}
-                                                        >
-                                                            {resource.status}
-                                                        </span>
+                                                        <StatusBadge status={resource.status} />
                                                     </td>
                                                     <td className="py-4 px-6 text-center">
                                                         <button
@@ -1098,7 +994,7 @@ const DevmanResources = () => {
                                 <p><span className="font-semibold">Role:</span> {tooltipState.data.assignment.projectRole}</p>
                                 <p><span className="font-semibold">Start:</span> {tooltipState.data.monthNames[tooltipState.data.startDateObj.getMonth()]} {tooltipState.data.startDateObj.getFullYear()}</p>
                                 <p><span className="font-semibold">End:</span> {tooltipState.data.monthNames[tooltipState.data.endDateObj.getMonth()]} {tooltipState.data.endDateObj.getFullYear()}</p>
-                                <p><span className="font-semibold">Status:</span> <span className={new Date(tooltipState.data.assignment.endDate) < tooltipState.data.now ? 'text-red-600 font-bold' : 'text-green-600 font-bold'}>{new Date(tooltipState.data.assignment.endDate) < tooltipState.data.now ? 'Closed' : 'Ongoing'}</span></p>
+                                <p><span className="font-semibold">Status:</span> <StatusBadge status={new Date(tooltipState.data.assignment.endDate) < tooltipState.data.now ? 'Closed' : 'Ongoing'} className="ml-1" /></p>
                             </div>
                         </div>
                         {/* Arrow */}

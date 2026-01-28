@@ -30,7 +30,8 @@ public class ProjectController {
     }
 
     @GetMapping("/{projectId}/resources")
-    public ResponseEntity<List<com.resourceManagement.dto.project.ProjectResourceDto>> getProjectResources(@PathVariable Integer projectId) {
+    public ResponseEntity<List<com.resourceManagement.dto.project.ProjectResourceDto>> getProjectResources(
+            @PathVariable Integer projectId) {
         return ResponseEntity.ok(projectService.getProjectResources(projectId));
     }
 
@@ -39,5 +40,11 @@ public class ProjectController {
             @PathVariable Integer projectId,
             @RequestParam com.resourceManagement.model.enums.ProjectStatus status) {
         return ResponseEntity.ok(projectService.updateProjectStatus(projectId, status));
+    }
+
+    @DeleteMapping("/{projectId}")
+    public ResponseEntity<Void> deleteProject(@PathVariable Integer projectId) {
+        projectService.deleteProject(projectId);
+        return ResponseEntity.ok().build();
     }
 }

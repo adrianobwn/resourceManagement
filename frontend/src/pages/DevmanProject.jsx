@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import StatusBadge from '../components/StatusBadge';
+import Toast from '../components/Toast';
 import api from '../utils/api';
 import * as XLSX from 'xlsx';
 import { Search, Users, Trash2, X, Calendar, Folder } from 'lucide-react';
@@ -274,31 +276,7 @@ const DevmanProject = () => {
         }, 300);
     };
 
-    const getStatusBadgeStyle = (status) => {
-        switch (status) {
-            case 'ONGOING':
-                return { backgroundColor: 'rgba(6, 208, 1, 0.2)', color: '#06D001' };
-            case 'HOLD':
-                return { backgroundColor: 'rgba(251, 205, 63, 0.2)', color: '#FBCD3F' };
-            case 'CLOSED':
-                return { backgroundColor: 'rgba(255, 0, 0, 0.2)', color: '#FF0000' };
-            default:
-                return { backgroundColor: '#CAF0F8', color: '#000000' };
-        }
-    };
 
-    const getStatusLabel = (status) => {
-        switch (status) {
-            case 'ONGOING':
-                return 'ONGOING';
-            case 'HOLD':
-                return 'HOLD';
-            case 'CLOSED':
-                return 'CLOSED';
-            default:
-                return status;
-        }
-    };
 
     const filteredProjects = projects.filter(p => {
         const matchesStatus = activeFilter === 'All' ||
@@ -319,38 +297,19 @@ const DevmanProject = () => {
         <div className="flex min-h-screen bg-[#E6F2F1] font-['SF_Pro_Display']">
             <Sidebar />
 
-            {/* Notification */}
-            {notification.show && (
-                <div
-                    className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-300 ease-in-out ${notification.closing
-                        ? 'opacity-0 translate-x-full'
-                        : 'opacity-100 translate-x-0 animate-slide-in'
-                        }`}
-                    style={{
-                        backgroundColor: notification.type === 'success' ? 'rgba(6, 208, 1, 0.2)' : notification.type === 'error' ? 'rgba(255, 0, 0, 0.2)' : '#CAF0F8',
-                        borderColor: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#CAF0F8'
-                    }}
-                >
-                    {notification.type === 'success' ? (
-                        <svg className="w-5 h-5" fill="none" stroke="#06D001" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                    ) : notification.type === 'error' ? (
-                        <svg className="w-5 h-5" fill="none" stroke="#FF0000" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                    ) : (
-                        <svg className="w-5 h-5" fill="none" stroke="#000000" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    )}
-                    <span className="font-bold" style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#000000', fontSize: '14px' }}>
-                        {notification.message}
-                    </span>
-                    <button onClick={closeNotification} className="ml-2 hover:opacity-70 transition-opacity" style={{ color: notification.type === 'success' ? '#06D001' : notification.type === 'error' ? '#FF0000' : '#000000' }}>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                </div>
-            )}
+            {/* Notification Toast */}
+            <Toast
+                show={notification.show}
+                message={notification.message}
+                type={notification.type}
+                onClose={() => setNotification(prev => ({ ...prev, closing: true }))}
+                closing={notification.closing}
+            />
 
             {/* Main Content */}
             <div className="flex-1 p-8 ml-[267px]">
                 <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-gray-800">Projects</h1>
+                    <h1 className="text-4xl font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Projects</h1>
                 </div>
 
                 {/* Toolbar */}
@@ -358,26 +317,26 @@ const DevmanProject = () => {
                     {/* Left: Search */}
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input type="text" placeholder="Find projects..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 pr-4 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAF0F8]" />
+                        <input type="text" placeholder="Find projects..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 pr-4 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAF0F8]" style={{ fontFamily: 'SF Pro Display' }} />
                     </div>
 
                     {/* Right: Filters & Actions */}
                     <div className="flex items-center gap-4">
                         <div className="flex bg-white rounded-lg p-1 shadow-sm border border-gray-100">
                             {filterTabs.map(tab => (
-                                <button key={tab} onClick={() => setActiveFilter(tab)} className={`px-6 py-2 rounded-md font-bold transition-colors ${activeFilter === tab ? 'bg-[#CAF0F8] text-black shadow-md' : 'text-gray-500 hover:bg-gray-100'}`}>{tab}</button>
+                                <button key={tab} onClick={() => setActiveFilter(tab)} className={`px-6 py-2 rounded-md font-bold transition-colors ${activeFilter === tab ? 'bg-[#CAF0F8] text-black shadow-md' : 'text-gray-500 hover:bg-gray-100'}`} style={{ fontFamily: 'SF Pro Display' }}>{tab}</button>
                             ))}
                         </div>
-                        <button onClick={() => setShowNewProjectModal(true)} className="px-6 py-2 bg-[#CAF0F8] text-black rounded-lg font-bold hover:bg-[#b8e8ef] transition-colors">+ Propose Project</button>
+                        <button onClick={() => setShowNewProjectModal(true)} className="px-6 py-2 bg-[#CAF0F8] text-black rounded-lg font-bold hover:bg-[#b8e8ef] transition-colors" style={{ fontFamily: 'SF Pro Display' }}>+ Propose Project</button>
                     </div>
                 </div>
 
                 {/* Project List */}
                 <div className="grid grid-cols-1 gap-4">
                     {loading ? (
-                        <div className="text-center py-12 text-gray-500 font-bold">Loading projects...</div>
+                        <div className="text-center py-12 text-gray-500 font-bold" style={{ fontFamily: 'SF Pro Display' }}>Loading projects...</div>
                     ) : filteredProjects.length === 0 ? (
-                        <div className="text-center py-12 bg-white rounded-xl text-gray-500 font-bold">No projects found.</div>
+                        <div className="text-center py-12 bg-white rounded-xl text-gray-500 font-bold" style={{ fontFamily: 'SF Pro Display' }}>No projects found.</div>
                     ) : (
                         filteredProjects.map(project => (
                             <div key={project.projectId} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
@@ -386,20 +345,21 @@ const DevmanProject = () => {
                                         <Folder className="w-6 h-6 text-blue-500" />
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-bold text-gray-800 mb-1">{project.projectName}</h3>
-                                        <p className="text-gray-500 font-medium">{project.clientName} • <span className="text-[#00B4D8] font-bold">{project.devManName}</span></p>
+                                        <h3 className="text-xl font-bold text-gray-800 mb-1" style={{ fontFamily: 'SF Pro Display' }}>{project.projectName}</h3>
+                                        <p className="text-gray-500 font-medium" style={{ fontFamily: 'SF Pro Display' }}>{project.clientName} • <span className="text-[#00B4D8] font-bold">{project.devManName}</span></p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-8">
                                     <div className="text-right">
-                                        <span className="text-xs px-3 py-1 rounded-full font-bold inline-block" style={getStatusBadgeStyle(project.status)}>{getStatusLabel(project.status)}</span>
-                                        <div className="text-black text-sm mt-2 font-medium flex items-center justify-end gap-2">
+                                        <StatusBadge status={project.status} />
+                                        <div className="text-black text-sm mt-2 font-medium flex items-center justify-end gap-2" style={{ fontFamily: 'SF Pro Display' }}>
                                             <Users className="w-4 h-4" /> {project.memberCount}
                                         </div>
                                     </div>
                                     <button
                                         onClick={() => handleViewDetail(project)}
                                         className="px-6 py-2 bg-[#CAF0F8] text-black rounded-lg font-bold hover:bg-[#b8e8ef] transition-colors"
+                                        style={{ fontFamily: 'SF Pro Display' }}
                                     >
                                         View Detail
                                     </button>
@@ -410,189 +370,193 @@ const DevmanProject = () => {
                 </div>
             </div>
 
-            {/* Detail Modal */}
+            {/* Detail Modal Container - Wraps both Project Detail and Action Modals */}
             {showDetailModal && selectedProject && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-                    <div className={`bg-white rounded-2xl p-8 w-[800px] relative transition-transform duration-300 animate-scale-in ${showExtendModal || showReleaseModal ? '-translate-x-[50%]' : ''}`}>
-                        <button onClick={() => setShowDetailModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
-                            <X className="w-6 h-6" />
-                        </button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-auto animate-fade-in">
+                    <div className="flex items-center gap-6 transition-all duration-300 min-w-min">
+                        {/* Project Detail Modal */}
+                        <div className="bg-white rounded-2xl p-8 w-[800px] flex-shrink-0 relative shadow-xl">
+                            <button onClick={() => setShowDetailModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
+                                <X className="w-6 h-6" />
+                            </button>
 
-                        <div className="flex items-center gap-4 mb-2">
-                            <h2 className="text-3xl font-bold text-gray-800">{selectedProject.projectName}</h2>
-                            <span
-                                className="px-3 py-1 rounded-full text-xs font-bold"
-                                style={getStatusBadgeStyle(selectedProject.status)}
-                            >
-                                {getStatusLabel(selectedProject.status)}
-                            </span>
-                        </div>
+                            <div className="flex items-center gap-4 mb-2">
+                                <h2 className="text-3xl font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>{selectedProject.projectName}</h2>
+                                <StatusBadge status={selectedProject.status} />
+                            </div>
 
-                        <div className="flex gap-8 mb-6">
-                            <div className="text-sm font-medium text-gray-500">Client Name : <span className="text-gray-800 font-bold">{selectedProject.clientName}</span></div>
-                            <div className="text-sm font-medium text-gray-500">DevMan : <span className="text-gray-800 font-bold">{selectedProject.devManName}</span></div>
-                        </div>
+                            <div className="flex gap-8 mb-6">
+                                <div className="text-sm font-medium text-gray-500" style={{ fontFamily: 'SF Pro Display' }}>Client Name : <span className="text-gray-800 font-bold">{selectedProject.clientName}</span></div>
+                                <div className="text-sm font-medium text-gray-500" style={{ fontFamily: 'SF Pro Display' }}>DevMan : <span className="text-gray-800 font-bold">{selectedProject.devManName}</span></div>
+                            </div>
 
-                        <div className="border-t border-gray-100 my-6"></div>
+                            <div className="border-t border-gray-100 my-6"></div>
 
-                        <h3 className="text-xl font-bold text-gray-800 mb-4">Assigned Resources</h3>
+                            <h3 className="text-xl font-bold text-gray-800 mb-4" style={{ fontFamily: 'SF Pro Display' }}>Assigned Resources</h3>
 
-                        <div className="bg-[#F8FBFC] rounded-xl overflow-hidden">
-                            <table className="w-full">
-                                <thead className="bg-[#CAF0F8] border-b border-gray-200 text-left">
-                                    <tr>
-                                        <th className="px-6 py-4 font-bold text-black text-center">Name</th>
-                                        <th className="px-6 py-4 font-bold text-center text-black">Role</th>
-                                        <th className="px-6 py-4 font-bold text-center text-black">Period</th>
-                                        <th className="px-6 py-4 font-bold text-center text-black">Status</th>
-                                        <th className="px-6 py-4 font-bold text-center text-black">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-[#E6F2F1]">
-                                    {projectResources.map((res, idx) => (
-                                        <tr key={idx} className="border-b border-gray-200 last:border-none">
-                                            <td className="px-6 py-6 font-bold text-gray-800">{res.resourceName}</td>
-                                            <td className="px-6 py-6 text-center font-bold text-gray-800">{res.role || '-'}</td>
-                                            <td className="px-6 py-6 text-center font-bold text-gray-800">{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
-                                            <td className="px-6 py-6 text-center">
-                                                <span className={`px-4 py-1 rounded-full text-[10px] font-bold border ${(res.status === 'RELEASED' || res.status === 'EXPIRED') ? 'bg-red-100 text-red-600 border-red-600' : 'bg-green-100 text-green-600 border-green-600'}`}>
-                                                    {res.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-6 text-center">
-                                                <div className="flex justify-center gap-2">
-                                                    {res.status === 'RELEASED' || res.status === 'EXPIRED' ? (
-                                                        <span className="text-gray-400 text-xs font-bold">-</span>
-                                                    ) : pendingRequests.some(req => req.assignmentId && String(req.assignmentId) === String(res.assignmentId)) ? (
-                                                        <span className="px-4 py-1.5 rounded-full bg-yellow-100 text-yellow-700 font-bold text-[10px]">
-                                                            PENDING
-                                                        </span>
-                                                    ) : res.status === 'ACTIVE' ? (
-                                                        <>
-                                                            <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] border border-[#F97316] hover:bg-[#F97316]/20">EXTEND</button>
-                                                            <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] border border-[#FF0000] hover:bg-[#FF0000]/20">RELEASE</button>
-                                                        </>
-                                                    ) : null}
-                                                </div>
-                                            </td>
+                            <div className="bg-[#F8FBFC] rounded-xl overflow-hidden">
+                                <table className="w-full">
+                                    <thead className="bg-[#CAF0F8] border-b border-gray-200 text-left">
+                                        <tr>
+                                            <th className="px-6 py-4 font-bold text-black text-center" style={{ fontFamily: 'SF Pro Display' }}>Name</th>
+                                            <th className="px-6 py-4 font-bold text-center text-black" style={{ fontFamily: 'SF Pro Display' }}>Role</th>
+                                            <th className="px-6 py-4 font-bold text-center text-black" style={{ fontFamily: 'SF Pro Display' }}>Period</th>
+                                            <th className="px-6 py-4 font-bold text-center text-black" style={{ fontFamily: 'SF Pro Display' }}>Status</th>
+                                            <th className="px-6 py-4 font-bold text-center text-black" style={{ fontFamily: 'SF Pro Display' }}>Action</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="bg-[#E6F2F1]">
+                                        {projectResources.map((res, idx) => (
+                                            <tr key={idx} className="border-b border-gray-200 last:border-none">
+                                                <td className="px-6 py-6 font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>{res.resourceName}</td>
+                                                <td className="px-6 py-6 text-center font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>{res.role || '-'}</td>
+                                                <td className="px-6 py-6 text-center font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
+                                                <td className="px-6 py-6 text-center">
+                                                    <StatusBadge status={res.status} className="text-[10px]" />
+                                                </td>
+                                                <td className="px-6 py-6 text-center">
+                                                    <div className="flex justify-center gap-2">
+                                                        {res.status === 'RELEASED' || res.status === 'EXPIRED' ? (
+                                                            <span className="text-gray-400 text-xs font-bold" style={{ fontFamily: 'SF Pro Display' }}>-</span>
+                                                        ) : pendingRequests.some(req => req.assignmentId && String(req.assignmentId) === String(res.assignmentId)) ? (
+                                                            <StatusBadge status="PENDING" className="text-[10px]" />
+                                                        ) : res.status === 'ACTIVE' ? (
+                                                            <>
+                                                                <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] border border-[#F97316] hover:bg-[#F97316]/20" style={{ fontFamily: 'SF Pro Display' }}>EXTEND</button>
+                                                                <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] border border-[#FF0000] hover:bg-[#FF0000]/20" style={{ fontFamily: 'SF Pro Display' }}>RELEASE</button>
+                                                            </>
+                                                        ) : null}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
+
+                        {/* Extend/Release Actions - Rendered Side-by-Side */}
+                        {(showExtendModal || showReleaseModal) && (
+                            <div className="w-[400px] h-fit bg-[#F5F5F5] shadow-2xl rounded-3xl p-6 flex flex-col animate-scale-in">
+
+                                {showExtendModal && (
+                                    <>
+                                        <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Extend Assignment</h3>
+
+                                        <div className="border-b border-gray-300 mb-6 mt-4"></div>
+
+                                        <div className="space-y-6 flex-1">
+                                            <div>
+                                                <div className="flex justify-between mb-2">
+                                                    <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Resource</span>
+                                                    <span className="text-black">: {selectedResourceForAction?.resourceName}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Current Date</span>
+                                                    <span className="text-black">: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>New End Date</label>
+                                                <div className="relative">
+                                                    <input
+                                                        type="date"
+                                                        value={actionDate}
+                                                        min={minDate}
+                                                        onChange={(e) => setActionDate(e.target.value)}
+                                                        className="w-full px-4 py-3 bg-[#F5F5F5] border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black"
+                                                        style={{ fontFamily: 'SF Pro Display' }}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Reason for Extension</label>
+                                                <textarea
+                                                    rows="6"
+                                                    value={actionReason}
+                                                    onChange={(e) => setActionReason(e.target.value)}
+                                                    className="w-full px-4 py-3 bg-[#F5F5F5] border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black resize-none"
+                                                    style={{ fontFamily: 'SF Pro Display' }}
+                                                ></textarea>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-4 mt-auto pt-4">
+                                            <button
+                                                onClick={() => setShowExtendModal(false)}
+                                                className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
+                                                style={{ fontFamily: 'SF Pro Display' }}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={handleExtendSubmit}
+                                                className="flex-1 py-3 bg-[#0057FF] text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                                                style={{ fontFamily: 'SF Pro Display' }}
+                                            >
+                                                Confirm Extension
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+
+                                {showReleaseModal && (
+                                    <>
+                                        <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Release Assignment</h3>
+
+                                        <div className="border-b border-gray-300 mb-6 mt-4"></div>
+
+                                        <div className="space-y-6 flex-1">
+                                            <div>
+                                                <div className="flex justify-between mb-2">
+                                                    <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Resource</span>
+                                                    <span className="text-black">: {selectedResourceForAction?.resourceName}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Current Date</span>
+                                                    <span className="text-black">: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Reason for Early Release</label>
+                                                <textarea
+                                                    rows="6"
+                                                    value={actionReason}
+                                                    onChange={(e) => setActionReason(e.target.value)}
+                                                    className="w-full px-4 py-3 bg-[#F5F5F5] border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#FF0000] outline-none text-black resize-none"
+                                                    style={{ fontFamily: 'SF Pro Display' }}
+                                                ></textarea>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-4 mt-auto pt-4">
+                                            <button
+                                                onClick={() => setShowReleaseModal(false)}
+                                                className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
+                                                style={{ fontFamily: 'SF Pro Display' }}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={handleReleaseSubmit}
+                                                className="flex-1 py-3 bg-[#FF0000] text-white rounded-xl font-bold hover:bg-red-700 transition-colors"
+                                                style={{ fontFamily: 'SF Pro Display' }}
+                                            >
+                                                Confirm Release
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
 
-            {/* Extend Sidebar */}
-            <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-400px-20px)] w-[400px] h-fit bg-[#F5F5F5] shadow-2xl z-[100] transition-all duration-300 rounded-3xl p-6 flex flex-col ${showExtendModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
-                <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Extend Assignment</h3>
 
-                <div className="border-b border-gray-300 mb-6 mt-4"></div>
-
-                <div className="space-y-6 flex-1">
-                    <div>
-                        <div className="flex justify-between mb-2">
-                            <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Resource</span>
-                            <span className="text-black">: {selectedResourceForAction?.resourceName}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Current Date</span>
-                            <span className="text-black">: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>New End Date</label>
-                        <div className="relative">
-                            <input
-                                type="date"
-                                value={actionDate}
-                                min={minDate}
-                                onChange={(e) => setActionDate(e.target.value)}
-                                className="w-full px-4 py-3 bg-[#F5F5F5] border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black"
-                                style={{ fontFamily: 'SF Pro Display' }}
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Reason for Extension</label>
-                        <textarea
-                            rows="6"
-                            value={actionReason}
-                            onChange={(e) => setActionReason(e.target.value)}
-                            className="w-full px-4 py-3 bg-[#F5F5F5] border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#0057FF] outline-none text-black resize-none"
-                            style={{ fontFamily: 'SF Pro Display' }}
-                        ></textarea>
-                    </div>
-                </div>
-
-                <div className="flex gap-4 mt-auto pt-4">
-                    <button
-                        onClick={() => setShowExtendModal(false)}
-                        className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
-                        style={{ fontFamily: 'SF Pro Display' }}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleExtendSubmit}
-                        className="flex-1 py-3 bg-[#0057FF] text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
-                        style={{ fontFamily: 'SF Pro Display' }}
-                    >
-                        Confirm Extension
-                    </button>
-                </div>
-            </div>
-
-            {/* Release Sidebar */}
-            <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-400px-20px)] w-[400px] h-fit bg-[#F5F5F5] shadow-2xl z-[100] transition-all duration-300 rounded-3xl p-6 flex flex-col ${showReleaseModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
-                <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Release Assignment</h3>
-
-                <div className="border-b border-gray-300 mb-6 mt-4"></div>
-
-                <div className="space-y-6 flex-1">
-                    <div>
-                        <div className="flex justify-between mb-2">
-                            <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Resource</span>
-                            <span className="text-black">: {selectedResourceForAction?.resourceName}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="font-bold text-black" style={{ fontFamily: 'SF Pro Display' }}>Current Date</span>
-                            <span className="text-black">: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Reason for Early Release</label>
-                        <textarea
-                            rows="6"
-                            value={actionReason}
-                            onChange={(e) => setActionReason(e.target.value)}
-                            className="w-full px-4 py-3 bg-[#F5F5F5] border border-gray-400 rounded-xl focus:ring-2 focus:ring-[#FF0000] outline-none text-black resize-none"
-                            style={{ fontFamily: 'SF Pro Display' }}
-                        ></textarea>
-                    </div>
-                </div>
-
-                <div className="flex gap-4 mt-auto pt-4">
-                    <button
-                        onClick={() => setShowReleaseModal(false)}
-                        className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
-                        style={{ fontFamily: 'SF Pro Display' }}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleReleaseSubmit}
-                        className="flex-1 py-3 bg-[#FF0000] text-white rounded-xl font-bold hover:bg-red-700 transition-colors"
-                        style={{ fontFamily: 'SF Pro Display' }}
-                    >
-                        Confirm Release
-                    </button>
-                </div>
-            </div>
 
             {/* Propose Project Modal (Styled) */}
             {showNewProjectModal && (

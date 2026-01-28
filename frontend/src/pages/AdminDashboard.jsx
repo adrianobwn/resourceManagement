@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import StatusBadge from '../components/StatusBadge';
+import Toast from '../components/Toast';
 import api from '../utils/api';
 import {
     Users,
@@ -101,33 +103,7 @@ const Dashboard = () => {
         return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
 
-    // Get type badge colors based on request type
-    const getTypeBadgeStyle = (type) => {
-        if (type === 'EXTEND') {
-            return {
-                backgroundColor: 'rgba(249, 115, 22, 0.2)',
-                border: '1px solid #F97316',
-                color: '#F97316'
-            };
-        } else if (type === 'RELEASE') {
-            return {
-                backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                border: '1px solid #FF0000',
-                color: '#FF0000'
-            };
-        } else if (type === 'PROJECT') {
-            return {
-                backgroundColor: 'rgba(0, 89, 255, 0.2)',
-                border: '1px solid #0059FF',
-                color: '#0059FF'
-            };
-        }
-        return {
-            backgroundColor: 'rgba(251, 205, 63, 0.2)',
-            border: '1px solid #FBCD3F',
-            color: '#FBCD3F'
-        };
-    };
+
 
     // Handle Accept action
     const handleAccept = (request) => {
@@ -209,338 +185,306 @@ const Dashboard = () => {
             {/* Sidebar */}
             <Sidebar />
 
-            {/* Toast Notification */}
-            {notification.show && (
-                <div
-                    className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-300 ease-in-out ${notification.closing
-                        ? 'opacity-0 translate-x-full'
-                        : 'opacity-100 translate-x-0'
-                        }`}
-                    style={{
-                        backgroundColor: notification.type === 'error' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(6, 208, 1, 0.2)',
-                        border: `1px solid ${notification.type === 'error' ? '#FF0000' : '#06D001'}`
-                    }}
-                >
-                    <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke={notification.type === 'error' ? '#FF0000' : '#06D001'}
-                        viewBox="0 0 24 24"
-                    >
-                        {notification.type === 'error' ? (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        ) : (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                        )}
-                    </svg>
-                    <span
-                        className="font-bold"
-                        style={{
-                            color: notification.type === 'error' ? '#FF0000' : '#06D001',
-                            fontSize: '14px',
-                            fontFamily: 'SF Pro Display'
-                        }}
-                    >
-                        {notification.message}
-                    </span>
-                    <button
-                        onClick={closeNotification}
-                        className="ml-2 hover:opacity-70 transition-opacity"
-                        style={{ color: notification.type === 'error' ? '#FF0000' : '#06D001' }}
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-            )}
+            {/* Notification Toast */}
+            <Toast
+                show={notification.show}
+                message={notification.message}
+                type={notification.type}
+                onClose={closeNotification}
+                closing={notification.closing}
+            />
 
 
 
             {/* View Detail Modal */}
             {viewDetailModal.show && viewDetailModal.request && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 animate-fade-in"
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-auto animate-fade-in"
                     style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
                 >
-                    <div
-                        className={`rounded-2xl p-6 relative transition-transform duration-300 max-h-[90vh] overflow-y-auto ${viewDetailModal.isRejecting ? '-translate-x-[20%]' : ''}`}
-                        style={{
-                            width: '620px',
-                            backgroundColor: '#F5F5F5'
-                        }}
-                    >
-                        {/* Header */}
-                        <div className="flex items-center justify-between pb-4 mb-4" style={{ borderBottom: '1px solid #D3D3D3' }}>
-                            <div className="flex items-center gap-3">
-                                <h2 className="text-2xl font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>
-                                    Request Detail
-                                </h2>
-                                <span className="text-gray-600 font-medium" style={{ fontFamily: 'SF Pro Display' }}>
-                                    {viewDetailModal.request.type === 'EXTEND' ? 'Extend Assignment' :
-                                        viewDetailModal.request.type === 'RELEASE' ? 'Release Assignment' : 'New Project Submission'}
-                                </span>
-                            </div>
-                            <button
-                                onClick={() => setViewDetailModal({ show: false, request: null, isRejecting: false, reason: '' })}
-                                className="text-gray-500 hover:text-gray-700 transition-colors"
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-
-                        {/* EXTEND Type Modal */}
-                        {viewDetailModal.request.type === 'EXTEND' && (
-                            <>
-                                {/* Resource Info */}
-                                <div className="space-y-3 mb-6">
-                                    <div className="flex items-center gap-3">
-                                        <User className="w-5 h-5 text-gray-500" />
-                                        <span style={{ fontFamily: 'SF Pro Display' }}>
-                                            Resource : <span className="font-bold">{viewDetailModal.request.resource}</span>
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <Folder className="w-5 h-5 text-gray-500" />
-                                        <span style={{ fontFamily: 'SF Pro Display' }}>
-                                            Project : <span className="font-bold">{viewDetailModal.request.project}</span>
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <Users className="w-5 h-5 text-gray-500" />
-                                        <span style={{ fontFamily: 'SF Pro Display' }}>
-                                            Role : <span className="font-bold">{viewDetailModal.request.role ? toTitleCase(viewDetailModal.request.role) : '-'}</span>
-                                        </span>
-                                    </div>
+                    <div className="flex items-start gap-6 transition-all duration-300 min-w-min">
+                        <div
+                            className="rounded-2xl p-6 relative bg-[#F5F5F5] flex-shrink-0 shadow-xl"
+                            style={{
+                                width: '620px',
+                                maxHeight: '90vh',
+                                overflowY: 'auto'
+                            }}
+                        >
+                            {/* Header */}
+                            <div className="flex items-center justify-between pb-4 mb-4" style={{ borderBottom: '1px solid #D3D3D3' }}>
+                                <div className="flex items-center gap-3">
+                                    <h2 className="text-2xl font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>
+                                        Request Detail
+                                    </h2>
+                                    <span className="text-gray-600 font-medium" style={{ fontFamily: 'SF Pro Display' }}>
+                                        {viewDetailModal.request.type === 'EXTEND' ? 'Extend Assignment' :
+                                            viewDetailModal.request.type === 'RELEASE' ? 'Release Assignment' : 'New Project Submission'}
+                                    </span>
                                 </div>
-
-                                <div className="border-t border-gray-300 my-4"></div>
-
-                                {/* Proposed Changes */}
-                                <div className="mb-4">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <Calendar className="w-5 h-5 text-gray-500" />
-                                        <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Proposed Changes</span>
-                                    </div>
-                                    <div className="ml-8 space-y-1" style={{ fontFamily: 'SF Pro Display' }}>
-                                        <p className="text-gray-600">Current End Date : {viewDetailModal.request.currentEndDate}</p>
-                                        <p className="text-gray-600">
-                                            Requested New End : {viewDetailModal.request.newEndDate}
-                                            {viewDetailModal.request.extensionMonths > 0 && (
-                                                <span className="text-red-500 font-medium"> (+ {viewDetailModal.request.extensionMonths} Months)</span>
-                                            )}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Reason from DevMan */}
-                                <div className="mb-6">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                        </svg>
-                                        <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Reason from DevMan</span>
-                                    </div>
-                                    <p className="ml-8 text-gray-600 italic" style={{ fontFamily: 'SF Pro Display' }}>
-                                        "{viewDetailModal.request.reason}"
-                                    </p>
-                                </div>
-                            </>
-                        )}
-
-                        {/* RELEASE Type Modal */}
-                        {viewDetailModal.request.type === 'RELEASE' && (
-                            <>
-                                {/* Resource Info */}
-                                <div className="space-y-3 mb-6">
-                                    <div className="flex items-center gap-3">
-                                        <User className="w-5 h-5 text-gray-500" />
-                                        <span style={{ fontFamily: 'SF Pro Display' }}>
-                                            Resource : <span className="font-bold">{viewDetailModal.request.resource}</span>
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <Folder className="w-5 h-5 text-gray-500" />
-                                        <span style={{ fontFamily: 'SF Pro Display' }}>
-                                            Project : <span className="font-bold">{viewDetailModal.request.project}</span>
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <Users className="w-5 h-5 text-gray-500" />
-                                        <span style={{ fontFamily: 'SF Pro Display' }}>
-                                            Role : <span className="font-bold">{viewDetailModal.request.role ? toTitleCase(viewDetailModal.request.role) : '-'}</span>
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="border-t border-gray-300 my-4"></div>
-
-                                {/* Proposed Changes */}
-                                <div className="mb-4">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <Calendar className="w-5 h-5 text-gray-500" />
-                                        <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Proposed Changes</span>
-                                    </div>
-                                    <div className="ml-8 space-y-1" style={{ fontFamily: 'SF Pro Display' }}>
-                                        <p className="text-gray-600">Original End Date : {viewDetailModal.request.originalEndDate}</p>
-                                        <p className="text-gray-600">
-                                            Requested New End : {viewDetailModal.request.requestedEndDate}
-                                            {viewDetailModal.request.earlyReleaseMonths > 0 && (
-                                                <span className="text-red-500 font-medium"> (Early Release by {viewDetailModal.request.earlyReleaseMonths} Month)</span>
-                                            )}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Reason from DevMan */}
-                                <div className="mb-6">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                        </svg>
-                                        <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Reason from DevMan</span>
-                                    </div>
-                                    <p className="ml-8 text-gray-600 italic" style={{ fontFamily: 'SF Pro Display' }}>
-                                        "{viewDetailModal.request.reason}"
-                                    </p>
-                                </div>
-                            </>
-                        )}
-
-                        {/* PROJECT Type Modal */}
-                        {viewDetailModal.request.type === 'PROJECT' && (
-                            <>
-                                {/* Requester Info */}
-                                <div className="space-y-3 mb-6">
-                                    <div className="flex items-center gap-3">
-                                        <User className="w-5 h-5 text-gray-500" />
-                                        <span style={{ fontFamily: 'SF Pro Display' }}>
-                                            Requester : <span className="font-bold">{viewDetailModal.request.requester}</span>
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <Calendar className="w-5 h-5 text-gray-500" />
-                                        <span style={{ fontFamily: 'SF Pro Display' }}>
-                                            Submitted : <span className="font-bold">{viewDetailModal.request.submittedDate ? new Date(viewDetailModal.request.submittedDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span>
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="border-t border-gray-300 my-4"></div>
-
-                                {/* Project Profile */}
-                                <div className="mb-4">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <Folder className="w-5 h-5 text-gray-500" />
-                                        <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Project Profile</span>
-                                    </div>
-                                    <div className="ml-8 space-y-1" style={{ fontFamily: 'SF Pro Display' }}>
-                                        <p className="text-gray-600">Project Name : <span className="font-bold">{viewDetailModal.request.projectName}</span></p>
-                                        <p className="text-gray-600">Client : <span className="font-bold">{viewDetailModal.request.clientName}</span></p>
-                                    </div>
-                                </div>
-
-                                {/* Description */}
-                                <div className="mb-4">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                        </svg>
-                                        <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Description</span>
-                                    </div>
-                                    <p className="ml-8 text-gray-600 italic" style={{ fontFamily: 'SF Pro Display' }}>
-                                        "{viewDetailModal.request.description}"
-                                    </p>
-                                </div>
-
-                                {/* Resource Plan */}
-                                <div className="mb-6">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <Users className="w-5 h-5 text-gray-500" />
-                                        <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Resource Plan</span>
-                                    </div>
-                                    <div className="ml-8" style={{ fontFamily: 'SF Pro Display' }}>
-                                        <p className="text-gray-600 mb-2">DevMan Requesting :</p>
-                                        {viewDetailModal.request.resourcePlan && viewDetailModal.request.resourcePlan.map((item, index) => (
-                                            <div key={index} className="flex items-center gap-4 text-gray-600 mb-1">
-                                                <span>{index + 1}. {item.name}</span>
-                                                <span className="font-bold">{toTitleCase(item.role)}</span>
-                                                <span>{item.startDate}</span>
-                                                <span>-</span>
-                                                <span>{item.endDate}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </>
-                        )}
-
-                        {/* Action Buttons */}
-                        <div className="flex items-center justify-between pt-4" style={{ borderTop: '1px solid #D3D3D3' }}>
-                            <button
-                                onClick={() => setViewDetailModal({ show: false, request: null, isRejecting: false, reason: '' })}
-                                className="px-6 py-2 rounded-lg hover:opacity-90 transition-colors font-bold"
-                                style={{ backgroundColor: '#D3D3D3', color: '#000000', fontFamily: 'SF Pro Display' }}
-                            >
-                                Cancel
-                            </button>
-                            <div className="flex gap-3">
                                 <button
-                                    onClick={() => setViewDetailModal(prev => ({ ...prev, isRejecting: true }))}
-                                    className="px-6 py-2 rounded-lg hover:opacity-90 transition-colors font-bold"
-                                    style={{ backgroundColor: 'rgba(255, 0, 0, 0.2)', color: '#FF0000', fontFamily: 'SF Pro Display' }}
+                                    onClick={() => setViewDetailModal({ show: false, request: null, isRejecting: false, reason: '' })}
+                                    className="text-gray-500 hover:text-gray-700 transition-colors"
                                 >
-                                    Reject
-                                </button>
-                                <button
-                                    onClick={() => handleApprove(viewDetailModal.request)}
-                                    className="px-6 py-2 rounded-lg hover:opacity-90 transition-colors font-bold"
-                                    style={{ backgroundColor: 'rgba(6, 208, 1, 0.2)', color: '#06D001', fontFamily: 'SF Pro Display' }}
-                                >
-                                    Approve Request
+                                    <X className="w-6 h-6" />
                                 </button>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Reject Sidebar */}
-                    <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-310px-20px)] w-[400px] h-fit bg-[#F5F5F5] shadow-2xl z-60 transition-all duration-300 rounded-3xl p-6 flex flex-col ${viewDetailModal.isRejecting ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
-                        <h3 className="text-2xl font-bold mb-2 text-center text-red-600" style={{ fontFamily: 'SF Pro Display' }}>Decline Request</h3>
+                            {/* EXTEND Type Modal */}
+                            {viewDetailModal.request.type === 'EXTEND' && (
+                                <>
+                                    {/* Resource Info */}
+                                    <div className="space-y-3 mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <User className="w-5 h-5 text-gray-500" />
+                                            <span style={{ fontFamily: 'SF Pro Display' }}>
+                                                Resource : <span className="font-bold">{viewDetailModal.request.resource}</span>
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <Folder className="w-5 h-5 text-gray-500" />
+                                            <span style={{ fontFamily: 'SF Pro Display' }}>
+                                                Project : <span className="font-bold">{viewDetailModal.request.project}</span>
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <Users className="w-5 h-5 text-gray-500" />
+                                            <span style={{ fontFamily: 'SF Pro Display' }}>
+                                                Role : <span className="font-bold">{viewDetailModal.request.role ? toTitleCase(viewDetailModal.request.role) : '-'}</span>
+                                            </span>
+                                        </div>
+                                    </div>
 
-                        <div className="border-b border-gray-300 mb-6 mt-4"></div>
+                                    <div className="border-t border-gray-300 my-4"></div>
 
-                        <div className="space-y-6 flex-1">
-                            <div>
-                                <p className="text-gray-600 mb-4 font-medium" style={{ fontFamily: 'SF Pro Display' }}>
-                                    Please provide a reason for declining this request:
-                                </p>
-                                <textarea
-                                    value={viewDetailModal.reason}
-                                    onChange={(e) => setViewDetailModal(prev => ({ ...prev, reason: e.target.value }))}
-                                    className="w-full p-4 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 resize-none flex-1 shadow-sm"
-                                    style={{ minHeight: '150px', fontFamily: 'SF Pro Display' }}
-                                    placeholder="Enter reason for declining..."
-                                />
+                                    {/* Proposed Changes */}
+                                    <div className="mb-4">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <Calendar className="w-5 h-5 text-gray-500" />
+                                            <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Proposed Changes</span>
+                                        </div>
+                                        <div className="ml-8 space-y-1" style={{ fontFamily: 'SF Pro Display' }}>
+                                            <p className="text-gray-600">Current End Date : {viewDetailModal.request.currentEndDate}</p>
+                                            <p className="text-gray-600">
+                                                Requested New End : {viewDetailModal.request.newEndDate}
+                                                {viewDetailModal.request.extensionMonths > 0 && (
+                                                    <span className="text-red-500 font-medium"> (+ {viewDetailModal.request.extensionMonths} Months)</span>
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Reason from DevMan */}
+                                    <div className="mb-6">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                            </svg>
+                                            <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Reason from DevMan</span>
+                                        </div>
+                                        <p className="ml-8 text-gray-600 italic" style={{ fontFamily: 'SF Pro Display' }}>
+                                            "{viewDetailModal.request.reason}"
+                                        </p>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* RELEASE Type Modal */}
+                            {viewDetailModal.request.type === 'RELEASE' && (
+                                <>
+                                    {/* Resource Info */}
+                                    <div className="space-y-3 mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <User className="w-5 h-5 text-gray-500" />
+                                            <span style={{ fontFamily: 'SF Pro Display' }}>
+                                                Resource : <span className="font-bold">{viewDetailModal.request.resource}</span>
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <Folder className="w-5 h-5 text-gray-500" />
+                                            <span style={{ fontFamily: 'SF Pro Display' }}>
+                                                Project : <span className="font-bold">{viewDetailModal.request.project}</span>
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <Users className="w-5 h-5 text-gray-500" />
+                                            <span style={{ fontFamily: 'SF Pro Display' }}>
+                                                Role : <span className="font-bold">{viewDetailModal.request.role ? toTitleCase(viewDetailModal.request.role) : '-'}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="border-t border-gray-300 my-4"></div>
+
+                                    {/* Proposed Changes */}
+                                    <div className="mb-4">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <Calendar className="w-5 h-5 text-gray-500" />
+                                            <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Proposed Changes</span>
+                                        </div>
+                                        <div className="ml-8 space-y-1" style={{ fontFamily: 'SF Pro Display' }}>
+                                            <p className="text-gray-600">Original End Date : {viewDetailModal.request.originalEndDate}</p>
+                                            <p className="text-gray-600">
+                                                Requested New End : {viewDetailModal.request.requestedEndDate}
+                                                {viewDetailModal.request.earlyReleaseMonths > 0 && (
+                                                    <span className="text-red-500 font-medium"> (Early Release by {viewDetailModal.request.earlyReleaseMonths} Month)</span>
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Reason from DevMan */}
+                                    <div className="mb-6">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                            </svg>
+                                            <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Reason from DevMan</span>
+                                        </div>
+                                        <p className="ml-8 text-gray-600 italic" style={{ fontFamily: 'SF Pro Display' }}>
+                                            "{viewDetailModal.request.reason}"
+                                        </p>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* PROJECT Type Modal */}
+                            {viewDetailModal.request.type === 'PROJECT' && (
+                                <>
+                                    {/* Requester Info */}
+                                    <div className="space-y-3 mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <User className="w-5 h-5 text-gray-500" />
+                                            <span style={{ fontFamily: 'SF Pro Display' }}>
+                                                Requester : <span className="font-bold">{viewDetailModal.request.requester}</span>
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <Calendar className="w-5 h-5 text-gray-500" />
+                                            <span style={{ fontFamily: 'SF Pro Display' }}>
+                                                Submitted : <span className="font-bold">{viewDetailModal.request.submittedDate ? new Date(viewDetailModal.request.submittedDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="border-t border-gray-300 my-4"></div>
+
+                                    {/* Project Profile */}
+                                    <div className="mb-4">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <Folder className="w-5 h-5 text-gray-500" />
+                                            <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Project Profile</span>
+                                        </div>
+                                        <div className="ml-8 space-y-1" style={{ fontFamily: 'SF Pro Display' }}>
+                                            <p className="text-gray-600">Project Name : <span className="font-bold">{viewDetailModal.request.projectName}</span></p>
+                                            <p className="text-gray-600">Client : <span className="font-bold">{viewDetailModal.request.clientName}</span></p>
+                                        </div>
+                                    </div>
+
+                                    {/* Description */}
+                                    <div className="mb-4">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                            </svg>
+                                            <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Description</span>
+                                        </div>
+                                        <p className="ml-8 text-gray-600 italic" style={{ fontFamily: 'SF Pro Display' }}>
+                                            "{viewDetailModal.request.description}"
+                                        </p>
+                                    </div>
+
+                                    {/* Resource Plan */}
+                                    <div className="mb-6">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <Users className="w-5 h-5 text-gray-500" />
+                                            <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Resource Plan</span>
+                                        </div>
+                                        <div className="ml-8" style={{ fontFamily: 'SF Pro Display' }}>
+                                            <p className="text-gray-600 mb-2">DevMan Requesting :</p>
+                                            {viewDetailModal.request.resourcePlan && viewDetailModal.request.resourcePlan.map((item, index) => (
+                                                <div key={index} className="flex items-center gap-4 text-gray-600 mb-1">
+                                                    <span>{index + 1}. {item.name}</span>
+                                                    <span className="font-bold">{toTitleCase(item.role)}</span>
+                                                    <span>{item.startDate}</span>
+                                                    <span>-</span>
+                                                    <span>{item.endDate}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center justify-between pt-4" style={{ borderTop: '1px solid #D3D3D3' }}>
+                                <button
+                                    onClick={() => setViewDetailModal({ show: false, request: null, isRejecting: false, reason: '' })}
+                                    className="px-6 py-2 rounded-lg hover:opacity-90 transition-colors font-bold"
+                                    style={{ backgroundColor: '#D3D3D3', color: '#000000', fontFamily: 'SF Pro Display' }}
+                                >
+                                    Cancel
+                                </button>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setViewDetailModal(prev => ({ ...prev, isRejecting: true }))}
+                                        className="px-6 py-2 rounded-lg hover:opacity-90 transition-colors font-bold"
+                                        style={{ backgroundColor: 'rgba(255, 0, 0, 0.2)', color: '#FF0000', fontFamily: 'SF Pro Display' }}
+                                    >
+                                        Reject
+                                    </button>
+                                    <button
+                                        onClick={() => handleApprove(viewDetailModal.request)}
+                                        className="px-6 py-2 rounded-lg hover:opacity-90 transition-colors font-bold"
+                                        style={{ backgroundColor: 'rgba(6, 208, 1, 0.2)', color: '#06D001', fontFamily: 'SF Pro Display' }}
+                                    >
+                                        Approve Request
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="flex gap-4 mt-auto pt-6">
-                            <button
-                                onClick={() => setViewDetailModal(prev => ({ ...prev, isRejecting: false, reason: '' }))}
-                                className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
-                                style={{ fontFamily: 'SF Pro Display' }}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={submitDecline}
-                                disabled={!viewDetailModal.reason?.trim()}
-                                className={`flex-1 py-3 text-white rounded-xl font-bold transition-colors ${!viewDetailModal.reason?.trim() ? 'opacity-50 cursor-not-allowed bg-red-400' : 'hover:bg-red-700 bg-[#FF0000]'}`}
-                                style={{ fontFamily: 'SF Pro Display' }}
-                            >
-                                Confirm Decline
-                            </button>
-                        </div>
+                        {/* Reject Sidebar - Now Side-by-Side in Flex Container */}
+                        {viewDetailModal.isRejecting && (
+                            <div className="w-[400px] h-fit bg-[#F5F5F5] shadow-2xl rounded-3xl p-6 flex flex-col animate-scale-in">
+                                <h3 className="text-2xl font-bold mb-2 text-center text-red-600" style={{ fontFamily: 'SF Pro Display' }}>Decline Request</h3>
+
+                                <div className="border-b border-gray-300 mb-6 mt-4"></div>
+
+                                <div className="space-y-6 flex-1">
+                                    <div>
+                                        <p className="text-gray-600 mb-4 font-medium" style={{ fontFamily: 'SF Pro Display' }}>
+                                            Please provide a reason for declining this request:
+                                        </p>
+                                        <textarea
+                                            value={viewDetailModal.reason}
+                                            onChange={(e) => setViewDetailModal(prev => ({ ...prev, reason: e.target.value }))}
+                                            className="w-full p-4 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 resize-none flex-1 shadow-sm"
+                                            style={{ minHeight: '150px', fontFamily: 'SF Pro Display' }}
+                                            placeholder="Enter reason for declining..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4 mt-auto pt-6">
+                                    <button
+                                        onClick={() => setViewDetailModal(prev => ({ ...prev, isRejecting: false, reason: '' }))}
+                                        className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
+                                        style={{ fontFamily: 'SF Pro Display' }}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={submitDecline}
+                                        disabled={!viewDetailModal.reason?.trim()}
+                                        className={`flex-1 py-3 text-white rounded-xl font-bold transition-colors ${!viewDetailModal.reason?.trim() ? 'opacity-50 cursor-not-allowed bg-red-400' : 'hover:bg-red-700 bg-[#FF0000]'}`}
+                                        style={{ fontFamily: 'SF Pro Display' }}
+                                    >
+                                        Confirm Decline
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -646,12 +590,7 @@ const Dashboard = () => {
                                 style={{ backgroundColor: '#E8E8E8' }}
                             >
                                 <div className="flex items-center gap-3">
-                                    <span
-                                        className="text-xs px-3 py-1 rounded-full font-bold"
-                                        style={getTypeBadgeStyle(request.type)}
-                                    >
-                                        {request.type}
-                                    </span>
+                                    <StatusBadge status={request.type} />
                                     <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>
                                         {request.type === 'PROJECT' ? request.projectName : request.resource}
                                     </span>
@@ -750,12 +689,7 @@ const Dashboard = () => {
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-1" style={{ fontFamily: 'SF Pro Display' }}>
-                                                    <span className={`text-xs px-3 py-1 rounded-full font-medium ${project.status === 'ONGOING'
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-yellow-100 text-yellow-700'
-                                                        }`}>
-                                                        {project.status === 'ONGOING' ? 'ONGOING' : project.status}
-                                                    </span>
+                                                    <StatusBadge status={project.status} />
                                                     <div className="flex items-center gap-1 text-black font-bold">
                                                         <Users className="w-4 h-4" />
                                                         <span className="text-sm">{project.memberCount}</span>
