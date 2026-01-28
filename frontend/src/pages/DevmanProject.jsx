@@ -365,15 +365,15 @@ const DevmanProject = () => {
                     <div className="flex items-center gap-4">
                         <div className="flex bg-white rounded-lg p-1 shadow-sm border border-gray-100">
                             {filterTabs.map(tab => (
-                                <button key={tab} onClick={() => setActiveFilter(tab)} className={`px-6 py-2 rounded-md font-bold ${activeFilter === tab ? 'bg-[#00B4D8] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'}`}>{tab}</button>
+                                <button key={tab} onClick={() => setActiveFilter(tab)} className={`px-6 py-2 rounded-md font-bold transition-colors ${activeFilter === tab ? 'bg-[#00B4D8] text-white shadow-md' : 'text-gray-500 hover:bg-gray-100'}`}>{tab}</button>
                             ))}
                         </div>
 
                         {/* Separator */}
                         <div className="h-10 w-px bg-gray-200 mx-2"></div>
 
-                        <button onClick={handleExport} className="px-6 py-2 bg-white text-gray-700 rounded-lg font-bold border border-gray-200">Export</button>
-                        <button onClick={() => setShowNewProjectModal(true)} className="px-6 py-2 bg-[#00B4D8] text-white rounded-lg font-bold">+ Propose Project</button>
+                        <button onClick={handleExport} className="px-6 py-2 bg-white text-gray-700 rounded-lg font-bold border border-gray-200 hover:bg-gray-50 transition-colors">Export</button>
+                        <button onClick={() => setShowNewProjectModal(true)} className="px-6 py-2 bg-[#00B4D8] text-white rounded-lg font-bold hover:bg-[#009ac7] transition-colors">+ Propose Project</button>
                     </div>
                 </div>
 
@@ -387,9 +387,8 @@ const DevmanProject = () => {
                         filteredProjects.map(project => (
                             <div key={project.projectId} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
                                 <div className="flex items-center gap-6">
-                                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                        {/* Uses Folder icon instead of Users icon for consistency with Admin */}
-                                        <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <div className="w-10 h-10 bg-[#CAF0F8] rounded-lg flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                                         </svg>
                                     </div>
@@ -406,7 +405,6 @@ const DevmanProject = () => {
                                     <button
                                         onClick={() => handleViewDetail(project)}
                                         className="px-6 py-2 bg-[#CAF0F8] text-black rounded-lg font-bold hover:bg-[#b8e8ef] transition-colors"
-                                        style={{ fontFamily: 'SF Pro Display' }}
                                     >
                                         View Detail
                                     </button>
@@ -446,13 +444,13 @@ const DevmanProject = () => {
 
                         <div className="bg-[#F8FBFC] rounded-xl overflow-hidden">
                             <table className="w-full">
-                                <thead className="border-b border-gray-200 text-left">
+                                <thead className="bg-[#CAF0F8] border-b border-gray-200 text-left">
                                     <tr>
-                                        <th className="px-6 py-4 font-bold text-gray-700 text-center">Name</th>
-                                        <th className="px-6 py-4 font-bold text-center text-gray-700">Role</th>
-                                        <th className="px-6 py-4 font-bold text-center text-gray-700">Period</th>
-                                        <th className="px-6 py-4 font-bold text-center text-gray-700">Status</th>
-                                        <th className="px-6 py-4 font-bold text-center text-gray-700">Action</th>
+                                        <th className="px-6 py-4 font-bold text-black text-center">Name</th>
+                                        <th className="px-6 py-4 font-bold text-center text-black">Role</th>
+                                        <th className="px-6 py-4 font-bold text-center text-black">Period</th>
+                                        <th className="px-6 py-4 font-bold text-center text-black">Status</th>
+                                        <th className="px-6 py-4 font-bold text-center text-black">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-[#E6F2F1]">
@@ -640,7 +638,7 @@ const DevmanProject = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-black mb-2" style={{ fontFamily: 'SF Pro Display' }}>Description</label>
+                                <label className="block text-sm font-bold mb-2 text-black" style={{ fontFamily: 'SF Pro Display' }}>Description</label>
                                 <textarea
                                     value={projectProposal.description}
                                     onChange={(e) => setProjectProposal({ ...projectProposal, description: e.target.value })}

@@ -376,7 +376,7 @@ const DevmanResources = () => {
                 >
                     <div
                         className="bg-white rounded-2xl relative flex flex-col items-center animate-scale-in"
-                        style={{ width: '700px', height: '424px' }}
+                        style={{ width: '700px', height: 'auto', maxHeight: '90vh' }}
                     >
                         {/* Header with Name, Status and Close Button */}
                         <div className="flex items-center justify-between mt-8 mb-4 px-8 w-full">
@@ -407,21 +407,21 @@ const DevmanResources = () => {
                         </div>
 
                         {/* Separator Line */}
-                        <div className="w-[600px] border-b border-gray-200 mb-4"></div>
+                        <div className="w-[calc(100%-4rem)] border-b border-gray-200 mb-4"></div>
 
                         {/* Projects Table */}
                         <div
-                            className="overflow-hidden rounded-lg border border-gray-200"
-                            style={{ width: '600px', height: '234px' }}
+                            className="overflow-hidden rounded-lg border border-gray-200 mx-8 mb-8"
+                            style={{ width: 'calc(100%-4rem)' }}
                         >
-                            <div className="overflow-auto h-full">
+                            <div className="overflow-auto" style={{ maxHeight: 'calc(90vh - 200px)' }}>
                                 <table className="w-full table-fixed" style={{ borderCollapse: 'collapse' }}>
                                     <thead>
                                         <tr className="bg-[#CAF0F8] border-b border-gray-200">
-                                            <th className="text-center py-3 px-4 font-bold text-gray-700 border-r border-gray-200" style={{ fontSize: '14px', width: '35%' }}>Project Name</th>
-                                            <th className="text-center py-3 px-4 font-bold text-gray-700 border-r border-gray-200" style={{ fontSize: '14px', width: '25%' }}>Role</th>
-                                            <th className="text-center py-3 px-4 font-bold text-gray-700 border-r border-gray-200" style={{ fontSize: '14px', width: '20%' }}>Start Date</th>
-                                            <th className="text-center py-3 px-4 font-bold text-gray-700" style={{ fontSize: '14px', width: '20%' }}>End Date</th>
+                                            <th className="text-center py-3 px-4 font-bold text-black border-r border-gray-200" style={{ fontSize: '14px', width: '35%' }}>Project Name</th>
+                                            <th className="text-center py-3 px-4 font-bold text-black border-r border-gray-200" style={{ fontSize: '14px', width: '25%' }}>Role</th>
+                                            <th className="text-center py-3 px-4 font-bold text-black border-r border-gray-200" style={{ fontSize: '14px', width: '20%' }}>Start Date</th>
+                                            <th className="text-center py-3 px-4 font-bold text-black" style={{ fontSize: '14px', width: '20%' }}>End Date</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1003,13 +1003,13 @@ const DevmanResources = () => {
                         ) : (
                             <div className="overflow-y-auto flex-1 custom-scrollbar">
                                 <table className="w-full relative">
-                                    <thead className="sticky top-0 z-10 bg-white shadow-sm">
+                                    <thead className="sticky top-0 z-10 bg-[#CAF0F8] shadow-sm">
                                         <tr className="border-b border-gray-200">
-                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-white" style={{ fontSize: '20px' }}>Name</th>
-                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-white" style={{ fontSize: '20px' }}>Status</th>
-                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-white" style={{ fontSize: '20px' }}>Detail</th>
-                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-white" style={{ fontSize: '20px' }}>Track Record</th>
-                                            <th className="text-right py-4 px-6 font-bold text-gray-700 bg-white"></th>
+                                            <th className="text-left py-4 px-6 font-bold text-black bg-[#CAF0F8]" style={{ fontSize: '20px' }}>Name</th>
+                                            <th className="text-left py-4 px-6 font-bold text-black bg-[#CAF0F8]" style={{ fontSize: '20px' }}>Status</th>
+                                            <th className="text-center py-4 px-6 font-bold text-black bg-[#CAF0F8]" style={{ fontSize: '20px' }}>Detail</th>
+                                            <th className="text-center py-4 px-6 font-bold text-black bg-[#CAF0F8]" style={{ fontSize: '20px' }}>Track Record</th>
+                                            <th className="text-right py-4 px-6 font-bold text-black bg-[#CAF0F8]"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
