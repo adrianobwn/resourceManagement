@@ -66,7 +66,7 @@ const AdminProject = () => {
             const response = await api.get('/users/pms');
             setPmList(response.data);
         } catch (error) {
-            console.error('Error fetching PM list:', error);
+            console.error('Error fetching DevMan list:', error);
         }
     };
 

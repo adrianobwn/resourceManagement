@@ -245,6 +245,28 @@ const DevmanProject = () => {
         }, 4000);
     };
 
+    const handleExport = () => {
+        try {
+            const exportData = filteredProjects.map(project => ({
+                'Project Name': project.projectName,
+                'Client': project.clientName,
+                'Status': project.status,
+                'DevMan': project.pmName || '-',
+                'Active Resources': project.activeResourceCount || 0
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Projects');
+            XLSX.writeFile(wb, `DevMan_Projects_${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            showNotification('Project data exported successfully!', 'success');
+        } catch (error) {
+            console.error('Error exporting data:', error);
+            showNotification('Failed to export data', 'error');
+        }
+    };
+
     const closeNotification = () => {
         setNotification(prev => ({ ...prev, closing: true }));
         setTimeout(() => {
@@ -433,67 +455,44 @@ const DevmanProject = () => {
                                         <th className="px-6 py-4 font-bold text-center text-gray-700">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="bg-[#E6F2F1]">
                                     {projectResources.map((res, idx) => (
-                                        <tr key={idx} className="border-b border-gray-50 last:border-none">
+                                        <tr key={idx} className="border-b border-gray-200 last:border-none">
                                             <td className="px-6 py-6 font-bold text-gray-800">{res.resourceName}</td>
-                                            <td className="px-6 py-6 text-center font-bold text-gray-600">{res.role}</td>
+                                            <td className="px-6 py-6 text-center font-bold text-gray-800">{res.role || '-'}</td>
                                             <td className="px-6 py-6 text-center font-bold text-gray-800">{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
                                             <td className="px-6 py-6 text-center">
-                                                <span className="px-4 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-600">
+                                                <span className={`px-4 py-1 rounded-full text-[10px] font-bold border ${(res.status === 'RELEASED' || res.status === 'EXPIRED') ? 'bg-red-100 text-red-600 border-red-600' : 'bg-green-100 text-green-600 border-green-600'}`}>
                                                     {res.status}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-6 text-center">
                                                 <div className="flex justify-center gap-2">
-                                                    {res.status === 'RELEASED' ? (
-                                                        // Show dash for released assignments
+                                                    {res.status === 'RELEASED' || res.status === 'EXPIRED' ? (
                                                         <span className="text-gray-400 text-xs font-bold">-</span>
                                                     ) : pendingRequests.some(req => req.assignmentId && String(req.assignmentId) === String(res.assignmentId)) ? (
-                                                        // Show "Pending" badge if there's any pending request for this assignment
                                                         <span className="px-4 py-1.5 rounded-full bg-yellow-100 text-yellow-700 font-bold text-[10px]">
                                                             PENDING
                                                         </span>
                                                     ) : res.status === 'ACTIVE' ? (
-                                                        // Show buttons only if ACTIVE and no pending requests
                                                         <>
-                                                            <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] hover:bg-[#F97316]/20">EXTEND</button>
-                                                            <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] hover:bg-[#FF0000]/20">RELEASE</button>
+                                                            <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] border border-[#F97316] hover:bg-[#F97316]/20">EXTEND</button>
+                                                            <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] border border-[#FF0000] hover:bg-[#FF0000]/20">RELEASE</button>
                                                         </>
                                                     ) : null}
                                                 </div>
                                             </td>
                                         </tr>
-                                    </thead>
-                                    <tbody className="bg-[#E6F2F1]">
-                                        {projectResources.map((res, idx) => (
-                                            <tr key={idx} className="border-b border-gray-200 last:border-none">
-                                                <td className="px-6 py-6 font-bold text-gray-800">{res.resourceName}</td>
-                                                <td className="px-6 py-6 text-center font-bold text-gray-800">{res.role || '-'}</td>
-                                                <td className="px-6 py-6 text-center font-bold text-gray-800">{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
-                                                <td className="px-6 py-6 text-center">
-                                                    <span className={`px-4 py-1 rounded-full text-[10px] font-bold border ${(res.status === 'RELEASED' || res.status === 'EXPIRED') ? 'bg-red-100 text-red-600 border-red-600' : 'bg-green-100 text-green-600 border-green-600'}`}>
-                                                        {res.status}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-6 text-center">
-                                                    {(res.status !== 'RELEASED' && res.status !== 'EXPIRED') && (
-                                                        <div className="flex justify-center gap-2">
-                                                            <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] border border-[#F97316] hover:bg-[#F97316]/20">EXTEND</button>
-                                                            <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] border border-[#FF0000] hover:bg-[#FF0000]/20">RELEASE</button>
-                                                        </div>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
+                </div>
+            )}
 
-                    {/* Extend Sidebar */}
-                    <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-400px-20px)] w-[400px] h-fit bg-[#F5F5F5] shadow-2xl z-60 transition-all duration-300 rounded-3xl p-6 flex flex-col ${showExtendModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
+            {/* Extend Sidebar */}
+            <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-400px-20px)] w-[400px] h-fit bg-[#F5F5F5] shadow-2xl z-60 transition-all duration-300 rounded-3xl p-6 flex flex-col ${showExtendModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
                         <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Extend Assignment</h3>
 
                         <div className="border-b border-gray-300 mb-6 mt-4"></div>
@@ -554,8 +553,8 @@ const DevmanProject = () => {
                         </div>
                     </div>
 
-                    {/* Release Sidebar */}
-                    <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-400px-20px)] w-[400px] h-fit bg-[#F5F5F5] shadow-2xl z-60 transition-all duration-300 rounded-3xl p-6 flex flex-col ${showReleaseModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
+            {/* Release Sidebar */}
+            <div className={`fixed top-1/2 -translate-y-1/2 right-[calc(50%-400px-20px)] w-[400px] h-fit bg-[#F5F5F5] shadow-2xl z-60 transition-all duration-300 rounded-3xl p-6 flex flex-col ${showReleaseModal ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[200%] pointer-events-none'}`}>
                         <h3 className="text-2xl font-bold mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Release Assignment</h3>
 
                         <div className="border-b border-gray-300 mb-6 mt-4"></div>
@@ -601,8 +600,6 @@ const DevmanProject = () => {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
 
             {/* Propose Project Modal (Styled) */}
             {showNewProjectModal && (

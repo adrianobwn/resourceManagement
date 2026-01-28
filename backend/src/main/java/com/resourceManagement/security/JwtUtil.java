@@ -1,6 +1,7 @@
 package com.resourceManagement.security;
 
 import com.resourceManagement.model.entity.User;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -34,5 +35,22 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
+    }
+
+    public String extractRole(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(SECRET_KEY.getBytes())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        
+        String role = claims.get("role", String.class);
+        
+        // Backward compatibility: Convert old PM role to DEV_MANAGER
+        if ("PM".equals(role)) {
+            return "DEV_MANAGER";
+        }
+        
+        return role;
     }
 }

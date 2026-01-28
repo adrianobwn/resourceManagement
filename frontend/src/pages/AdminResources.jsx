@@ -43,7 +43,7 @@ const AdminResources = () => {
 
     // Body scroll locking
     useEffect(() => {
-        if (detailModal.show || addResourceModal.show || addDevManModal.show || assignModal.show || trackRecordModal.show) {
+        if (detailModal.show || addResourceModal.show || assignModal.show || trackRecordModal.show) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'auto';
@@ -52,7 +52,7 @@ const AdminResources = () => {
         return () => {
             document.body.style.overflow = 'auto';
         };
-    }, [detailModal.show, addResourceModal.show, addDevManModal.show, assignModal.show, trackRecordModal.show]);
+    }, [detailModal.show, addResourceModal.show, assignModal.show, trackRecordModal.show]);
 
     useEffect(() => {
         const token = localStorage.getItem('token');

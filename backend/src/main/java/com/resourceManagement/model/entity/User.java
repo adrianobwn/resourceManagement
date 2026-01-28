@@ -1,5 +1,6 @@
 package com.resourceManagement.model.entity;
 
+import com.resourceManagement.model.converter.UserTypeConverter;
 import com.resourceManagement.model.enums.AccountStatus;
 import com.resourceManagement.model.enums.UserType;
 import jakarta.persistence.*;
@@ -28,7 +29,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = UserTypeConverter.class)
     @Column(nullable = false)
     private UserType userType;
 

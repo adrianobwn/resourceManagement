@@ -63,7 +63,7 @@ public class ProjectService {
 
     public ProjectListResponse createProject(CreateProjectRequest request) {
         User pm = userRepository.findById(request.getPmId())
-                .orElseThrow(() -> new RuntimeException("PM not found with id: " + request.getPmId()));
+                .orElseThrow(() -> new RuntimeException("DevMan not found with id: " + request.getPmId()));
 
         Project project = Project.builder()
                 .projectName(request.getProjectName())

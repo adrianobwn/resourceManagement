@@ -144,8 +144,8 @@ public class AssignmentRequestService {
         } else {
             // Re-use current behavior: only show what they requested? 
             // Actually, if we want them to see what's pending for their project (maybe requested by others?), we'd use OR.
-            // But usually only one PM per project. 
-            // Let's stick to the user's specific requirement: "berhubungan dengan pm tersebut".
+            // But usually only one DevMan per project. 
+            // Let's stick to the user's specific requirement: "berhubungan dengan devman tersebut".
             return requestRepository.findByRequester_UserIdAndStatus(user.getUserId(), RequestStatus.PENDING);
         }
     }

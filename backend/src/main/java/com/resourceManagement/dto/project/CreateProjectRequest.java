@@ -17,6 +17,6 @@ public class CreateProjectRequest {
     @NotBlank(message = "Client name is required")
     private String clientName;
 
-    @NotNull(message = "PM ID is required")
+    @NotNull(message = "DevMan ID is required")
     private Integer pmId;
 }

@@ -20,7 +20,7 @@ public class UserController {
     @PostMapping("/pm")
     public ResponseEntity<?> createPm(@Valid @RequestBody CreatePmRequest request) {
         userService.createPm(request);
-        return ResponseEntity.ok("PM account created successfully");
+        return ResponseEntity.ok("DevMan account created successfully");
     }
 
     @GetMapping("/pms")

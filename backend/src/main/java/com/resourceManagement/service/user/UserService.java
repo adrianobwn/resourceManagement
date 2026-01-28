@@ -21,10 +21,10 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     public void createPm(CreatePmRequest request) {
-        System.out.println("Attempting to create PM: " + request.getName() + " (" + request.getEmail() + ")");
+        System.out.println("Attempting to create DevMan: " + request.getName() + " (" + request.getEmail() + ")");
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            System.err.println("PM creation failed: Email already exists: " + request.getEmail());
+            System.err.println("DevMan creation failed: Email already exists: " + request.getEmail());
             throw new RuntimeException("Email already exists");
         }
 
@@ -38,9 +38,9 @@ public class UserService {
 
         try {
             userRepository.saveAndFlush(pm);
-            System.out.println("PM successfully saved to DB.");
+            System.out.println("DevMan successfully saved to DB.");
         } catch (Exception e) {
-            System.err.println("Error saving PM to DB: " + e.getMessage());
+            System.err.println("Error saving DevMan to DB: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("DB Persistence Error: " + e.getMessage());
         }

@@ -11,8 +11,7 @@ const Sidebar = () => {
 
     const isDevMan = user.userType && (
         user.userType.toUpperCase().includes('DEV') ||
-        user.userType.toUpperCase().includes('MANAGER') ||
-        user.userType.toUpperCase() === 'PM'
+        user.userType.toUpperCase().includes('MANAGER')
     );
 
     const menuItems = [
@@ -125,7 +124,6 @@ const Sidebar = () => {
                 <nav className="mt-8 px-4">
                     {menuItems.map((item) => {
                         const IconComponent = item.icon;
-                        const showBadge = isDevman && item.name === 'Activities' && pendingCount > 0;
                         return (
                             <button
                                 key={item.name}
