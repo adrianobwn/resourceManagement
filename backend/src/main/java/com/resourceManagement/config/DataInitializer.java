@@ -28,10 +28,11 @@ public class DataInitializer implements CommandLineRunner {
         private final PasswordEncoder passwordEncoder;
 
         @Override
+        @Transactional
         public void run(String... args) {
                 // Migrate old ON_GOING status to ONGOING
                 migrateProjectStatus();
-                
+
                 if (userRepository.findByEmail("admin@inteleq.com").isEmpty()) {
                         User admin = User.builder()
                                         .name("Admin")
@@ -44,10 +45,17 @@ public class DataInitializer implements CommandLineRunner {
                         System.out.println("Admin user created: admin@inteleq.com / password123");
                 }
         }
-        
-        @Transactional
+
         private void migrateProjectStatus() {
                 try {
+                        // Update column definition first
+                        try {
+                                projectRepository.alterStatusColumn();
+                                System.out.println("✓ Updated projects table status column definition");
+                        } catch (Exception e) {
+                                System.err.println("Warning during schema update: " + e.getMessage());
+                        }
+
                         int updated = projectRepository.migrateOnGoingToOngoing();
                         if (updated > 0) {
                                 System.out.println("✓ Migrated " + updated + " project(s) from ON_GOING to ONGOING");

@@ -15,6 +15,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
         Map<String, String> response = new HashMap<>();
         response.put("message", ex.getMessage());
+
+        // Check if this is an authentication-related error
+        String message = ex.getMessage();
+        if (message != null && (message.contains("User not found") ||
+                message.contains("not authenticated") ||
+                message.contains("not authorized"))) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 

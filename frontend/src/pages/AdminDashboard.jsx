@@ -750,11 +750,11 @@ const Dashboard = () => {
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-1" style={{ fontFamily: 'SF Pro Display' }}>
-                                                    <span className={`text-xs px-3 py-1 rounded-full font-medium ${project.status === 'ON_GOING'
+                                                    <span className={`text-xs px-3 py-1 rounded-full font-medium ${project.status === 'ONGOING'
                                                         ? 'bg-green-100 text-green-700'
                                                         : 'bg-yellow-100 text-yellow-700'
                                                         }`}>
-                                                        {project.status === 'ON_GOING' ? 'ONGOING' : project.status}
+                                                        {project.status === 'ONGOING' ? 'ONGOING' : project.status}
                                                     </span>
                                                     <div className="flex items-center gap-1 text-black font-bold">
                                                         <Users className="w-4 h-4" />

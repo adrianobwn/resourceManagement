@@ -173,7 +173,7 @@ const AdminProject = () => {
     };
 
     const handleToggleStatus = async (projectId, currentStatus) => {
-        const newStatus = currentStatus === 'ON_GOING' ? 'HOLD' : 'ON_GOING';
+        const newStatus = currentStatus === 'ONGOING' ? 'HOLD' : 'ONGOING';
         try {
             const response = await api.patch(`/projects/${projectId}/status?status=${newStatus}`);
             showNotification(`Project status updated to ${newStatus}`, 'success');
@@ -302,7 +302,7 @@ const AdminProject = () => {
 
     const getStatusBadgeStyle = (status) => {
         switch (status) {
-            case 'ON_GOING':
+            case 'ONGOING':
                 return {
                     backgroundColor: 'rgba(6, 208, 1, 0.2)',
                     color: '#06D001',
@@ -513,7 +513,7 @@ const AdminProject = () => {
                                         backgroundColor: 'transparent'
                                     }}
                                 >
-                                    {selectedProject.status === 'ON_GOING' ? 'Change to Hold' : 'Change to Ongoing'}
+                                    {selectedProject.status === 'ONGOING' ? 'Change to Hold' : 'Change to Ongoing'}
                                 </button>
                             )}
                         </div>
