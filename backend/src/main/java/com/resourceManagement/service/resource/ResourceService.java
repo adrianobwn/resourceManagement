@@ -90,6 +90,17 @@ public class ResourceService {
                 Project project = projectRepository.findById(request.getProjectId())
                                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
+                // Check for existing active assignment to this project
+                long activeAssignments = assignmentRepository.countByResource_ResourceIdAndProject_ProjectIdAndStatus(
+                                resource.getResourceId(),
+                                project.getProjectId(),
+                                AssignmentStatus.ACTIVE);
+
+                if (activeAssignments > 0) {
+                        throw new RuntimeException(
+                                        "Resource is already assigned to this project. Use 'Extend' to modify the existing assignment.");
+                }
+
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 LocalDate startDate = LocalDate.parse(request.getStartDate(), formatter);
                 LocalDate endDate = LocalDate.parse(request.getEndDate(), formatter);

@@ -18,5 +18,7 @@ public interface HistoryLogRepository extends JpaRepository<HistoryLog, Integer>
     List<HistoryLog> findByPerformedBy_UserIdOrProject_DevMan_UserIdOrderByTimestampDesc(Integer userId,
             Integer devManId);
 
+    List<HistoryLog> findByProject_ProjectId(Integer projectId);
+
     void deleteByProject_ProjectId(Integer projectId);
 }

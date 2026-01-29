@@ -11,23 +11,28 @@ import java.util.List;
 @Repository
 public interface ResourceAssignmentRepository extends JpaRepository<ResourceAssignment, Integer> {
 
-    List<ResourceAssignment> findByResource_ResourceId(Integer resourceId);
+        List<ResourceAssignment> findByResource_ResourceId(Integer resourceId);
 
-    List<ResourceAssignment> findByProject_ProjectId(Integer projectId);
+        List<ResourceAssignment> findByProject_ProjectId(Integer projectId);
 
-    List<ResourceAssignment> findByStatus(AssignmentStatus status);
+        List<ResourceAssignment> findByStatus(AssignmentStatus status);
 
-    List<ResourceAssignment> findByStatusAndEndDateBetween(AssignmentStatus status, LocalDate startDate,
-            LocalDate endDate);
+        List<ResourceAssignment> findByStatusAndEndDateBetween(AssignmentStatus status, LocalDate startDate,
+                        LocalDate endDate);
 
-    List<ResourceAssignment> findByStatusAndProject_DevMan_UserIdAndEndDateBetween(AssignmentStatus status,
-            Integer devManId, LocalDate startDate, LocalDate endDate);
+        List<ResourceAssignment> findByStatusAndProject_DevMan_UserIdAndEndDateBetween(AssignmentStatus status,
+                        Integer devManId, LocalDate startDate, LocalDate endDate);
 
-    long countByProject_ProjectId(Integer projectId);
+        long countByProject_ProjectId(Integer projectId);
 
-    long countByProject_ProjectIdAndStatus(Integer projectId, AssignmentStatus status);
+        long countByProject_ProjectIdAndStatus(Integer projectId, AssignmentStatus status);
 
-    void deleteByResource_ResourceId(Integer resourceId);
+        long countByResource_ResourceIdAndProject_ProjectIdAndStatus(Integer resourceId, Integer projectId,
+                        AssignmentStatus status);
 
-    void deleteByProject_ProjectId(Integer projectId);
+        long countByResource_ResourceIdAndStatus(Integer resourceId, AssignmentStatus status);
+
+        void deleteByResource_ResourceId(Integer resourceId);
+
+        void deleteByProject_ProjectId(Integer projectId);
 }

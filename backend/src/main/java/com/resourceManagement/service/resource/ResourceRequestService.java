@@ -69,15 +69,25 @@ public class ResourceRequestService {
 
         } else if (request.getRequestType() == RequestType.RELEASE) {
             // Find existing assignment and set to RELEASED, resource to AVAILABLE
-            List<ResourceAssignment> assignments = assignmentRepository.findByResource_ResourceId(request.getResource().getResourceId());
+            List<ResourceAssignment> assignments = assignmentRepository
+                    .findByResource_ResourceId(request.getResource().getResourceId());
             for (ResourceAssignment assignment : assignments) {
                 if (assignment.getProject().getProjectId().equals(request.getProject().getProjectId())) {
                     assignment.setStatus(AssignmentStatus.RELEASED);
                     assignmentRepository.save(assignment);
 
+                    // Check if resource has other active assignments
+                    long activeAssignmentsCount = assignmentRepository.countByResource_ResourceIdAndStatus(
+                            request.getResource().getResourceId(),
+                            AssignmentStatus.ACTIVE);
+
                     // Update resource status
                     Resource resource = request.getResource();
-                    resource.setStatus(ResourceStatus.AVAILABLE);
+                    if (activeAssignmentsCount == 0) {
+                        resource.setStatus(ResourceStatus.AVAILABLE);
+                    } else {
+                        resource.setStatus(ResourceStatus.ASSIGNED);
+                    }
                     resourceRepository.save(resource);
                     break;
                 }

@@ -3,6 +3,7 @@ package com.resourceManagement.service.project;
 import com.resourceManagement.dto.project.CreateProjectRequest;
 import com.resourceManagement.dto.project.ProjectListResponse;
 import com.resourceManagement.model.entity.AssignmentRequest;
+import com.resourceManagement.model.entity.HistoryLog;
 import com.resourceManagement.model.entity.Project;
 import com.resourceManagement.model.entity.User;
 import com.resourceManagement.model.enums.EntityType;
@@ -15,7 +16,7 @@ import com.resourceManagement.repository.HistoryLogRepository;
 import com.resourceManagement.repository.ProjectRepository;
 import com.resourceManagement.repository.ResourceAssignmentRepository;
 import com.resourceManagement.repository.UserRepository;
-import com.resourceManagement.service.project.HistoryLogService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -157,12 +158,22 @@ public class ProjectService {
                 Project project = projectRepository.findById(projectId)
                                 .orElseThrow(() -> new RuntimeException("Project not found with id: " + projectId));
 
-                // Delete all assignment requests associated with this project
-                requestRepository.deleteByProject_ProjectId(projectId);
+                if (project.getStatus() != ProjectStatus.CLOSED) {
+                        throw new RuntimeException("Cannot delete project. Only CLOSED projects can be deleted.");
+                }
 
-                // Log deletion (must be before deleting history logs if we want to keep it? No,
-                // if we delete by project ID, project logs are gone.
-                // But this log won't have project ID.)
+                // Preserve history: Detach assignment requests from the project instead of
+                // deleting them works
+                List<AssignmentRequest> requests = requestRepository.findByProject_ProjectId(projectId);
+                for (AssignmentRequest req : requests) {
+                        req.setProject(null);
+                        if (req.getProjectName() == null) {
+                                req.setProjectName(project.getProjectName());
+                        }
+                        requestRepository.save(req);
+                }
+
+                // Log deletion
                 String currentPrincipalName = SecurityContextHolder.getContext().getAuthentication().getName();
                 User performedBy = userRepository.findByEmail(currentPrincipalName)
                                 .orElseThrow(() -> new RuntimeException("Current user not found"));
@@ -173,8 +184,12 @@ public class ProjectService {
                                 "Deleted Project: " + project.getProjectName(),
                                 performedBy);
 
-                // Delete all history logs associated with this project
-                historyLogRepository.deleteByProject_ProjectId(projectId);
+                // Preserve history: Detach history logs (track record) from the project
+                List<HistoryLog> logs = historyLogRepository.findByProject_ProjectId(projectId);
+                for (HistoryLog log : logs) {
+                        log.setProject(null);
+                        historyLogRepository.save(log);
+                }
 
                 // Delete all assignments associated with this project
                 resourceAssignmentRepository.deleteByProject_ProjectId(projectId);

@@ -41,7 +41,8 @@ public class RequestController {
     }
 
     @GetMapping("/project/{projectId}/pending")
-    public ResponseEntity<List<AssignmentRequestResponse>> getPendingRequestsByProject(@PathVariable Integer projectId) {
+    public ResponseEntity<List<AssignmentRequestResponse>> getPendingRequestsByProject(
+            @PathVariable Integer projectId) {
         List<AssignmentRequestResponse> responses = requestService.getPendingRequestsByProject(projectId)
                 .stream()
                 .map(this::mapToResponse)
@@ -70,7 +71,8 @@ public class RequestController {
     }
 
     @PostMapping("/{id}/reject")
-    public ResponseEntity<String> rejectRequest(@PathVariable Integer id, @RequestBody java.util.Map<String, String> body) {
+    public ResponseEntity<String> rejectRequest(@PathVariable Integer id,
+            @RequestBody java.util.Map<String, String> body) {
         String reason = body.get("reason");
         requestService.rejectRequest(id, reason);
         return ResponseEntity.ok("Request rejected successfully");
@@ -91,8 +93,10 @@ public class RequestController {
         }
         if (req.getProject() != null) {
             builder.project(req.getProject().getProjectName());
+        } else if (req.getProjectName() != null) {
+            builder.project(req.getProjectName());
         }
-        
+
         builder.role(req.getRole())
                 .currentEndDate(req.getCurrentEndDate())
                 .startDate(req.getStartDate())
