@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ProjectCountBadge from '../components/ProjectCountBadge';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import StatusBadge from '../components/StatusBadge';
@@ -98,8 +99,6 @@ const DevmanResources = () => {
         setDateFilter(e.target.value);
     };
 
-
-
     useEffect(() => {
         // Start with all resources
         let result = resources.map(r => ({ ...r })); // create shallow copy
@@ -184,10 +183,6 @@ const DevmanResources = () => {
         }, 4000);
     };
 
-
-
-
-
     const handleAssignToProject = (resource) => {
         setAssignModal({ show: true, resource });
     };
@@ -223,7 +218,7 @@ const DevmanResources = () => {
                 startDate: assignmentData.startDate,
                 endDate: assignmentData.endDate
             };
-            await api.post('/resources/assign', assignData);
+            await api.post('/requests/assign', assignData);
             closeAssignModal();
             showNotification('Assignment request submitted for approval!', 'success');
             fetchResources(); // Refresh the list
@@ -232,30 +227,6 @@ const DevmanResources = () => {
             showNotification(error.response?.data?.message || 'Failed to submit assignment request', 'error');
         }
     };
-
-    const getProjectBadgeColors = (projectCount) => {
-        if (projectCount <= 1) {
-            return {
-                border: '#06D001',
-                background: 'rgba(6, 208, 1, 0.2)',
-                text: '#06D001'
-            };
-        } else if (projectCount === 2) {
-            return {
-                border: '#F97316',
-                background: 'rgba(249, 115, 22, 0.2)',
-                text: '#F97316'
-            };
-        } else {
-            return {
-                border: '#FF0000',
-                background: 'rgba(255, 0, 0, 0.2)',
-                text: '#FF0000'
-            };
-        }
-    };;
-
-
 
     const handleViewDetail = async (resource) => {
         if (resource.status === 'AVAILABLE') {
@@ -266,12 +237,14 @@ const DevmanResources = () => {
                 const assignments = response.data;
 
                 // Format assignments for display
-                const formattedProjects = assignments.map(a => ({
-                    projectName: a.projectName,
-                    role: a.projectRole,
-                    startDate: new Date(a.startDate).toLocaleDateString('en-GB'),
-                    endDate: new Date(a.endDate).toLocaleDateString('en-GB')
-                }));
+                const formattedProjects = assignments
+                    .filter(a => a.projectStatus !== 'CLOSED')
+                    .map(a => ({
+                        projectName: a.projectName,
+                        role: a.projectRole,
+                        startDate: new Date(a.startDate).toLocaleDateString('en-GB'),
+                        endDate: new Date(a.endDate).toLocaleDateString('en-GB')
+                    }));
 
                 setDetailModal({ show: true, resource, projects: formattedProjects });
             } catch (error) {
@@ -342,17 +315,7 @@ const DevmanResources = () => {
                                 {detailModal.resource?.resourceName}
                             </h2>
                             <div className="flex items-center gap-4">
-                                <span
-                                    className="px-3 py-1 rounded-full font-bold whitespace-nowrap"
-                                    style={{
-                                        fontSize: '12px',
-                                        color: '#000000',
-                                        backgroundColor: '#CAF0F8',
-                                        border: '1px solid #CAF0F8'
-                                    }}
-                                >
-                                    ACTIVE IN {detailModal.projects.length} PROJECTS
-                                </span>
+                                <ProjectCountBadge count={detailModal.projects.length} />
                                 <button
                                     onClick={closeDetailModal}
                                     className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -449,18 +412,7 @@ const DevmanResources = () => {
                                 </div>
                                 {/* Right side: Status badges */}
                                 <div className="flex items-center gap-2">
-                                    <span
-                                        className="px-2 py-0.5 text-xs font-medium rounded-full"
-                                        style={{
-                                            backgroundColor: getProjectBadgeColors(assignModal.resource?.projectCount || 0).background,
-                                            color: getProjectBadgeColors(assignModal.resource?.projectCount || 0).text,
-                                            border: `1px solid ${getProjectBadgeColors(assignModal.resource?.projectCount || 0).border}`,
-                                            fontFamily: 'SF Pro Display',
-                                            fontSize: '11px'
-                                        }}
-                                    >
-                                        ACTIVE IN {assignModal.resource?.projectCount || 0} PROJECT{assignModal.resource?.projectCount !== 1 ? 'S' : ''}
-                                    </span>
+                                    <ProjectCountBadge count={assignModal.resource?.projectCount || 0} size="small" />
                                     <StatusBadge
                                         status={assignModal.resource?.status}
                                         className="text-xs"
@@ -718,9 +670,9 @@ const DevmanResources = () => {
                                             };
 
                                             const getProjectColor = (assignment) => {
-                                                if (assignment.projectStatus === 'CLOSED' || assignment.assignmentStatus === 'RELEASED') return '#FF0000';
-                                                if (assignment.projectStatus === 'HOLD') return '#F97316';
-                                                return '#06D001';
+                                                if (assignment.assignmentStatus === 'ACTIVE') return '#06D001'; // Green for Active
+                                                if (assignment.projectStatus === 'HOLD') return '#F97316'; // Orange for Hold
+                                                return '#FF0000'; // Red for everything else (Released, Expired, Closed)
                                             };
 
                                             const rows = [];
@@ -994,7 +946,21 @@ const DevmanResources = () => {
                                 <p><span className="font-semibold">Role:</span> {tooltipState.data.assignment.projectRole}</p>
                                 <p><span className="font-semibold">Start:</span> {tooltipState.data.monthNames[tooltipState.data.startDateObj.getMonth()]} {tooltipState.data.startDateObj.getFullYear()}</p>
                                 <p><span className="font-semibold">End:</span> {tooltipState.data.monthNames[tooltipState.data.endDateObj.getMonth()]} {tooltipState.data.endDateObj.getFullYear()}</p>
-                                <p><span className="font-semibold">Status:</span> <StatusBadge status={new Date(tooltipState.data.assignment.endDate) < tooltipState.data.now ? 'Closed' : 'Ongoing'} className="ml-1" /></p>
+                                <p><span className="font-semibold">Status:</span> <span className={
+                                    tooltipState.data.assignment.projectStatus === 'CLOSED' ||
+                                        tooltipState.data.assignment.assignmentStatus === 'RELEASED' ||
+                                        new Date(tooltipState.data.assignment.endDate) < tooltipState.data.now
+                                        ? 'text-red-600 font-bold'
+                                        : tooltipState.data.assignment.projectStatus === 'HOLD'
+                                            ? 'text-orange-500 font-bold'
+                                            : 'text-green-600 font-bold'
+                                }>
+                                    {tooltipState.data.assignment.projectStatus === 'CLOSED' ||
+                                        tooltipState.data.assignment.assignmentStatus === 'RELEASED' ||
+                                        new Date(tooltipState.data.assignment.endDate) < tooltipState.data.now
+                                        ? 'CLOSED'
+                                        : tooltipState.data.assignment.projectStatus}
+                                </span></p>
                             </div>
                         </div>
                         {/* Arrow */}
@@ -1014,7 +980,7 @@ const DevmanResources = () => {
                     </div>
                 )
             }
-        </div >
+        </div>
     );
 };
 

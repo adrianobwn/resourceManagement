@@ -1337,7 +1337,21 @@ const AdminResources = () => {
                             <p><span className="font-semibold">Role:</span> {tooltipState.data.assignment.projectRole}</p>
                             <p><span className="font-semibold">Start:</span> {tooltipState.data.monthNames[tooltipState.data.startDateObj.getMonth()]} {tooltipState.data.startDateObj.getFullYear()}</p>
                             <p><span className="font-semibold">End:</span> {tooltipState.data.monthNames[tooltipState.data.endDateObj.getMonth()]} {tooltipState.data.endDateObj.getFullYear()}</p>
-                            <p><span className="font-semibold">Status:</span> <span className={tooltipState.data.assignment.projectStatus === 'CLOSED' || tooltipState.data.assignment.projectStatus === 'HOLD' || new Date(tooltipState.data.assignment.endDate) < tooltipState.data.now ? 'text-red-600 font-bold' : 'text-green-600 font-bold'}>{tooltipState.data.assignment.projectStatus}</span></p>
+                            <p><span className="font-semibold">Status:</span> <span className={
+                                tooltipState.data.assignment.projectStatus === 'CLOSED' ||
+                                    tooltipState.data.assignment.assignmentStatus === 'RELEASED' ||
+                                    new Date(tooltipState.data.assignment.endDate) < tooltipState.data.now
+                                    ? 'text-red-600 font-bold'
+                                    : tooltipState.data.assignment.projectStatus === 'HOLD'
+                                        ? 'text-orange-500 font-bold'
+                                        : 'text-green-600 font-bold'
+                            }>
+                                {tooltipState.data.assignment.projectStatus === 'CLOSED' ||
+                                    tooltipState.data.assignment.assignmentStatus === 'RELEASED' ||
+                                    new Date(tooltipState.data.assignment.endDate) < tooltipState.data.now
+                                    ? 'CLOSED'
+                                    : tooltipState.data.assignment.projectStatus}
+                            </span></p>
                         </div>
                     </div>
                     {/* Arrow */}

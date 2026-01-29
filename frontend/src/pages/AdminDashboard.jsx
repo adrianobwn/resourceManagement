@@ -219,7 +219,9 @@ const Dashboard = () => {
                                     </h2>
                                     <span className="text-gray-600 font-medium" style={{ fontFamily: 'SF Pro Display' }}>
                                         {viewDetailModal.request.type === 'EXTEND' ? 'Extend Assignment' :
-                                            viewDetailModal.request.type === 'RELEASE' ? 'Release Assignment' : 'New Project Submission'}
+                                            viewDetailModal.request.type === 'RELEASE' ? 'Release Assignment' :
+                                                viewDetailModal.request.type === 'ASSIGN' ? 'New Assignment' :
+                                                    'New Project Submission'}
                                     </span>
                                 </div>
                                 <button
@@ -230,11 +232,64 @@ const Dashboard = () => {
                                 </button>
                             </div>
 
+                            {/* ASSIGN Type Modal */}
+                            {viewDetailModal.request.type === 'ASSIGN' && (
+                                <>
+                                    {/* Resource Info */}
+                                    <div className="space-y-3 mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <User className="w-5 h-5 text-gray-500" />
+                                            <span style={{ fontFamily: 'SF Pro Display' }}>
+                                                Requester : <span className="font-bold">{viewDetailModal.request.requester}</span>
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <User className="w-5 h-5 text-gray-500" />
+                                            <span style={{ fontFamily: 'SF Pro Display' }}>
+                                                Resource : <span className="font-bold">{viewDetailModal.request.resource}</span>
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <Folder className="w-5 h-5 text-gray-500" />
+                                            <span style={{ fontFamily: 'SF Pro Display' }}>
+                                                Project : <span className="font-bold">{viewDetailModal.request.project}</span>
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <Users className="w-5 h-5 text-gray-500" />
+                                            <span style={{ fontFamily: 'SF Pro Display' }}>
+                                                Role : <span className="font-bold">{viewDetailModal.request.role ? toTitleCase(viewDetailModal.request.role) : '-'}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="border-t border-gray-300 my-4"></div>
+
+                                    {/* Assignment Details */}
+                                    <div className="mb-4">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <Calendar className="w-5 h-5 text-gray-500" />
+                                            <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Assignment Period</span>
+                                        </div>
+                                        <div className="ml-8 space-y-1" style={{ fontFamily: 'SF Pro Display' }}>
+                                            <p className="text-gray-600">Start Date : {formatDate(viewDetailModal.request.startDate)}</p>
+                                            <p className="text-gray-600">End Date : {formatDate(viewDetailModal.request.newEndDate)}</p>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
                             {/* EXTEND Type Modal */}
                             {viewDetailModal.request.type === 'EXTEND' && (
                                 <>
                                     {/* Resource Info */}
                                     <div className="space-y-3 mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <User className="w-5 h-5 text-gray-500" />
+                                            <span style={{ fontFamily: 'SF Pro Display' }}>
+                                                Requester : <span className="font-bold">{viewDetailModal.request.requester}</span>
+                                            </span>
+                                        </div>
                                         <div className="flex items-center gap-3">
                                             <User className="w-5 h-5 text-gray-500" />
                                             <span style={{ fontFamily: 'SF Pro Display' }}>
@@ -294,6 +349,12 @@ const Dashboard = () => {
                                 <>
                                     {/* Resource Info */}
                                     <div className="space-y-3 mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <User className="w-5 h-5 text-gray-500" />
+                                            <span style={{ fontFamily: 'SF Pro Display' }}>
+                                                Requester : <span className="font-bold">{viewDetailModal.request.requester}</span>
+                                            </span>
+                                        </div>
                                         <div className="flex items-center gap-3">
                                             <User className="w-5 h-5 text-gray-500" />
                                             <span style={{ fontFamily: 'SF Pro Display' }}>
@@ -591,9 +652,21 @@ const Dashboard = () => {
                             >
                                 <div className="flex items-center gap-3">
                                     <StatusBadge status={request.type} />
-                                    <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>
-                                        {request.type === 'PROJECT' ? request.projectName : request.resource}
-                                    </span>
+                                    <div style={{ fontFamily: 'SF Pro Display' }}>
+                                        <p className="font-bold text-gray-800">
+                                            {request.type === 'PROJECT' ? request.projectName : request.resource}
+                                        </p>
+                                        {['ASSIGN', 'EXTEND', 'RELEASE'].includes(request.type) && (
+                                            <p className="text-sm text-gray-500">
+                                                {request.project}
+                                            </p>
+                                        )}
+                                        {request.type === 'PROJECT' && (
+                                            <p className="text-sm text-gray-500">
+                                                {request.clientName}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                                 <button
                                     onClick={() => setViewDetailModal({ show: true, request, isRejecting: false, reason: '' })}

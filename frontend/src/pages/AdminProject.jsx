@@ -414,16 +414,18 @@ const AdminProject = () => {
                                             <Users className="w-4 h-4" /> {project.memberCount}
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteClick(project);
-                                        }}
-                                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                        title="Delete Project"
-                                    >
-                                        <Trash2 className="w-5 h-5" />
-                                    </button>
+                                    {project.status === 'CLOSED' && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteClick(project);
+                                            }}
+                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                            title="Delete Project"
+                                        >
+                                            <Trash2 className="w-5 h-5" />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))

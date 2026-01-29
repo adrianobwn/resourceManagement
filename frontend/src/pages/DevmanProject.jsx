@@ -226,6 +226,15 @@ const DevmanProject = () => {
     };
 
     const updateResourcePlanItem = (index, field, value) => {
+        // Prevent duplicate resource selection
+        if (field === 'resourceId') {
+            const isDuplicate = projectProposal.resourcePlan.some((item, idx) => idx !== index && item.resourceId === value);
+            if (isDuplicate) {
+                showNotification('This resource is already added to the plan', 'error');
+                return;
+            }
+        }
+
         const newPlan = [...projectProposal.resourcePlan];
         newPlan[index][field] = value;
         setProjectProposal({ ...projectProposal, resourcePlan: newPlan });
