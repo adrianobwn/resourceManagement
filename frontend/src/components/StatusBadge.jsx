@@ -5,7 +5,7 @@ const StatusBadge = ({ status, className = '' }) => {
         const upperStatus = statusName?.toUpperCase();
 
         // Green Group
-        if (['ONGOING', 'APPROVED', 'ACTIVE', 'AVAILABLE'].includes(upperStatus)) {
+        if (['ONGOING', 'APPROVED', 'ACTIVE', 'AVAILABLE', 'ASSIGN'].includes(upperStatus)) {
             return {
                 color: '#06D001',
                 borderColor: '#06D001',
