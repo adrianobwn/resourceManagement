@@ -90,6 +90,42 @@ public class AssignmentRequestService {
                 Project project = projectRepository.findById(dto.getProjectId())
                                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
+                // Check for existing active assignment to this project with the SAME ROLE
+                long activeAssignments = assignmentRepository
+                                .countByResource_ResourceIdAndProject_ProjectIdAndProjectRoleAndStatus(
+                                                resource.getResourceId(),
+                                                project.getProjectId(),
+                                                dto.getProjectRole(),
+                                                AssignmentStatus.ACTIVE);
+
+                if (activeAssignments > 0) {
+                        throw new RuntimeException("Resource is already assigned to this project with this role.");
+                }
+
+                // Check for existing pending request to this project with the SAME ROLE
+                long pendingRequests = requestRepository.countByResource_ResourceIdAndProject_ProjectIdAndRoleAndStatus(
+                                resource.getResourceId(),
+                                project.getProjectId(),
+                                dto.getProjectRole(),
+                                RequestStatus.PENDING);
+
+                if (pendingRequests > 0) {
+                        throw new RuntimeException(
+                                        "A pending assignment request already exists for this resource and role in this project.");
+                }
+
+                LocalDate startDate = LocalDate.parse(dto.getStartDate());
+                LocalDate endDate = LocalDate.parse(dto.getEndDate());
+                LocalDate today = LocalDate.now();
+
+                if (startDate.isBefore(today)) {
+                        throw new RuntimeException("Start date cannot be in the past.");
+                }
+
+                if (!endDate.isAfter(startDate)) {
+                        throw new RuntimeException("End date must be after start date.");
+                }
+
                 AssignmentRequest request = AssignmentRequest.builder()
                                 .requestType(RequestType.ASSIGN)
                                 .status(RequestStatus.PENDING)
@@ -97,8 +133,8 @@ public class AssignmentRequestService {
                                 .project(project)
                                 .resource(resource)
                                 .role(dto.getProjectRole())
-                                .startDate(LocalDate.parse(dto.getStartDate()))
-                                .endDate(LocalDate.parse(dto.getEndDate()))
+                                .startDate(startDate)
+                                .endDate(endDate)
                                 .build();
 
                 requestRepository.save(request);
@@ -119,12 +155,13 @@ public class AssignmentRequestService {
                                 .build();
 
                 if (dto.getResourcePlan() != null) {
-                        java.util.Set<Integer> uniqueResourceIds = new java.util.HashSet<>();
+                        java.util.Set<String> uniqueAssignments = new java.util.HashSet<>();
                         for (com.resourceManagement.dto.request.ProjectProposalRequest.ResourcePlanItem item : dto
                                         .getResourcePlan()) {
-                                if (!uniqueResourceIds.add(item.getResourceId())) {
-                                        throw new RuntimeException("Duplicate resource found in proposal: "
-                                                        + item.getResourceId());
+                                String key = item.getResourceId() + ":" + item.getRole();
+                                if (!uniqueAssignments.add(key)) {
+                                        throw new RuntimeException("Duplicate resource and role in proposal: "
+                                                        + item.getResourceId() + " as " + item.getRole());
                                 }
                         }
 
@@ -142,6 +179,23 @@ public class AssignmentRequestService {
                                                                 .endDate(item.getEndDate())
                                                                 .build();
                                         }).collect(java.util.stream.Collectors.toList());
+
+                        // Validate dates in the plan
+                        LocalDate today = LocalDate.now();
+                        for (ProjectRequestResource item : plan) {
+                                LocalDate start = item.getStartDate();
+                                LocalDate end = item.getEndDate();
+                                if (start.isBefore(today)) {
+                                        throw new RuntimeException(
+                                                        "Start date for " + item.getResource().getResourceName()
+                                                                        + " cannot be in the past.");
+                                }
+                                if (!end.isAfter(start)) {
+                                        throw new RuntimeException(
+                                                        "End date for " + item.getResource().getResourceName()
+                                                                        + " must be after start date.");
+                                }
+                        }
                         request.setResourcePlan(plan);
                 }
 
@@ -236,10 +290,11 @@ public class AssignmentRequestService {
 
                         // Create assignments
                         if (req.getResourcePlan() != null) {
-                                java.util.Set<Integer> processedResourceIds = new java.util.HashSet<>();
+                                java.util.Set<String> processedAssignments = new java.util.HashSet<>();
                                 for (ProjectRequestResource item : req.getResourcePlan()) {
                                         // Skip if already processed in this batch (prevent duplicates)
-                                        if (!processedResourceIds.add(item.getResource().getResourceId())) {
+                                        String key = item.getResource().getResourceId() + ":" + item.getRole();
+                                        if (!processedAssignments.add(key)) {
                                                 continue;
                                         }
 
@@ -265,19 +320,17 @@ public class AssignmentRequestService {
                                 throw new RuntimeException("Cannot assign resources to a CLOSED project");
                         }
 
-                        // Check for existing active assignment to this project
+                        // Check for existing active assignment to this project with the SAME ROLE
                         long activeAssignments = assignmentRepository
-                                        .countByResource_ResourceIdAndProject_ProjectIdAndStatus(
+                                        .countByResource_ResourceIdAndProject_ProjectIdAndProjectRoleAndStatus(
                                                         req.getResource().getResourceId(),
                                                         req.getProject().getProjectId(),
+                                                        req.getRole(),
                                                         AssignmentStatus.ACTIVE);
 
                         if (activeAssignments > 0) {
-                                // If already assigned, just approve the request but don't create duplicate
-                                // assignment
-                                // Or consider it an implicit extension if dates differ?
-                                // For now, to be safe and consistent with direct assignment validation:
-                                throw new RuntimeException("Resource is already assigned to this project.");
+                                throw new RuntimeException(
+                                                "Resource is already assigned to this project with this role.");
                         }
 
                         ResourceAssignment assignment = ResourceAssignment.builder()

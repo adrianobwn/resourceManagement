@@ -205,8 +205,18 @@ const DevmanResources = () => {
         }
 
         // Date range validation
-        if (new Date(assignmentData.endDate) < new Date(assignmentData.startDate)) {
-            showNotification('End Date cannot be before Start Date', 'error');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const start = new Date(assignmentData.startDate);
+        const end = new Date(assignmentData.endDate);
+
+        if (start < today) {
+            showNotification('Start Date cannot be in the past', 'error');
+            return;
+        }
+
+        if (end <= start) {
+            showNotification('End Date must be after Start Date', 'error');
             return;
         }
 

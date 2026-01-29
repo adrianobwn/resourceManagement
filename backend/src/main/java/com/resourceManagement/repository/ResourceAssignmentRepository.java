@@ -20,6 +20,8 @@ public interface ResourceAssignmentRepository extends JpaRepository<ResourceAssi
         List<ResourceAssignment> findByStatusAndEndDateBetween(AssignmentStatus status, LocalDate startDate,
                         LocalDate endDate);
 
+        List<ResourceAssignment> findByStatusAndEndDateBefore(AssignmentStatus status, LocalDate date);
+
         List<ResourceAssignment> findByStatusAndProject_DevMan_UserIdAndEndDateBetween(AssignmentStatus status,
                         Integer devManId, LocalDate startDate, LocalDate endDate);
 
@@ -29,6 +31,10 @@ public interface ResourceAssignmentRepository extends JpaRepository<ResourceAssi
 
         long countByResource_ResourceIdAndProject_ProjectIdAndStatus(Integer resourceId, Integer projectId,
                         AssignmentStatus status);
+
+        long countByResource_ResourceIdAndProject_ProjectIdAndProjectRoleAndStatus(Integer resourceId,
+                        Integer projectId,
+                        String projectRole, AssignmentStatus status);
 
         long countByResource_ResourceIdAndStatus(Integer resourceId, AssignmentStatus status);
 

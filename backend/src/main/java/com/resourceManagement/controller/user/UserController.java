@@ -28,6 +28,14 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllPms());
     }
 
+    @PutMapping("/{userId}")
+    public ResponseEntity<Void> updateUser(
+            @PathVariable Integer userId,
+            @Valid @RequestBody com.resourceManagement.dto.user.UpdateUserRequest request) {
+        userService.updateUser(userId, request);
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/{userId}")
     public ResponseEntity<Void> deleteUser(@PathVariable Integer userId) {
         userService.deleteUser(userId);

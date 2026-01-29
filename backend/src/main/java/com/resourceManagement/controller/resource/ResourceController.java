@@ -52,6 +52,15 @@ public class ResourceController {
         return ResponseEntity.ok(assignments);
     }
 
+    @PutMapping("/{resourceId}")
+    // @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ResourceResponse> updateResource(
+            @PathVariable Integer resourceId,
+            @Valid @RequestBody com.resourceManagement.dto.resource.UpdateResourceRequest request) {
+        ResourceResponse updated = resourceService.updateResource(resourceId, request);
+        return ResponseEntity.ok(updated);
+    }
+
     @DeleteMapping("/{resourceId}")
     // @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteResource(@PathVariable Integer resourceId) {

@@ -15,6 +15,7 @@ import com.resourceManagement.model.enums.UserType;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/assignments")
@@ -48,22 +49,24 @@ public class ResourceAssignmentController {
             return ResponseEntity.ok("Extend request submitted successfully");
         } else {
             // Admin direct action
-            com.resourceManagement.model.entity.ResourceAssignment assignment = 
-                assignmentService.extendAssignment(request);
-            
+            ResourceAssignment currentAssignment = assignmentService.getAssignmentById(request.getAssignmentId());
+            LocalDate oldEndDate = currentAssignment.getEndDate();
+
+            ResourceAssignment updatedAssignment = assignmentService.extendAssignment(request);
+
             // Log the direct admin action
-            com.resourceManagement.model.entity.AssignmentRequest details = 
-                com.resourceManagement.model.entity.AssignmentRequest.builder()
-                    .assignmentId(assignment.getAssignmentId())
-                    .project(assignment.getProject())
-                    .resource(assignment.getResource())
-                    .role(assignment.getProjectRole())
-                    .currentEndDate(assignment.getEndDate())
+            com.resourceManagement.model.entity.AssignmentRequest details = com.resourceManagement.model.entity.AssignmentRequest
+                    .builder()
+                    .assignmentId(updatedAssignment.getAssignmentId())
+                    .project(updatedAssignment.getProject())
+                    .resource(updatedAssignment.getResource())
+                    .role(updatedAssignment.getProjectRole())
+                    .currentEndDate(oldEndDate)
                     .newEndDate(request.getNewEndDate())
                     .reason(request.getReason())
                     .build();
             requestService.recordDirectAction(user, com.resourceManagement.model.enums.RequestType.EXTEND, details);
-            
+
             return ResponseEntity.ok("Assignment extended successfully");
         }
     }
@@ -78,22 +81,24 @@ public class ResourceAssignmentController {
             return ResponseEntity.ok("Release request submitted successfully");
         } else {
             // Admin direct action
-            com.resourceManagement.model.entity.ResourceAssignment assignment = 
-                assignmentService.releaseAssignment(request);
-            
+            ResourceAssignment currentAssignment = assignmentService.getAssignmentById(request.getAssignmentId());
+            LocalDate oldEndDate = currentAssignment.getEndDate();
+
+            ResourceAssignment updatedAssignment = assignmentService.releaseAssignment(request);
+
             // Log the direct admin action
-            com.resourceManagement.model.entity.AssignmentRequest details = 
-                com.resourceManagement.model.entity.AssignmentRequest.builder()
-                    .assignmentId(assignment.getAssignmentId())
-                    .project(assignment.getProject())
-                    .resource(assignment.getResource())
-                    .role(assignment.getProjectRole())
-                    .currentEndDate(assignment.getEndDate())
+            com.resourceManagement.model.entity.AssignmentRequest details = com.resourceManagement.model.entity.AssignmentRequest
+                    .builder()
+                    .assignmentId(updatedAssignment.getAssignmentId())
+                    .project(updatedAssignment.getProject())
+                    .resource(updatedAssignment.getResource())
+                    .role(updatedAssignment.getProjectRole())
+                    .currentEndDate(oldEndDate)
                     .newEndDate(request.getReleaseDate())
                     .reason(request.getReason())
                     .build();
             requestService.recordDirectAction(user, com.resourceManagement.model.enums.RequestType.RELEASE, details);
-            
+
             return ResponseEntity.ok("Assignment released successfully");
         }
     }

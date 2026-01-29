@@ -696,7 +696,7 @@ const Dashboard = () => {
                                         No assignments ending soon
                                     </div>
                                 ) : (
-                                    assignmentsEndingSoon.filter(a => a.daysLeft <= 1).map((assignment) => (
+                                    assignmentsEndingSoon.filter(a => a.daysLeft === 1).map((assignment) => (
                                         <div
                                             key={assignment.assignmentId}
                                             className="rounded-xl p-4 flex items-center justify-between"

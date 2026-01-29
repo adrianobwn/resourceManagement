@@ -19,6 +19,8 @@ import com.resourceManagement.model.enums.EntityType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.resourceManagement.model.enums.RequestStatus;
+import com.resourceManagement.repository.AssignmentRequestRepository;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -34,6 +36,9 @@ public class ResourceService {
         private final ProjectRepository projectRepository;
         private final UserRepository userRepository;
         private final HistoryLogService historyLogService;
+        private final AssignmentRequestRepository requestRepository;
+        private final com.resourceManagement.repository.ProjectRequestResourceRepository projectRequestResourceRepository;
+        private final com.resourceManagement.repository.HistoryLogRepository historyLogRepository;
 
         public List<ResourceResponse> getAllResources() {
                 List<Resource> resources = resourceRepository.findAll();
@@ -90,15 +95,29 @@ public class ResourceService {
                 Project project = projectRepository.findById(request.getProjectId())
                                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
-                // Check for existing active assignment to this project
-                long activeAssignments = assignmentRepository.countByResource_ResourceIdAndProject_ProjectIdAndStatus(
-                                resource.getResourceId(),
-                                project.getProjectId(),
-                                AssignmentStatus.ACTIVE);
+                // Check for existing active assignment to this project with the SAME ROLE
+                long activeAssignments = assignmentRepository
+                                .countByResource_ResourceIdAndProject_ProjectIdAndProjectRoleAndStatus(
+                                                resource.getResourceId(),
+                                                project.getProjectId(),
+                                                request.getProjectRole(),
+                                                AssignmentStatus.ACTIVE);
 
                 if (activeAssignments > 0) {
                         throw new RuntimeException(
-                                        "Resource is already assigned to this project. Use 'Extend' to modify the existing assignment.");
+                                        "Resource is already assigned to this project with this role. Use 'Extend' to modify the existing assignment or choose a different role.");
+                }
+
+                // Check for existing pending request to this project with the SAME ROLE
+                long pendingRequests = requestRepository.countByResource_ResourceIdAndProject_ProjectIdAndRoleAndStatus(
+                                resource.getResourceId(),
+                                project.getProjectId(),
+                                request.getProjectRole(),
+                                RequestStatus.PENDING);
+
+                if (pendingRequests > 0) {
+                        throw new RuntimeException(
+                                        "A pending assignment request already exists for this resource and role in this project.");
                 }
 
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -147,10 +166,20 @@ public class ResourceService {
                                         "Cannot delete resource with active assignments. Please release all assignments first.");
                 }
 
-                // Delete all assignments (including history/inactive ones)
+                // Delete all assignments
                 assignmentRepository.deleteByResource_ResourceId(resourceId);
 
-                // Log deletion
+                // Delete from project request resources (proposals)
+                projectRequestResourceRepository.deleteByResource_ResourceId(resourceId);
+
+                // Delete from assignment requests
+                requestRepository.deleteByResource_ResourceId(resourceId);
+
+                // Delete history logs
+                historyLogRepository.deleteByResource_ResourceId(resourceId);
+
+                // Log deletion (this log will be deleted eventually if we delete everything,
+                // but for now it's okay)
                 String currentPrincipalName = SecurityContextHolder.getContext().getAuthentication().getName();
                 User performedBy = userRepository.findByEmail(currentPrincipalName)
                                 .orElseThrow(() -> new RuntimeException("Current user not found"));
@@ -163,6 +192,37 @@ public class ResourceService {
 
                 // Delete the resource
                 resourceRepository.delete(resource);
+        }
+
+        @Transactional
+        public ResourceResponse updateResource(Integer resourceId,
+                        com.resourceManagement.dto.resource.UpdateResourceRequest request) {
+                Resource resource = resourceRepository.findById(resourceId)
+                                .orElseThrow(() -> new RuntimeException("Resource not found with id: " + resourceId));
+
+                String oldName = resource.getResourceName();
+                String oldEmail = resource.getEmail();
+
+                resource.setResourceName(request.getResourceName());
+                resource.setEmail(request.getEmail());
+
+                Resource updated = resourceRepository.save(resource);
+
+                // Log activity
+                String email = SecurityContextHolder.getContext().getAuthentication().getName();
+                User actor = userRepository.findByEmail(email).orElseThrow();
+
+                String changeLog = String.format("Updated Resource: %s -> %s, %s -> %s",
+                                oldName, request.getResourceName(),
+                                oldEmail, request.getEmail());
+
+                historyLogService.logActivity(
+                                EntityType.RESOURCE,
+                                "UPDATE",
+                                changeLog,
+                                actor);
+
+                return mapToResourceResponse(updated);
         }
 
         private ResourceResponse mapToResourceResponse(Resource resource) {
@@ -186,6 +246,7 @@ public class ResourceService {
                                 .email(resource.getEmail())
                                 .status(resource.getStatus())
                                 .projectCount((int) projectCount)
+                                .totalAssignments(assignments.size())
                                 .currentAssignments(assignmentInfos)
                                 .build();
         }

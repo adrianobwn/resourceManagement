@@ -21,4 +21,8 @@ public interface HistoryLogRepository extends JpaRepository<HistoryLog, Integer>
     List<HistoryLog> findByProject_ProjectId(Integer projectId);
 
     void deleteByProject_ProjectId(Integer projectId);
+
+    void deleteByResource_ResourceId(Integer resourceId);
+
+    void deleteByPerformedBy_UserId(Integer userId);
 }

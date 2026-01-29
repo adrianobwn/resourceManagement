@@ -42,6 +42,13 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.updateProjectStatus(projectId, status));
     }
 
+    @PutMapping("/{projectId}")
+    public ResponseEntity<ProjectListResponse> updateProject(
+            @PathVariable Integer projectId,
+            @Valid @RequestBody com.resourceManagement.dto.project.UpdateProjectRequest request) {
+        return ResponseEntity.ok(projectService.updateProject(projectId, request));
+    }
+
     @DeleteMapping("/{projectId}")
     public ResponseEntity<Void> deleteProject(@PathVariable Integer projectId) {
         projectService.deleteProject(projectId);

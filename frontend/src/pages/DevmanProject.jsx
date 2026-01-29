@@ -198,6 +198,25 @@ const DevmanProject = () => {
             return;
         }
 
+        // Date validation for resource plan
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (const item of projectProposal.resourcePlan) {
+            const start = new Date(item.startDate);
+            const end = new Date(item.endDate);
+
+            if (start < today) {
+                showNotification(`Start Date for a resource cannot be in the past`, 'error');
+                return;
+            }
+
+            if (end <= start) {
+                showNotification(`End Date must be after Start Date for all resources`, 'error');
+                return;
+            }
+        }
+
         try {
             await api.post('/requests/project', projectProposal);
             setShowNewProjectModal(false);
@@ -227,11 +246,19 @@ const DevmanProject = () => {
 
     const updateResourcePlanItem = (index, field, value) => {
         // Prevent duplicate resource selection
-        if (field === 'resourceId') {
-            const isDuplicate = projectProposal.resourcePlan.some((item, idx) => idx !== index && item.resourceId === value);
-            if (isDuplicate) {
-                showNotification('This resource is already added to the plan', 'error');
-                return;
+        if (field === 'resourceId' || field === 'role') {
+            const currentItem = projectProposal.resourcePlan[index];
+            const resourceId = field === 'resourceId' ? value : currentItem.resourceId;
+            const role = field === 'role' ? value : currentItem.role;
+
+            if (resourceId && role) {
+                const isDuplicate = projectProposal.resourcePlan.some((item, idx) =>
+                    idx !== index && item.resourceId === resourceId && item.role === role
+                );
+                if (isDuplicate) {
+                    showNotification('This resource is already added to the plan with this role', 'error');
+                    return;
+                }
             }
         }
 

@@ -159,42 +159,72 @@ public class ProjectService {
                                 .orElseThrow(() -> new RuntimeException("Project not found with id: " + projectId));
 
                 if (project.getStatus() != ProjectStatus.CLOSED) {
-                        throw new RuntimeException("Cannot delete project. Only CLOSED projects can be deleted.");
+                        throw new RuntimeException(
+                                        "Only CLOSED projects can be deleted. Please ensure the project status is CLOSED first.");
                 }
 
-                // Preserve history: Detach assignment requests from the project instead of
-                // deleting them works
-                List<AssignmentRequest> requests = requestRepository.findByProject_ProjectId(projectId);
-                for (AssignmentRequest req : requests) {
-                        req.setProject(null);
-                        if (req.getProjectName() == null) {
-                                req.setProjectName(project.getProjectName());
-                        }
-                        requestRepository.save(req);
-                }
+                // Delete all assignment requests associated with this project
+                requestRepository.deleteByProject_ProjectId(projectId);
 
-                // Log deletion
-                String currentPrincipalName = SecurityContextHolder.getContext().getAuthentication().getName();
-                User performedBy = userRepository.findByEmail(currentPrincipalName)
-                                .orElseThrow(() -> new RuntimeException("Current user not found"));
+                // Log deletion (this log will be deleted below if it's pointing to the project,
+                // but we might want to log it to the resource/user instead?
+                // Actually, historyLogService.logActivity above line 181 is good)
 
-                historyLogService.logActivity(
-                                EntityType.PROJECT,
-                                "DELETE",
-                                "Deleted Project: " + project.getProjectName(),
-                                performedBy);
-
-                // Preserve history: Detach history logs (track record) from the project
-                List<HistoryLog> logs = historyLogRepository.findByProject_ProjectId(projectId);
-                for (HistoryLog log : logs) {
-                        log.setProject(null);
-                        historyLogRepository.save(log);
-                }
+                // Delete all history logs associated with this project
+                historyLogRepository.deleteByProject_ProjectId(projectId);
 
                 // Delete all assignments associated with this project
                 resourceAssignmentRepository.deleteByProject_ProjectId(projectId);
 
                 // Delete the project
                 projectRepository.delete(project);
+        }
+
+        @org.springframework.transaction.annotation.Transactional
+        public ProjectListResponse updateProject(Integer projectId,
+                        com.resourceManagement.dto.project.UpdateProjectRequest request) {
+                Project project = projectRepository.findById(projectId)
+                                .orElseThrow(() -> new RuntimeException("Project not found"));
+
+                String oldName = project.getProjectName();
+                String oldClient = project.getClientName();
+
+                String oldStatus = project.getStatus().toString();
+
+                // Validation for status transitions
+                if (project.getStatus() == ProjectStatus.CLOSED && request.getStatus() != ProjectStatus.CLOSED) {
+                        throw new RuntimeException(
+                                        "Cannot reopen a CLOSED project manually. Status can only be changed between ONGOING and HOLD.");
+                }
+                if (request.getStatus() == ProjectStatus.CLOSED && project.getStatus() != ProjectStatus.CLOSED) {
+                        throw new RuntimeException(
+                                        "Cannot manually close a project. Projects are automatically closed when all resources are released.");
+                }
+
+                project.setProjectName(request.getProjectName());
+                project.setClientName(request.getClientName());
+                project.setStatus(request.getStatus());
+
+                Project saved = projectRepository.save(project);
+
+                // Log activity
+                String email = SecurityContextHolder.getContext().getAuthentication().getName();
+                User admin = userRepository.findByEmail(email).orElseThrow();
+
+                String changeLog = String.format("Updated Project: Name(%s -> %s), Client(%s -> %s), Status(%s -> %s)",
+                                oldName, request.getProjectName(),
+                                oldClient, request.getClientName(),
+                                oldStatus, request.getStatus());
+
+                historyLogService.logActivity(
+                                EntityType.PROJECT,
+                                "UPDATE",
+                                changeLog,
+                                admin,
+                                saved,
+                                null,
+                                null);
+
+                return mapToProjectListResponse(saved);
         }
 }

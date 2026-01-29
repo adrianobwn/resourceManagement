@@ -17,6 +17,7 @@ public class ResourceResponse {
     private String email;
     private ResourceStatus status;
     private Integer projectCount;
+    private Integer totalAssignments;
     private List<AssignmentInfo> currentAssignments;
 
     @Getter

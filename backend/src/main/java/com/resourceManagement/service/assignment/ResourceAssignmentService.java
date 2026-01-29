@@ -21,7 +21,9 @@ import com.resourceManagement.model.entity.AssignmentRequest;
 import com.resourceManagement.model.entity.User;
 import com.resourceManagement.model.enums.RequestType;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.scheduling.annotation.Scheduled;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -59,6 +61,39 @@ public class ResourceAssignmentService {
         // Validate project status
         if (assignment.getProject().getStatus() == com.resourceManagement.model.enums.ProjectStatus.CLOSED) {
             throw new RuntimeException("Cannot assign resources to a CLOSED project");
+        }
+
+        // Check for existing active assignment to this project with the SAME ROLE
+        long activeAssignments = assignmentRepository
+                .countByResource_ResourceIdAndProject_ProjectIdAndProjectRoleAndStatus(
+                        assignment.getResource().getResourceId(),
+                        assignment.getProject().getProjectId(),
+                        assignment.getProjectRole(),
+                        AssignmentStatus.ACTIVE);
+
+        if (activeAssignments > 0) {
+            throw new RuntimeException("Resource is already assigned to this project with this role.");
+        }
+
+        // Check for existing pending request to this project with the SAME ROLE
+        long pendingRequests = requestRepository.countByResource_ResourceIdAndProject_ProjectIdAndRoleAndStatus(
+                assignment.getResource().getResourceId(),
+                assignment.getProject().getProjectId(),
+                assignment.getProjectRole(),
+                RequestStatus.PENDING);
+
+        if (pendingRequests > 0) {
+            throw new RuntimeException(
+                    "A pending assignment request already exists for this resource and role in this project.");
+        }
+
+        // Validate dates
+        LocalDate today = LocalDate.now();
+        if (assignment.getStartDate().isBefore(today)) {
+            throw new RuntimeException("Start date cannot be in the past.");
+        }
+        if (!assignment.getEndDate().isAfter(assignment.getStartDate())) {
+            throw new RuntimeException("End date must be after start date.");
         }
 
         // Save the assignment
@@ -102,6 +137,11 @@ public class ResourceAssignmentService {
                 .orElseThrow(() -> new RuntimeException("Assignment not found with id: " + request.getAssignmentId()));
 
         assignment.setEndDate(request.getReleaseDate());
+        return processRelease(assignment, getCurrentUser());
+    }
+
+    @Transactional
+    public ResourceAssignment processRelease(ResourceAssignment assignment, User performedBy) {
         assignment.setStatus(AssignmentStatus.RELEASED);
 
         // Save assignment first
@@ -136,18 +176,53 @@ public class ResourceAssignmentService {
                     EntityType.PROJECT,
                     "AUTO_CLOSE",
                     "Project closed automatically as all resources were released",
-                    getCurrentUser(),
+                    performedBy,
                     project,
                     null,
                     null);
         }
 
-        // Activity logging is handled by the caller (either approval flow or direct
-        // action)
         return savedAssignment;
+    }
+
+    @Scheduled(cron = "0 0 0 * * *") // Runs every day at midnight
+    @Transactional
+    public void autoReleaseAssignments() {
+        LocalDate today = LocalDate.now();
+        List<ResourceAssignment> expiredAssignments = assignmentRepository
+                .findByStatusAndEndDateBefore(AssignmentStatus.ACTIVE, today);
+
+        if (expiredAssignments.isEmpty()) {
+            return;
+        }
+
+        // Use a system user or the first admin for logging
+        User systemUser = userRepository.findAll().stream()
+                .filter(u -> u.getUserType() == com.resourceManagement.model.enums.UserType.Admin)
+                .findFirst()
+                .orElse(null);
+
+        for (ResourceAssignment assignment : expiredAssignments) {
+            processRelease(assignment, systemUser);
+
+            // Log the automatic release
+            historyLogService.logActivity(
+                    EntityType.ASSIGNMENT,
+                    "AUTO_RELEASE",
+                    "Assignment released automatically due to reaching end date",
+                    systemUser,
+                    assignment.getProject(),
+                    assignment.getResource(),
+                    assignment.getProjectRole());
+        }
     }
 
     public List<ResourceAssignment> getAllAssignments() {
         return assignmentRepository.findAll();
+    }
+
+    public ResourceAssignment getAssignmentById(Integer id) {
+        return assignmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Assignment not found with id: " + id));
     }
 }

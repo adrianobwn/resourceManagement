@@ -12,7 +12,11 @@ import java.util.List;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Integer> {
 
+    List<Project> findByProjectName(String projectName);
+
     List<Project> findByDevMan_UserId(Integer devManId);
+
+    long countByDevMan_UserId(Integer devManId);
 
     List<Project> findByStatus(ProjectStatus status);
 

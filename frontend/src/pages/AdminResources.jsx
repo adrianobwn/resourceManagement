@@ -5,7 +5,7 @@ import StatusBadge from '../components/StatusBadge';
 import Toast from '../components/Toast';
 import api from '../utils/api';
 import * as XLSX from 'xlsx';
-import { Trash2, AlertTriangle } from 'lucide-react';
+import { Trash2, AlertTriangle, Edit2 } from 'lucide-react';
 
 const AdminResources = () => {
     const navigate = useNavigate();
@@ -22,6 +22,12 @@ const AdminResources = () => {
     const [assignModal, setAssignModal] = useState({ show: false, resource: null });
     const [trackRecordModal, setTrackRecordModal] = useState({ show: false, resource: null });
     const [deleteModal, setDeleteModal] = useState({ show: false, resource: null });
+    const [restrictionModal, setRestrictionModal] = useState({ show: false, message: '', title: '' });
+    const [editModal, setEditModal] = useState({
+        show: false,
+        resource: null,
+        formData: { resourceName: '', email: '' }
+    });
     const [newResource, setNewResource] = useState({
         fullName: '',
         email: ''
@@ -47,7 +53,7 @@ const AdminResources = () => {
 
     // Body scroll locking
     useEffect(() => {
-        if (detailModal.show || addResourceModal.show || assignModal.show || trackRecordModal.show || deleteModal.show) {
+        if (detailModal.show || addResourceModal.show || assignModal.show || trackRecordModal.show || deleteModal.show || editModal.show || restrictionModal.show) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'auto';
@@ -279,8 +285,18 @@ const AdminResources = () => {
         }
 
         // Date range validation
-        if (new Date(assignmentData.endDate) < new Date(assignmentData.startDate)) {
-            showNotification('End Date cannot be before Start Date', 'error');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const start = new Date(assignmentData.startDate);
+        const end = new Date(assignmentData.endDate);
+
+        if (start < today) {
+            showNotification('Start Date cannot be in the past', 'error');
+            return;
+        }
+
+        if (end <= start) {
+            showNotification('End Date must be after Start Date', 'error');
             return;
         }
 
@@ -325,6 +341,22 @@ const AdminResources = () => {
     };
 
     const handleDeleteClick = (resource) => {
+        if (resource.status !== 'AVAILABLE') {
+            setRestrictionModal({
+                show: true,
+                title: 'Cannot Delete Resource',
+                message: 'Only AVAILABLE resources can be deleted. Please ensure the resource is not currently assigned to any projects.'
+            });
+            return;
+        }
+        if (resource.totalAssignments > 0) {
+            setRestrictionModal({
+                show: true,
+                title: 'Cannot Delete Resource',
+                message: 'Cannot delete resource with project history. Please ensure all historical data is handled according to policy.'
+            });
+            return;
+        }
         setDeleteModal({ show: true, resource });
     };
 
@@ -339,6 +371,30 @@ const AdminResources = () => {
         } catch (error) {
             console.error('Error deleting resource:', error);
             showNotification(error.response?.data?.message || 'Failed to delete resource', 'error');
+        }
+    };
+
+    const handleEditClick = (resource) => {
+        setEditModal({
+            show: true,
+            resource: resource,
+            formData: {
+                resourceName: resource.resourceName,
+                email: resource.email
+            }
+        });
+    };
+
+    const confirmEdit = async () => {
+        if (!editModal.resource) return;
+        try {
+            await api.put(`/resources/${editModal.resource.resourceId}`, editModal.formData);
+            showNotification('Resource updated successfully!', 'success');
+            setEditModal({ show: false, resource: null, formData: { resourceName: '', email: '' } });
+            fetchResources();
+        } catch (error) {
+            console.error('Error updating resource:', error);
+            showNotification(error.response?.data?.message || 'Failed to update resource', 'error');
         }
     };
 
@@ -1275,6 +1331,13 @@ const AdminResources = () => {
                                                             >
                                                                 <Trash2 size={20} />
                                                             </button>
+                                                            <button
+                                                                onClick={() => handleEditClick(resource)}
+                                                                className="p-2 text-[#00B4D8] hover:bg-blue-50 rounded-lg transition-colors"
+                                                                title="Edit Resource"
+                                                            >
+                                                                <Edit2 size={20} />
+                                                            </button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -1288,7 +1351,93 @@ const AdminResources = () => {
                 </div>
 
             </div>
-            {/* Delete Confirmation Modal */}
+            {/* Edit Resource Modal */}
+            {editModal.show && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
+                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+                >
+                    <div
+                        className="rounded-2xl relative flex flex-col animate-scale-in"
+                        style={{ width: '500px', maxHeight: '90vh', backgroundColor: '#F5F5F5' }}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-8 pt-6 pb-4">
+                            <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
+                                Edit Resource
+                            </h2>
+                            <button
+                                onClick={() => setEditModal({ show: false, resource: null, formData: { resourceName: '', email: '' } })}
+                                className="text-gray-500 hover:text-gray-700 transition-colors"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Line below title */}
+                        <div className="border-b border-gray-300 mx-0" style={{ width: '500px' }}></div>
+
+                        {/* Form Content */}
+                        <div className="px-8 py-4">
+                            <div className="mb-6">
+                                <div className="flex items-center justify-center gap-2 mb-4">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    <span className="font-bold text-black" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>Resource Details</span>
+                                </div>
+                                <div className="space-y-4 px-4">
+                                    <div>
+                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Full Name</label>
+                                        <input
+                                            type="text"
+                                            value={editModal.formData.resourceName}
+                                            onChange={(e) => setEditModal(prev => ({ ...prev, formData: { ...prev.formData, resourceName: e.target.value } }))}
+                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                            style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                        />
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <div style={{ width: '100%' }}>
+                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Email Address</label>
+                                            <input
+                                                type="email"
+                                                value={editModal.formData.email}
+                                                onChange={(e) => setEditModal(prev => ({ ...prev, formData: { ...prev.formData, email: e.target.value } }))}
+                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Separator before buttons */}
+                        <div className="border-b border-gray-300 mx-0 mb-4" style={{ width: '500px' }}></div>
+
+                        {/* Footer Buttons */}
+                        <div className="px-8 pb-8 flex justify-center gap-4">
+                            <button
+                                onClick={() => setEditModal({ show: false, resource: null, formData: { resourceName: '', email: '' } })}
+                                className="px-8 py-2 bg-[#D9D9D9] text-black font-bold rounded-lg hover:bg-gray-300 transition-colors"
+                                style={{ width: '120px', fontSize: '16px', fontFamily: 'SF Pro Display' }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmEdit}
+                                className="px-8 py-2 bg-[#00B4D8] text-white font-bold rounded-lg hover:bg-[#0096B4] transition-colors"
+                                style={{ width: '120px', fontSize: '16px', fontFamily: 'SF Pro Display' }}
+                            >
+                                SAVE
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             {deleteModal.show && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
                     <div className="bg-[#F5F5F5] rounded-2xl p-8 w-[400px] flex flex-col items-center animate-scale-in">
@@ -1368,6 +1517,32 @@ const AdminResources = () => {
                             borderTop: '8px solid white'
                         }}
                     ></div>
+                </div>
+            )}
+
+            {/* Restriction Modal */}
+            {restrictionModal.show && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden transform animate-in zoom-in-95 duration-200">
+                        <div className="p-8">
+                            <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+                                <AlertTriangle className="w-8 h-8 text-red-500" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-800 text-center mb-4" style={{ fontFamily: 'SF Pro Display' }}>
+                                {restrictionModal.title}
+                            </h2>
+                            <p className="text-gray-600 text-center mb-8 font-medium leading-relaxed">
+                                {restrictionModal.message}
+                            </p>
+                            <button
+                                onClick={() => setRestrictionModal({ ...restrictionModal, show: false })}
+                                className="w-full py-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-2xl font-bold transition-all duration-200"
+                                style={{ fontFamily: 'SF Pro Display' }}
+                            >
+                                I Understand
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

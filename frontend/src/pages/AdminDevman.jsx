@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar';
 import StatusBadge from '../components/StatusBadge';
 import Toast from '../components/Toast';
 import api from '../utils/api';
-import { Search, UserPlus, X, Eye, Trash2, AlertTriangle } from 'lucide-react';
+import { Search, UserPlus, X, Eye, Trash2, AlertTriangle, Edit2 } from 'lucide-react';
 
 const AdminDevman = () => {
     const navigate = useNavigate();
@@ -28,6 +28,14 @@ const AdminDevman = () => {
 
     // Delete Modal State
     const [deleteModal, setDeleteModal] = useState({ show: false, devMan: null });
+    const [restrictionModal, setRestrictionModal] = useState({ show: false, message: '', title: '' });
+
+    // Edit Modal State
+    const [editModal, setEditModal] = useState({
+        show: false,
+        devMan: null,
+        formData: { name: '', email: '' }
+    });
 
     // Notification State
     const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
@@ -47,7 +55,7 @@ const AdminDevman = () => {
 
     // Scroll locking for modals
     useEffect(() => {
-        if (showCreateModal || showDetailModal || deleteModal.show) {
+        if (showCreateModal || showDetailModal || deleteModal.show || editModal.show || restrictionModal.show) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'unset';
@@ -55,7 +63,7 @@ const AdminDevman = () => {
         return () => {
             document.body.style.overflow = 'unset';
         };
-    }, [showCreateModal, showDetailModal, deleteModal.show]);
+    }, [showCreateModal, showDetailModal, deleteModal.show, editModal.show]);
 
     const fetchData = async () => {
         try {
@@ -99,6 +107,14 @@ const AdminDevman = () => {
     };
 
     const handleDeleteClick = (devMan) => {
+        if (devMan.projectCount > 0) {
+            setRestrictionModal({
+                show: true,
+                title: 'Cannot Delete DevMan',
+                message: 'Cannot delete DevMan associated with existing projects. Please reassign or delete the projects first.'
+            });
+            return;
+        }
         setDeleteModal({ show: true, devMan });
     };
 
@@ -113,6 +129,30 @@ const AdminDevman = () => {
         } catch (error) {
             console.error('Error deleting DevMan:', error);
             showNotification(error.response?.data?.message || 'Failed to delete DevMan', 'error');
+        }
+    };
+
+    const handleEditClick = (devMan) => {
+        setEditModal({
+            show: true,
+            devMan: devMan,
+            formData: {
+                name: devMan.name,
+                email: devMan.email
+            }
+        });
+    };
+
+    const confirmEdit = async () => {
+        if (!editModal.devMan) return;
+        try {
+            await api.put(`/users/${editModal.devMan.userId}`, editModal.formData);
+            showNotification('DevMan updated successfully', 'success');
+            setEditModal({ show: false, devMan: null, formData: { name: '', email: '' } });
+            fetchData();
+        } catch (error) {
+            console.error('Error updating DevMan:', error);
+            showNotification(error.response?.data?.message || 'Failed to update DevMan', 'error');
         }
     };
 
@@ -239,6 +279,13 @@ const AdminDevman = () => {
                                                             >
                                                                 <Trash2 size={20} />
                                                             </button>
+                                                            <button
+                                                                onClick={() => handleEditClick(devMan)}
+                                                                className="p-2 text-[#00B4D8] hover:bg-blue-50 rounded-lg transition-colors"
+                                                                title="Edit DevMan"
+                                                            >
+                                                                <Edit2 size={20} />
+                                                            </button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -354,6 +401,48 @@ const AdminDevman = () => {
                     </div>
                 </div>
             )}
+            {/* Edit DevMan Modal */}
+            {editModal.show && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-white rounded-2xl w-[500px] animate-scale-in">
+                        <div className="flex justify-between items-center px-8 py-6 border-b border-gray-100">
+                            <h2 className="text-2xl font-bold">Edit DevMan</h2>
+                            <button onClick={() => setEditModal({ show: false, devMan: null, formData: { name: '', email: '' } })} className="text-gray-400 hover:text-gray-600">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <div className="p-8 space-y-6">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Full Name</label>
+                                <input
+                                    type="text"
+                                    value={editModal.formData.name}
+                                    onChange={(e) => setEditModal({ ...editModal, formData: { ...editModal.formData, name: e.target.value } })}
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#00B4D8] outline-none"
+                                    placeholder="Enter full name"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
+                                <input
+                                    type="email"
+                                    value={editModal.formData.email}
+                                    onChange={(e) => setEditModal({ ...editModal, formData: { ...editModal.formData, email: e.target.value } })}
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#00B4D8] outline-none"
+                                    placeholder="name@company.com"
+                                />
+                            </div>
+                            <button
+                                onClick={confirmEdit}
+                                disabled={!editModal.formData.name || !editModal.formData.email}
+                                className="w-full py-3 bg-[#CAF0F8] text-black font-bold rounded-lg hover:bg-[#b8e8ef] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Delete Confirmation Modal */}
             {deleteModal.show && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
@@ -379,6 +468,32 @@ const AdminDevman = () => {
                                 style={{ fontFamily: 'SF Pro Display' }}
                             >
                                 Yes, delete it!
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Restriction Modal */}
+            {restrictionModal.show && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden transform animate-in zoom-in-95 duration-200">
+                        <div className="p-8">
+                            <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+                                <AlertTriangle className="w-8 h-8 text-red-500" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-800 text-center mb-4" style={{ fontFamily: 'SF Pro Display' }}>
+                                {restrictionModal.title}
+                            </h2>
+                            <p className="text-gray-600 text-center mb-8 font-medium leading-relaxed">
+                                {restrictionModal.message}
+                            </p>
+                            <button
+                                onClick={() => setRestrictionModal({ ...restrictionModal, show: false })}
+                                className="w-full py-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-2xl font-bold transition-all duration-200"
+                                style={{ fontFamily: 'SF Pro Display' }}
+                            >
+                                I Understand
                             </button>
                         </div>
                     </div>
