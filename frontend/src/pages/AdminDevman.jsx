@@ -13,6 +13,7 @@ const AdminDevman = () => {
     const [devManagers, setDevManagers] = useState([]);
     const [projects, setProjects] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
 
     // Create DevMan Modal State
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -184,10 +185,22 @@ const AdminDevman = () => {
         setShowDetailModal(true);
     };
 
-    const filteredDevManagers = devManagers.filter(devMan =>
-        devMan.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        devMan.email.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredDevManagers = devManagers.filter(devMan => {
+        const matchesSearch = devMan.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            devMan.email.toLowerCase().includes(searchQuery.toLowerCase());
+
+        // Check availability based on active projects
+        const devManProjects = getDevManProjects(devMan.userId);
+        const hasActiveProjects = devManProjects.length > 0;
+        let matchesStatus = true;
+        if (statusFilter === 'available') {
+            matchesStatus = !hasActiveProjects;
+        } else if (statusFilter === 'unavailable') {
+            matchesStatus = hasActiveProjects;
+        }
+
+        return matchesSearch && matchesStatus;
+    });
 
     return (
         <div className="flex min-h-screen bg-[#E6F2F1] font-['SF_Pro_Display']">
@@ -207,15 +220,31 @@ const AdminDevman = () => {
 
                     {/* Toolbar */}
                     <div className="flex items-center justify-between mb-6">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Find DevMan..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10 pr-4 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B4D8] font-medium"
-                            />
+                        <div className="flex items-center gap-4">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Find DevMan..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-10 pr-4 py-2 w-80 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B4D8] font-medium"
+                                />
+                            </div>
+                            <div className="relative">
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    className="appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-[#00B4D8] font-medium text-gray-700 cursor-pointer"
+                                >
+                                    <option value="all">All Status</option>
+                                    <option value="available">Available</option>
+                                    <option value="unavailable">Unavailable</option>
+                                </select>
+                                <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
                         </div>
                         <button
                             onClick={() => setShowCreateModal(true)}
@@ -227,8 +256,8 @@ const AdminDevman = () => {
                 </div>
 
                 {/* Table */}
-                <div className="px-8 pb-8 flex-1 overflow-hidden">
-                    <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+                <div className="px-8 pb-8 flex-1 flex flex-col min-h-0">
+                    <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col" style={{ maxHeight: 'calc(100vh - 260px)' }}>
                         {loading ? (
                             <div className="p-8 text-center text-gray-500">Loading...</div>
                         ) : (

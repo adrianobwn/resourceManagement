@@ -342,17 +342,17 @@ const DevmanResources = () => {
 
                         {/* Projects Table */}
                         <div
-                            className="overflow-hidden rounded-lg border border-gray-200 mx-8 mb-8"
-                            style={{ width: 'calc(100%-4rem)' }}
+                            className="bg-white rounded-lg border border-gray-200 mx-8 mb-8 flex flex-col overflow-hidden"
+                            style={{ width: 'calc(100%-4rem)', maxHeight: 'calc(90vh - 200px)' }}
                         >
-                            <div className="overflow-auto" style={{ maxHeight: 'calc(90vh - 200px)' }}>
-                                <table className="w-full table-fixed" style={{ borderCollapse: 'collapse' }}>
-                                    <thead>
+                            <div className="overflow-y-auto custom-scrollbar flex-1">
+                                <table className="w-full table-fixed relative" style={{ borderCollapse: 'collapse' }}>
+                                    <thead className="sticky top-0 z-10 shadow-sm">
                                         <tr className="bg-[#CAF0F8] border-b border-gray-200">
-                                            <th className="text-center py-3 px-4 font-bold text-black border-r border-gray-200" style={{ fontSize: '14px', width: '35%' }}>Project Name</th>
-                                            <th className="text-center py-3 px-4 font-bold text-black border-r border-gray-200" style={{ fontSize: '14px', width: '25%' }}>Role</th>
-                                            <th className="text-center py-3 px-4 font-bold text-black border-r border-gray-200" style={{ fontSize: '14px', width: '20%' }}>Start Date</th>
-                                            <th className="text-center py-3 px-4 font-bold text-black" style={{ fontSize: '14px', width: '20%' }}>End Date</th>
+                                            <th className="text-center py-3 px-4 font-bold text-black border-r border-gray-200 bg-[#CAF0F8]" style={{ fontSize: '14px', width: '35%' }}>Project Name</th>
+                                            <th className="text-center py-3 px-4 font-bold text-black border-r border-gray-200 bg-[#CAF0F8]" style={{ fontSize: '14px', width: '25%' }}>Role</th>
+                                            <th className="text-center py-3 px-4 font-bold text-black border-r border-gray-200 bg-[#CAF0F8]" style={{ fontSize: '14px', width: '20%' }}>Start Date</th>
+                                            <th className="text-center py-3 px-4 font-bold text-black bg-[#CAF0F8]" style={{ fontSize: '14px', width: '20%' }}>End Date</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -787,12 +787,12 @@ const DevmanResources = () => {
 
             {/* Main Content */}
             <div className="flex-1 ml-[267px] flex flex-col h-screen overflow-hidden bg-[#E6F2F1]">
-                <div className="p-8 pb-0">
+                <div className="p-8 pb-4">
                     {/* Page Title */}
-                    <h1 className="text-4xl font-bold text-gray-800 mb-8">Resources</h1>
+                    <h1 className="text-4xl font-bold text-gray-800 mb-6">Resources</h1>
 
                     {/* Toolbar */}
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center justify-between mb-6">
                         {/* Left: Search */}
                         <div className="relative">
                             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -856,8 +856,8 @@ const DevmanResources = () => {
                 </div>
 
                 {/* Table */}
-                <div className="px-8 pb-8 flex-1 overflow-hidden">
-                    <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+                <div className="px-8 pb-8 flex-1 flex flex-col min-h-0">
+                    <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col" style={{ maxHeight: 'calc(100vh - 260px)' }}>
                         {isLoading ? (
                             <div className="p-8 text-center text-gray-500">Loading...</div>
                         ) : (

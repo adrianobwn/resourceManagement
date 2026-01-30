@@ -91,316 +91,331 @@ const DevmanActivities = () => {
             <Sidebar />
 
             {/* Main Content */}
-            <div className="flex-1 ml-[267px] p-8">
-                {/* Page Title */}
-                <h1 className="text-4xl font-bold text-gray-800 mb-8">Activities</h1>
+            <div className="flex-1 ml-[267px] flex flex-col h-screen overflow-hidden bg-[#E6F2F1]">
+                <div className="p-8 pb-4">
+                    {/* Page Title */}
+                    <h1 className="text-4xl font-bold text-gray-800 mb-8">Activities</h1>
 
-                {/* Tab Navigation */}
-                <div className="mb-6">
-                    <div className="flex items-center justify-between">
-                        <div className="flex bg-[#F5F5F5] rounded-lg p-1">
-                            <button
-                                onClick={() => setActiveTab('extend')}
-                                className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg flex items-center gap-2 ${activeTab === 'extend'
-                                    ? 'bg-white text-black'
-                                    : 'text-black hover:bg-gray-200'
-                                    }`}
-                            >
-                                Extend
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('release')}
-                                className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg flex items-center gap-2 ${activeTab === 'release'
-                                    ? 'bg-white text-black'
-                                    : 'text-black hover:bg-gray-200'
-                                    }`}
-                            >
-                                Release
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('assignment')}
-                                className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg flex items-center gap-2 ${activeTab === 'assignment'
-                                    ? 'bg-white text-black'
-                                    : 'text-black hover:bg-gray-200'
-                                    }`}
-                            >
-                                Assignment
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('project')}
-                                className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg flex items-center gap-2 ${activeTab === 'project'
-                                    ? 'bg-white text-black'
-                                    : 'text-black hover:bg-gray-200'
-                                    }`}
-                            >
-                                Project
-                            </button>
+                    {/* Tab Navigation */}
+                    <div className="mb-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex bg-[#F5F5F5] rounded-lg p-1">
+                                <button
+                                    onClick={() => setActiveTab('extend')}
+                                    className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg flex items-center gap-2 ${activeTab === 'extend'
+                                        ? 'bg-white text-black'
+                                        : 'text-black hover:bg-gray-200'
+                                        }`}
+                                >
+                                    Extend
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('release')}
+                                    className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg flex items-center gap-2 ${activeTab === 'release'
+                                        ? 'bg-white text-black'
+                                        : 'text-black hover:bg-gray-200'
+                                        }`}
+                                >
+                                    Release
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('assignment')}
+                                    className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg flex items-center gap-2 ${activeTab === 'assignment'
+                                        ? 'bg-white text-black'
+                                        : 'text-black hover:bg-gray-200'
+                                        }`}
+                                >
+                                    Assignment
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('project')}
+                                    className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg flex items-center gap-2 ${activeTab === 'project'
+                                        ? 'bg-white text-black'
+                                        : 'text-black hover:bg-gray-200'
+                                        }`}
+                                >
+                                    Project
+                                </button>
+                            </div>
                         </div>
-
                     </div>
                 </div>
 
                 {/* Tab Content */}
-                <div className="bg-white rounded-lg overflow-hidden">
-                    {/* Extend Tab */}
-                    {activeTab === 'extend' && (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-[#CAF0F8]">
-                                    <tr>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Requester</th>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Project</th>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Resource Name</th>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Role</th>
-                                        <th className="text-center py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Old End Date</th>
-                                        <th className="text-center py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>New End Date</th>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Description</th>
-                                        <th className="text-center py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {activities.filter(a => a.type === 'EXTEND').length === 0 ? (
+                <div className="px-8 pb-8 flex-1 flex flex-col min-h-0">
+                    <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+                        {/* Extend Tab */}
+                        {activeTab === 'extend' && (
+                            <div className="overflow-y-auto custom-scrollbar flex-1">
+                                <table className="w-full relative">
+                                    <thead className="sticky top-0 z-10 bg-[#CAF0F8] shadow-sm">
                                         <tr>
-                                            <td colSpan="8" className="text-center py-4 text-gray-500">No activities found</td>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Requester</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Project</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Resource Name</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Role</th>
+                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Old End Date</th>
+                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>New End Date</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Description</th>
+                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Status</th>
                                         </tr>
-                                    ) : (
-                                        activities.filter(a => a.type === 'EXTEND').map((item) => (
-                                            <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.project}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.resource}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.role}</span>
-                                                </td>
-                                                <td className="py-4 px-6 text-center">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.currentEndDate)}</span>
-                                                </td>
-                                                <td className="py-4 px-6 text-center">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.newEndDate)}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.reason}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <div className="flex justify-center items-center gap-2">
-                                                        <StatusBadge status={item.status} className="px-3 py-1 font-semibold text-xs" />
-                                                        {item.status === 'REJECTED' && (
-                                                            <button
-                                                                onClick={() => setReasonModal({ show: true, reason: item.adminReason || item.rejectionReason || item.rejectReason || 'No reason provided' })}
-                                                                className="text-[#00B4D8] hover:text-[#0096B4] focus:outline-none"
-                                                                title="View Rejection Reason"
-                                                            >
-                                                                <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                                                                </svg>
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
+                                    </thead>
+                                    <tbody>
+                                        {activities.filter(a => a.type === 'EXTEND').length === 0 ? (
+                                            <tr>
+                                                <td colSpan="8" className="text-center py-4 text-gray-500">No activities found</td>
                                             </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                                        ) : (
+                                            activities.filter(a => a.type === 'EXTEND').map((item, index) => (
+                                                <tr
+                                                    key={item.id}
+                                                    className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"
+                                                >
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.project}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.resource}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.role}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6 text-center">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.currentEndDate)}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6 text-center">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.newEndDate)}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.reason}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <div className="flex justify-center items-center gap-2">
+                                                            <StatusBadge status={item.status} className="px-3 py-1 font-semibold text-xs" />
+                                                            {item.status === 'REJECTED' && (
+                                                                <button
+                                                                    onClick={() => setReasonModal({ show: true, reason: item.adminReason || item.rejectionReason || item.rejectReason || 'No reason provided' })}
+                                                                    className="text-[#00B4D8] hover:text-[#0096B4] focus:outline-none"
+                                                                    title="View Rejection Reason"
+                                                                >
+                                                                    <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                                    </svg>
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
 
-                    {/* Release Tab */}
-                    {activeTab === 'release' && (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-[#CAF0F8]">
-                                    <tr>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Requester</th>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Project</th>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Resource Name</th>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Role</th>
-                                        <th className="text-center py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Old End Date</th>
-                                        <th className="text-center py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>New End Date</th>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Description</th>
-                                        <th className="text-center py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {activities.filter(a => a.type === 'RELEASE').length === 0 ? (
+                        {/* Release Tab */}
+                        {activeTab === 'release' && (
+                            <div className="overflow-y-auto custom-scrollbar flex-1">
+                                <table className="w-full relative">
+                                    <thead className="sticky top-0 z-10 bg-[#CAF0F8] shadow-sm">
                                         <tr>
-                                            <td colSpan="8" className="text-center py-4 text-gray-500">No activities found</td>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Requester</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Project</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Resource Name</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Role</th>
+                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Old End Date</th>
+                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>New End Date</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Description</th>
+                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Status</th>
                                         </tr>
-                                    ) : (
-                                        activities.filter(a => a.type === 'RELEASE').map((item) => (
-                                            <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.project}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.resource}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.role}</span>
-                                                </td>
-                                                <td className="py-4 px-6 text-center">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.currentEndDate)}</span>
-                                                </td>
-                                                <td className="py-4 px-6 text-center">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.newEndDate)}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.reason}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <div className="flex justify-center items-center gap-2">
-                                                        <StatusBadge status={item.status} />
-                                                        {item.status === 'REJECTED' && (
-                                                            <button
-                                                                onClick={() => setReasonModal({ show: true, reason: item.adminReason || item.rejectionReason || item.rejectReason || 'No reason provided' })}
-                                                                className="text-[#00B4D8] hover:text-[#0096B4] focus:outline-none"
-                                                                title="View Rejection Reason"
-                                                            >
-                                                                <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                                                                </svg>
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
+                                    </thead>
+                                    <tbody>
+                                        {activities.filter(a => a.type === 'RELEASE').length === 0 ? (
+                                            <tr>
+                                                <td colSpan="8" className="text-center py-4 text-gray-500">No activities found</td>
                                             </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                                        ) : (
+                                            activities.filter(a => a.type === 'RELEASE').map((item, index) => (
+                                                <tr
+                                                    key={item.id}
+                                                    className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"
+                                                >
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.project}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.resource}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.role}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6 text-center">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.currentEndDate)}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6 text-center">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.newEndDate)}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.reason}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <div className="flex justify-center items-center gap-2">
+                                                            <StatusBadge status={item.status} className="px-3 py-1 font-semibold text-xs" />
+                                                            {item.status === 'REJECTED' && (
+                                                                <button
+                                                                    onClick={() => setReasonModal({ show: true, reason: item.adminReason || item.rejectionReason || item.rejectReason || 'No reason provided' })}
+                                                                    className="text-[#00B4D8] hover:text-[#0096B4] focus:outline-none"
+                                                                    title="View Rejection Reason"
+                                                                >
+                                                                    <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                                    </svg>
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
 
-                    {/* Assignment Tab */}
-                    {activeTab === 'assignment' && (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-[#CAF0F8]">
-                                    <tr>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Requester</th>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Project</th>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Assignment</th>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Role</th>
-                                        <th className="text-center py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Start Date</th>
-                                        <th className="text-center py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>End Date</th>
-                                        <th className="text-center py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {activities.filter(a => a.type === 'ASSIGN').length === 0 ? (
+                        {/* Assignment Tab */}
+                        {activeTab === 'assignment' && (
+                            <div className="overflow-y-auto custom-scrollbar flex-1">
+                                <table className="w-full relative">
+                                    <thead className="sticky top-0 z-10 bg-[#CAF0F8] shadow-sm">
                                         <tr>
-                                            <td colSpan="7" className="text-center py-4 text-gray-500">No activities found</td>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Requester</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Project</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Assignment</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Role</th>
+                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Start Date</th>
+                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>End Date</th>
+                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Status</th>
                                         </tr>
-                                    ) : (
-                                        activities.filter(a => a.type === 'ASSIGN').map((item) => (
-                                            <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.project}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.resource}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.role}</span>
-                                                </td>
-                                                <td className="py-4 px-6 text-center">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.startDate)}</span>
-                                                </td>
-                                                <td className="py-4 px-6 text-center">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.newEndDate)}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <div className="flex justify-center items-center gap-2">
-                                                        <StatusBadge status={item.status} />
-                                                        {item.status === 'REJECTED' && (
-                                                            <button
-                                                                onClick={() => setReasonModal({ show: true, reason: item.adminReason || item.rejectionReason || item.rejectReason || 'No reason provided' })}
-                                                                className="text-[#00B4D8] hover:text-[#0096B4] focus:outline-none"
-                                                                title="View Rejection Reason"
-                                                            >
-                                                                <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                                                                </svg>
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
+                                    </thead>
+                                    <tbody>
+                                        {activities.filter(a => a.type === 'ASSIGN').length === 0 ? (
+                                            <tr>
+                                                <td colSpan="7" className="text-center py-4 text-gray-500">No activities found</td>
                                             </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                                        ) : (
+                                            activities.filter(a => a.type === 'ASSIGN').map((item, index) => (
+                                                <tr
+                                                    key={item.id}
+                                                    className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"
+                                                >
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.project}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.resource}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.role}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6 text-center">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.startDate)}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6 text-center">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{formatDate(item.newEndDate)}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <div className="flex justify-center items-center gap-2">
+                                                            <StatusBadge status={item.status} className="px-3 py-1 font-semibold text-xs" />
+                                                            {item.status === 'REJECTED' && (
+                                                                <button
+                                                                    onClick={() => setReasonModal({ show: true, reason: item.adminReason || item.rejectionReason || item.rejectReason || 'No reason provided' })}
+                                                                    className="text-[#00B4D8] hover:text-[#0096B4] focus:outline-none"
+                                                                    title="View Rejection Reason"
+                                                                >
+                                                                    <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                                    </svg>
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
 
-                    {/* Project Tab */}
-                    {activeTab === 'project' && (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-[#CAF0F8]">
-                                    <tr>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Requester</th>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Nama Project</th>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Nama Client</th>
-                                        <th className="text-left py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Description</th>
-                                        <th className="text-center py-4 px-6 font-bold text-gray-700" style={{ fontSize: '16px' }}>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {activities.filter(a => a.type === 'PROJECT').length === 0 ? (
+                        {/* Project Tab */}
+                        {activeTab === 'project' && (
+                            <div className="overflow-y-auto custom-scrollbar flex-1">
+                                <table className="w-full relative">
+                                    <thead className="sticky top-0 z-10 bg-[#CAF0F8] shadow-sm">
                                         <tr>
-                                            <td colSpan="5" className="text-center py-4 text-gray-500">No activities found</td>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Requester</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Nama Project</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Nama Client</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Description</th>
+                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Status</th>
                                         </tr>
-                                    ) : (
-                                        activities.filter(a => a.type === 'PROJECT').map((item) => (
-                                            <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.projectName}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.clientName}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.description}</span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <div className="flex justify-center items-center gap-2">
-                                                        <StatusBadge status={item.status} />
-                                                        {item.status === 'REJECTED' && (
-                                                            <button
-                                                                onClick={() => setReasonModal({ show: true, reason: item.adminReason || item.rejectionReason || item.rejectReason || 'No reason provided' })}
-                                                                className="text-[#00B4D8] hover:text-[#0096B4] focus:outline-none"
-                                                                title="View Rejection Reason"
-                                                            >
-                                                                <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                                                                </svg>
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
+                                    </thead>
+                                    <tbody>
+                                        {activities.filter(a => a.type === 'PROJECT').length === 0 ? (
+                                            <tr>
+                                                <td colSpan="5" className="text-center py-4 text-gray-500">No activities found</td>
                                             </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                                        ) : (
+                                            activities.filter(a => a.type === 'PROJECT').map((item, index) => (
+                                                <tr
+                                                    key={item.id}
+                                                    className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"
+                                                >
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.projectName}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.clientName}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{item.description}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <div className="flex justify-center items-center gap-2">
+                                                            <StatusBadge status={item.status} className="px-3 py-1 font-semibold text-xs" />
+                                                            {item.status === 'REJECTED' && (
+                                                                <button
+                                                                    onClick={() => setReasonModal({ show: true, reason: item.adminReason || item.rejectionReason || item.rejectReason || 'No reason provided' })}
+                                                                    className="text-[#00B4D8] hover:text-[#0096B4] focus:outline-none"
+                                                                    title="View Rejection Reason"
+                                                                >
+                                                                    <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                                    </svg>
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
             {/* Rejection Reason Modal */}
