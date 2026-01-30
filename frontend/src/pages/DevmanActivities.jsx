@@ -169,11 +169,7 @@ const DevmanActivities = () => {
                                             activities.filter(a => a.type === 'EXTEND').map((item, index) => (
                                                 <tr
                                                     key={item.id}
-                                                    className={`border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors ${item.status === 'APPROVED' ? 'bg-green-50' :
-                                                        item.status === 'REJECTED' ? 'bg-red-50' :
-                                                            item.status === 'PENDING' ? 'bg-yellow-50' :
-                                                                index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                                                        }`}
+                                                    className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"
                                                 >
                                                     <td className="py-4 px-6">
                                                         <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
@@ -245,11 +241,7 @@ const DevmanActivities = () => {
                                             activities.filter(a => a.type === 'RELEASE').map((item, index) => (
                                                 <tr
                                                     key={item.id}
-                                                    className={`border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors ${item.status === 'APPROVED' ? 'bg-green-50' :
-                                                        item.status === 'REJECTED' ? 'bg-red-50' :
-                                                            item.status === 'PENDING' ? 'bg-yellow-50' :
-                                                                index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                                                        }`}
+                                                    className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"
                                                 >
                                                     <td className="py-4 px-6">
                                                         <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
@@ -320,11 +312,7 @@ const DevmanActivities = () => {
                                             activities.filter(a => a.type === 'ASSIGN').map((item, index) => (
                                                 <tr
                                                     key={item.id}
-                                                    className={`border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors ${item.status === 'APPROVED' ? 'bg-green-50' :
-                                                        item.status === 'REJECTED' ? 'bg-red-50' :
-                                                            item.status === 'PENDING' ? 'bg-yellow-50' :
-                                                                index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                                                        }`}
+                                                    className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"
                                                 >
                                                     <td className="py-4 px-6">
                                                         <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
@@ -390,11 +378,7 @@ const DevmanActivities = () => {
                                             activities.filter(a => a.type === 'PROJECT').map((item, index) => (
                                                 <tr
                                                     key={item.id}
-                                                    className={`border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors ${item.status === 'APPROVED' ? 'bg-green-50' :
-                                                        item.status === 'REJECTED' ? 'bg-red-50' :
-                                                            item.status === 'PENDING' ? 'bg-yellow-50' :
-                                                                index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                                                        }`}
+                                                    className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"
                                                 >
                                                     <td className="py-4 px-6">
                                                         <span className="text-gray-800" style={{ fontSize: '14px' }}>{item.requester}</span>
