@@ -64,7 +64,7 @@ const AdminDevman = () => {
         return () => {
             document.body.style.overflow = 'unset';
         };
-    }, [showCreateModal, showDetailModal, deleteModal.show, editModal.show]);
+    }, [showCreateModal, showDetailModal, deleteModal.show, editModal.show, restrictionModal.show]);
 
     const fetchData = async () => {
         try {
@@ -146,6 +146,15 @@ const AdminDevman = () => {
 
     const confirmEdit = async () => {
         if (!editModal.devMan) return;
+
+        const isChanged = editModal.formData.name !== editModal.devMan.name ||
+            editModal.formData.email !== editModal.devMan.email;
+
+        if (!isChanged) {
+            setEditModal({ show: false, devMan: null, formData: { name: '', email: '' } });
+            return;
+        }
+
         try {
             await api.put(`/users/${editModal.devMan.userId}`, editModal.formData);
             showNotification('DevMan updated successfully', 'success');
@@ -505,26 +514,24 @@ const AdminDevman = () => {
 
             {/* Restriction Modal */}
             {restrictionModal.show && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden transform animate-in zoom-in-95 duration-200">
-                        <div className="p-8">
-                            <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                                <AlertTriangle className="w-8 h-8 text-red-500" />
-                            </div>
-                            <h2 className="text-2xl font-bold text-gray-800 text-center mb-4" style={{ fontFamily: 'SF Pro Display' }}>
-                                {restrictionModal.title}
-                            </h2>
-                            <p className="text-gray-600 text-center mb-8 font-medium leading-relaxed">
-                                {restrictionModal.message}
-                            </p>
-                            <button
-                                onClick={() => setRestrictionModal({ ...restrictionModal, show: false })}
-                                className="w-full py-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-2xl font-bold transition-all duration-200"
-                                style={{ fontFamily: 'SF Pro Display' }}
-                            >
-                                I Understand
-                            </button>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
+                    <div className="bg-[#F5F5F5] rounded-2xl p-8 w-[400px] flex flex-col items-center animate-scale-in">
+                        <div className="mb-6 flex justify-center">
+                            <AlertTriangle className="w-16 h-16 text-[#FBCD3F]" fill="#FBCD3F" stroke="#ffffff" />
                         </div>
+                        <h2 className="text-2xl font-bold text-gray-800 text-center mb-4" style={{ fontFamily: 'SF Pro Display' }}>
+                            {restrictionModal.title}
+                        </h2>
+                        <p className="text-gray-600 text-center mb-8 font-medium leading-relaxed">
+                            {restrictionModal.message}
+                        </p>
+                        <button
+                            onClick={() => setRestrictionModal({ ...restrictionModal, show: false })}
+                            className="w-full py-4 bg-[#D9D9D9] hover:bg-gray-300 text-black rounded-2xl font-bold transition-all duration-200"
+                            style={{ fontFamily: 'SF Pro Display' }}
+                        >
+                            I Understand
+                        </button>
                     </div>
                 </div>
             )}

@@ -98,7 +98,7 @@ const AdminProject = () => {
 
     // Body scroll locking
     useEffect(() => {
-        if (showNewProjectModal || showDetailModal || deleteModal.show || editModal.show) {
+        if (showNewProjectModal || showDetailModal || deleteModal.show || editModal.show || restrictionModal.show) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'auto';
@@ -107,7 +107,7 @@ const AdminProject = () => {
         return () => {
             document.body.style.overflow = 'auto';
         };
-    }, [showNewProjectModal, showDetailModal, deleteModal.show, editModal.show]);
+    }, [showNewProjectModal, showDetailModal, deleteModal.show, editModal.show, restrictionModal.show]);
 
     const handleOpenExtendModal = (resource) => {
         setSelectedResourceForAction(resource);
@@ -254,11 +254,12 @@ const AdminProject = () => {
     };
 
     const handleDeleteClick = (project) => {
-        if (project.status !== 'CLOSED') {
+        // Check if project has any active resources (memberCount > 0)
+        if (project.memberCount > 0) {
             setRestrictionModal({
                 show: true,
                 title: 'Cannot Delete Project',
-                message: 'Only CLOSED projects can be deleted. Please ensure the project status is CLOSED first.'
+                message: `This project still has ${project.memberCount} active resource(s). Please release all resources before deleting.`
             });
             return;
         }
@@ -293,6 +294,16 @@ const AdminProject = () => {
 
     const confirmEdit = async () => {
         if (!editModal.project) return;
+
+        const isChanged = editModal.formData.projectName !== editModal.project.projectName ||
+            editModal.formData.clientName !== editModal.project.clientName ||
+            editModal.formData.status !== editModal.project.status;
+
+        if (!isChanged) {
+            setEditModal({ show: false, project: null, formData: { projectName: '', clientName: '', status: '' } });
+            return;
+        }
+
         try {
             await api.put(`/projects/${editModal.project.projectId}`, editModal.formData);
             showNotification('Project updated successfully', 'success');
@@ -527,8 +538,8 @@ const AdminProject = () => {
                                                                         ) : res.status === 'ACTIVE' ? (
                                                                             // Show buttons only if ACTIVE and no pending requests
                                                                             <>
-                                                                                <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] hover:bg-[#F97316]/20">EXTEND</button>
-                                                                                <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] hover:bg-[#FF0000]/20">RELEASE</button>
+                                                                                <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] border border-[#F97316] hover:bg-[#F97316]/20" style={{ fontFamily: "SF Pro Display" }}>EXTEND</button>
+                                                                                <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] border border-[#FF0000] hover:bg-[#FF0000]/20" style={{ fontFamily: "SF Pro Display" }}>RELEASE</button>
                                                                             </>
                                                                         ) : null}
                                                                     </div>
@@ -729,8 +740,8 @@ const AdminProject = () => {
                                     <div className="flex justify-end gap-4">
                                         <button
                                             onClick={() => setShowNewProjectModal(false)}
-                                            className="font-bold text-black hover:text-gray-700 transition-colors"
-                                            style={{ fontFamily: 'SF Pro Display' }}
+                                            className="px-8 py-2 bg-[#D9D9D9] text-black font-bold rounded-lg hover:bg-gray-300 transition-colors"
+                                            style={{ width: '120px', fontSize: '16px', fontFamily: 'SF Pro Display' }}
                                         >
                                             Cancel
                                         </button>
@@ -823,8 +834,8 @@ const AdminProject = () => {
                                 <div className="flex justify-end gap-4">
                                     <button
                                         onClick={() => setEditModal({ show: false, project: null, formData: { projectName: '', clientName: '', status: '' } })}
-                                        className="font-bold text-black hover:text-gray-700 transition-colors"
-                                        style={{ fontFamily: 'SF Pro Display' }}
+                                        className="px-8 py-2 bg-[#D9D9D9] text-black font-bold rounded-lg hover:bg-gray-300 transition-colors"
+                                        style={{ width: '120px', fontSize: '16px', fontFamily: 'SF Pro Display' }}
                                     >
                                         Cancel
                                     </button>
@@ -876,26 +887,24 @@ const AdminProject = () => {
 
                 {/* Restriction Modal */}
                 {restrictionModal.show && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden transform animate-in zoom-in-95 duration-200">
-                            <div className="p-8">
-                                <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                                    <AlertTriangle className="w-8 h-8 text-red-500" />
-                                </div>
-                                <h2 className="text-2xl font-bold text-gray-800 text-center mb-4" style={{ fontFamily: 'SF Pro Display' }}>
-                                    {restrictionModal.title}
-                                </h2>
-                                <p className="text-gray-600 text-center mb-8 font-medium leading-relaxed">
-                                    {restrictionModal.message}
-                                </p>
-                                <button
-                                    onClick={() => setRestrictionModal({ ...restrictionModal, show: false })}
-                                    className="w-full py-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-2xl font-bold transition-all duration-200"
-                                    style={{ fontFamily: 'SF Pro Display' }}
-                                >
-                                    I Understand
-                                </button>
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
+                        <div className="bg-[#F5F5F5] rounded-2xl p-8 w-[400px] flex flex-col items-center animate-scale-in">
+                            <div className="mb-6 flex justify-center">
+                                <AlertTriangle className="w-16 h-16 text-[#FBCD3F]" fill="#FBCD3F" stroke="#ffffff" />
                             </div>
+                            <h2 className="text-2xl font-bold text-gray-800 text-center mb-4" style={{ fontFamily: 'SF Pro Display' }}>
+                                {restrictionModal.title}
+                            </h2>
+                            <p className="text-gray-600 text-center mb-8 font-medium leading-relaxed">
+                                {restrictionModal.message}
+                            </p>
+                            <button
+                                onClick={() => setRestrictionModal({ ...restrictionModal, show: false })}
+                                className="w-full py-4 bg-[#D9D9D9] hover:bg-gray-300 text-black rounded-2xl font-bold transition-all duration-200"
+                                style={{ fontFamily: 'SF Pro Display' }}
+                            >
+                                I Understand
+                            </button>
                         </div>
                     </div>
                 )}

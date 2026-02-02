@@ -158,9 +158,14 @@ public class ProjectService {
                 Project project = projectRepository.findById(projectId)
                                 .orElseThrow(() -> new RuntimeException("Project not found with id: " + projectId));
 
-                if (project.getStatus() != ProjectStatus.CLOSED) {
+                // Check if project has any active (non-released) resources
+                long activeResourceCount = resourceAssignmentRepository.countByProject_ProjectIdAndStatus(
+                                projectId, com.resourceManagement.model.enums.AssignmentStatus.ACTIVE);
+
+                if (activeResourceCount > 0) {
                         throw new RuntimeException(
-                                        "Only CLOSED projects can be deleted. Please ensure the project status is CLOSED first.");
+                                        "Cannot delete project with active resources. Please release all resources first. Active resources: "
+                                                        + activeResourceCount);
                 }
 
                 // Delete all assignment requests associated with this project

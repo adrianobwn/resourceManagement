@@ -548,8 +548,8 @@ const DevmanResources = () => {
                         <div className="flex items-center justify-between px-8 pb-6 pt-4 border-t border-gray-300">
                             <button
                                 onClick={closeAssignModal}
-                                className="font-bold text-black bg-white hover:bg-gray-100 transition-colors"
-                                style={{ width: '100px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', border: '1px solid #A9A9A9', borderRadius: '8px' }}
+                                className="px-8 py-2 bg-[#D9D9D9] text-black font-bold rounded-lg hover:bg-gray-300 transition-colors"
+                                style={{ width: '120px', fontSize: '16px', fontFamily: 'SF Pro Display' }}
                             >
                                 Cancel
                             </button>

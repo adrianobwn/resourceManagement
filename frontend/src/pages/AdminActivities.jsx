@@ -216,7 +216,7 @@ const Activities = () => {
                     <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ maxHeight: 'calc(100vh - 280px)' }}>
                         {/* Extend Tab */}
                         {activeTab === 'extend' && (
-                            <div className="overflow-y-auto custom-scrollbar flex-1">
+                            <div className="overflow-y-auto custom-scrollbar flex-1" style={{ maxHeight: 'inherit' }}>
                                 <table className="w-full relative">
                                     <thead className="sticky top-0 z-10 bg-[#CAF0F8] shadow-sm">
                                         <tr>
@@ -288,7 +288,7 @@ const Activities = () => {
 
                         {/* Release Tab */}
                         {activeTab === 'release' && (
-                            <div className="overflow-y-auto custom-scrollbar flex-1">
+                            <div className="overflow-y-auto custom-scrollbar flex-1" style={{ maxHeight: 'inherit' }}>
                                 <table className="w-full relative">
                                     <thead className="sticky top-0 z-10 bg-[#CAF0F8] shadow-sm">
                                         <tr>
@@ -360,7 +360,7 @@ const Activities = () => {
 
                         {/* Assignment Tab */}
                         {activeTab === 'assignment' && (
-                            <div className="overflow-y-auto custom-scrollbar flex-1">
+                            <div className="overflow-y-auto custom-scrollbar flex-1" style={{ maxHeight: 'inherit' }}>
                                 <table className="w-full relative">
                                     <thead className="sticky top-0 z-10 bg-[#CAF0F8] shadow-sm">
                                         <tr>
@@ -428,7 +428,7 @@ const Activities = () => {
 
                         {/* Project Tab */}
                         {activeTab === 'project' && (
-                            <div className="overflow-y-auto custom-scrollbar flex-1">
+                            <div className="overflow-y-auto custom-scrollbar flex-1" style={{ maxHeight: 'inherit' }}>
                                 <table className="w-full relative">
                                     <thead className="sticky top-0 z-10 bg-[#CAF0F8] shadow-sm">
                                         <tr>

@@ -62,7 +62,7 @@ const AdminResources = () => {
         return () => {
             document.body.style.overflow = 'auto';
         };
-    }, [detailModal.show, addResourceModal.show, assignModal.show, trackRecordModal.show, deleteModal.show]);
+    }, [detailModal.show, addResourceModal.show, assignModal.show, trackRecordModal.show, deleteModal.show, editModal.show, restrictionModal.show]);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -387,6 +387,15 @@ const AdminResources = () => {
 
     const confirmEdit = async () => {
         if (!editModal.resource) return;
+
+        const isChanged = editModal.formData.resourceName !== editModal.resource.resourceName ||
+            editModal.formData.email !== editModal.resource.email;
+
+        if (!isChanged) {
+            setEditModal({ show: false, resource: null, formData: { resourceName: '', email: '' } });
+            return;
+        }
+
         try {
             await api.put(`/resources/${editModal.resource.resourceId}`, editModal.formData);
             showNotification('Resource updated successfully!', 'success');
@@ -655,21 +664,12 @@ const AdminResources = () => {
                         <div className="border-b border-gray-300 mx-0 mb-4" style={{ width: '500px' }}></div>
 
                         {/* Footer Buttons */}
-                        <div className="flex items-center justify-between px-8 pb-6">
-                            <button
-                                onClick={closeAddResourceModal}
-                                className="font-bold text-black bg-white hover:bg-gray-100 transition-colors"
-                                style={{ width: '76px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', border: '1px solid #A9A9A9', borderRadius: '8px' }}
-                            >
-                                Cancel
-                            </button>
+                        <div className="px-8 pb-6">
                             <button
                                 onClick={handleSaveResource}
                                 disabled={!newResource.fullName || !newResource.email}
-                                className="font-bold text-black hover:opacity-90 transition-colors"
+                                className="w-full py-3 bg-[#CAF0F8] text-black font-bold rounded-lg hover:opacity-90 transition-colors"
                                 style={{
-                                    width: '180px',
-                                    height: '40px',
                                     fontSize: '14px',
                                     fontFamily: 'SF Pro Display',
                                     backgroundColor: '#CAF0F8',
@@ -683,168 +683,140 @@ const AdminResources = () => {
                         </div>
                     </div>
                 </div>
-            )}
+            )
+            }
 
 
 
             {/* Assign to Project Modal */}
-            {assignModal.show && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
-                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-                >
+            {
+                assignModal.show && (
                     <div
-                        className="rounded-2xl relative flex flex-col animate-scale-in bg-white"
-                        style={{ width: '620px', height: '580px' }}
+                        className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
+                        style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
                     >
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-8 pt-6 pb-4">
-                            <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
-                                Assign to a Project
-                            </h2>
-                            <button
-                                onClick={closeAssignModal}
-                                className="text-gray-500 hover:text-gray-700 transition-colors"
-                            >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        {/* Line below title */}
-                        <div className="border-b border-gray-300"></div>
-
-                        {/* Form Content */}
-                        <div className="px-8 py-6 flex-1 overflow-y-auto">
-                            {/* User Info - Layout matching reference image */}
-                            <div
-                                className="flex items-center justify-between mb-6 px-4 py-3 rounded-lg"
-                                style={{
-                                    backgroundColor: 'rgba(200, 200, 200, 0.3)'
-                                }}
-                            >
-                                {/* Left side: Profile picture and name */}
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-[#00B4D8] flex items-center justify-center">
-                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
-                                    </div>
-                                    <h3 className="font-bold text-black" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
-                                        {assignModal.resource?.resourceName}
-                                    </h3>
-                                </div>
-                                {/* Right side: Status badges */}
-                                <div className="flex items-center gap-2">
-                                    <span
-                                        className="px-2 py-0.5 text-xs font-medium rounded-full"
-                                        style={{
-                                            backgroundColor: getProjectBadgeColors(assignModal.resource?.projectCount || 0).background,
-                                            color: getProjectBadgeColors(assignModal.resource?.projectCount || 0).text,
-                                            border: `1px solid ${getProjectBadgeColors(assignModal.resource?.projectCount || 0).border}`,
-                                            fontFamily: 'SF Pro Display',
-                                            fontSize: '11px'
-                                        }}
-                                    >
-                                        ACTIVE IN {assignModal.resource?.projectCount || 0} PROJECT{assignModal.resource?.projectCount !== 1 ? 'S' : ''}
-                                    </span>
-                                    <span
-                                        className="px-2 py-0.5 text-xs font-bold rounded-full"
-                                        style={{
-                                            backgroundColor: assignModal.resource?.status === 'AVAILABLE' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(255, 0, 0, 0.2)',
-                                            color: assignModal.resource?.status === 'AVAILABLE' ? '#06D001' : '#FF0000',
-                                            fontSize: '11px',
-                                            border: assignModal.resource?.status === 'AVAILABLE' ? '1px solid #06D001' : '1px solid #FF0000'
-                                        }}
-                                    >
-                                        {assignModal.resource?.status}
-                                    </span>
-                                </div>
+                        <div
+                            className="rounded-2xl relative flex flex-col animate-scale-in bg-white"
+                            style={{ width: '620px', height: '580px' }}
+                        >
+                            {/* Header */}
+                            <div className="flex items-center justify-between px-8 pt-6 pb-4">
+                                <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
+                                    Assign to a Project
+                                </h2>
+                                <button
+                                    onClick={closeAssignModal}
+                                    className="text-gray-500 hover:text-gray-700 transition-colors"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
                             </div>
 
-                            {/* Current Projects (Only show Active) */}
-                            {assignModal.resource?.currentAssignments &&
-                                assignModal.resource.currentAssignments.filter(a => a.assignmentStatus === 'ACTIVE').length > 0 && (
-                                    <div className="mb-6">
-                                        <h4 className="font-bold text-black mb-3" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>
-                                            Current Project{assignModal.resource.currentAssignments.filter(a => a.assignmentStatus === 'ACTIVE').length > 1 ? 's' : ''}
-                                        </h4>
-                                        <div className="space-y-2">
-                                            {assignModal.resource.currentAssignments
-                                                .filter(a => a.assignmentStatus === 'ACTIVE')
-                                                .map((assignment, index) => (
-                                                    <p key={assignment.assignmentId} className="text-black" style={{ fontSize: '14px', fontFamily: 'SF Pro Display' }}>
-                                                        {index + 1}. {assignment.projectName} - Ends : {new Date(assignment.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                                    </p>
-                                                ))
-                                            }
+                            {/* Line below title */}
+                            <div className="border-b border-gray-300"></div>
+
+                            {/* Form Content */}
+                            <div className="px-8 py-6 flex-1 overflow-y-auto">
+                                {/* User Info - Layout matching reference image */}
+                                <div
+                                    className="flex items-center justify-between mb-6 px-4 py-3 rounded-lg"
+                                    style={{
+                                        backgroundColor: 'rgba(200, 200, 200, 0.3)'
+                                    }}
+                                >
+                                    {/* Left side: Profile picture and name */}
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-[#00B4D8] flex items-center justify-center">
+                                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
                                         </div>
+                                        <h3 className="font-bold text-black" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
+                                            {assignModal.resource?.resourceName}
+                                        </h3>
                                     </div>
-                                )}
-
-                            {/* Separator */}
-                            <div className="border-b border-gray-300 mb-6"></div>
-
-                            {/* Project Selection */}
-                            <div className="space-y-4">
-                                {/* 1. Project */}
-                                <div>
-                                    <label className="block mb-2 font-bold text-black" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
-                                        1. Project
-                                    </label>
-                                    <div className="relative">
-                                        <select
-                                            value={assignmentData.project}
-                                            onChange={(e) => {
-                                                const proj = projects.find(p => p.projectId === parseInt(e.target.value));
-                                                if (proj && proj.status === 'CLOSED') {
-                                                    showNotification('Cannot assign to a CLOSED project', 'error');
-                                                    return;
-                                                }
-                                                setAssignmentData(prev => ({ ...prev, project: e.target.value }));
+                                    {/* Right side: Status badges */}
+                                    <div className="flex items-center gap-2">
+                                        <span
+                                            className="px-2 py-0.5 text-xs font-medium rounded-full"
+                                            style={{
+                                                backgroundColor: getProjectBadgeColors(assignModal.resource?.projectCount || 0).background,
+                                                color: getProjectBadgeColors(assignModal.resource?.projectCount || 0).text,
+                                                border: `1px solid ${getProjectBadgeColors(assignModal.resource?.projectCount || 0).border}`,
+                                                fontFamily: 'SF Pro Display',
+                                                fontSize: '11px'
                                             }}
-                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full appearance-none"
-                                            style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 35px 0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
                                         >
-                                            <option value="">Select project</option>
-                                            {projects
-                                                .filter(project => project.status !== 'CLOSED')
-                                                .map(project => (
-                                                    <option key={project.projectId} value={project.projectId}>
-                                                        {project.projectName}
-                                                    </option>
-                                                ))}
-                                        </select>
-                                        <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                        </svg>
+                                            ACTIVE IN {assignModal.resource?.projectCount || 0} PROJECT{assignModal.resource?.projectCount !== 1 ? 'S' : ''}
+                                        </span>
+                                        <span
+                                            className="px-2 py-0.5 text-xs font-bold rounded-full"
+                                            style={{
+                                                backgroundColor: assignModal.resource?.status === 'AVAILABLE' ? 'rgba(6, 208, 1, 0.2)' : 'rgba(255, 0, 0, 0.2)',
+                                                color: assignModal.resource?.status === 'AVAILABLE' ? '#06D001' : '#FF0000',
+                                                fontSize: '11px',
+                                                border: assignModal.resource?.status === 'AVAILABLE' ? '1px solid #06D001' : '1px solid #FF0000'
+                                            }}
+                                        >
+                                            {assignModal.resource?.status}
+                                        </span>
                                     </div>
                                 </div>
 
-                                {/* 2. Select Project */}
-                                <div>
-                                    <label className="block mb-3 font-bold text-black" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
-                                        2. Select Project
-                                    </label>
+                                {/* Current Projects (Only show Active) */}
+                                {assignModal.resource?.currentAssignments &&
+                                    assignModal.resource.currentAssignments.filter(a => a.assignmentStatus === 'ACTIVE').length > 0 && (
+                                        <div className="mb-6">
+                                            <h4 className="font-bold text-black mb-3" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>
+                                                Current Project{assignModal.resource.currentAssignments.filter(a => a.assignmentStatus === 'ACTIVE').length > 1 ? 's' : ''}
+                                            </h4>
+                                            <div className="space-y-2">
+                                                {assignModal.resource.currentAssignments
+                                                    .filter(a => a.assignmentStatus === 'ACTIVE')
+                                                    .map((assignment, index) => (
+                                                        <p key={assignment.assignmentId} className="text-black" style={{ fontSize: '14px', fontFamily: 'SF Pro Display' }}>
+                                                            {index + 1}. {assignment.projectName} - Ends : {new Date(assignment.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                        </p>
+                                                    ))
+                                                }
+                                            </div>
+                                        </div>
+                                    )}
 
-                                    {/* Project Role */}
-                                    <div className="mb-4">
-                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>
-                                            Project Role
+                                {/* Separator */}
+                                <div className="border-b border-gray-300 mb-6"></div>
+
+                                {/* Project Selection */}
+                                <div className="space-y-4">
+                                    {/* 1. Project */}
+                                    <div>
+                                        <label className="block mb-2 font-bold text-black" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
+                                            1. Project
                                         </label>
                                         <div className="relative">
                                             <select
-                                                value={assignmentData.role}
-                                                onChange={(e) => setAssignmentData(prev => ({ ...prev, role: e.target.value }))}
+                                                value={assignmentData.project}
+                                                onChange={(e) => {
+                                                    const proj = projects.find(p => p.projectId === parseInt(e.target.value));
+                                                    if (proj && proj.status === 'CLOSED') {
+                                                        showNotification('Cannot assign to a CLOSED project', 'error');
+                                                        return;
+                                                    }
+                                                    setAssignmentData(prev => ({ ...prev, project: e.target.value }));
+                                                }}
                                                 className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full appearance-none"
                                                 style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 35px 0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
                                             >
-                                                <option value="">Select role</option>
-                                                <option value="Team Lead">Team Lead</option>
-                                                <option value="Backend Developer">Backend Developer</option>
-                                                <option value="Frontend Developer">Frontend Developer</option>
-                                                <option value="Quality Assurance">Quality Assurance</option>
+                                                <option value="">Select project</option>
+                                                {projects
+                                                    .filter(project => project.status !== 'CLOSED')
+                                                    .map(project => (
+                                                        <option key={project.projectId} value={project.projectId}>
+                                                            {project.projectName}
+                                                        </option>
+                                                    ))}
                                             </select>
                                             <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -852,301 +824,334 @@ const AdminResources = () => {
                                         </div>
                                     </div>
 
-                                    {/* Assignment Duration */}
+                                    {/* 2. Select Project */}
                                     <div>
-                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>
-                                            Assignment Duration
+                                        <label className="block mb-3 font-bold text-black" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
+                                            2. Select Project
                                         </label>
-                                        <div className="flex items-center gap-3">
-                                            <div className="relative flex-1">
-                                                <input
-                                                    type="date"
-                                                    value={assignmentData.startDate}
-                                                    onChange={(e) => setAssignmentData(prev => ({ ...prev, startDate: e.target.value }))}
-                                                    className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
-                                                    style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
-                                                />
-                                            </div>
-                                            <span className="text-gray-600" style={{ fontSize: '14px', fontFamily: 'SF Pro Display' }}>to</span>
-                                            <div className="relative flex-1">
-                                                <input
-                                                    type="date"
-                                                    value={assignmentData.endDate}
-                                                    onChange={(e) => setAssignmentData(prev => ({ ...prev, endDate: e.target.value }))}
-                                                    min={assignmentData.startDate}
-                                                    className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
-                                                    style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
-                                                />
+
+                                        {/* Project Role */}
+                                        <div className="mb-4">
+                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>
+                                                Project Role
+                                            </label>
+                                            <div className="relative">
+                                                <select
+                                                    value={assignmentData.role}
+                                                    onChange={(e) => setAssignmentData(prev => ({ ...prev, role: e.target.value }))}
+                                                    className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full appearance-none"
+                                                    style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 35px 0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
+                                                >
+                                                    <option value="">Select role</option>
+                                                    <option value="Team Lead">Team Lead</option>
+                                                    <option value="Backend Developer">Backend Developer</option>
+                                                    <option value="Frontend Developer">Frontend Developer</option>
+                                                    <option value="Quality Assurance">Quality Assurance</option>
+                                                </select>
+                                                <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                                </svg>
                                             </div>
                                         </div>
-                                        <p className="text-gray-500 mt-2" style={{ fontSize: '12px', fontFamily: 'SF Pro Display' }}>
-                                            {(() => {
-                                                if (!assignModal.resource?.currentAssignments?.length) {
-                                                    return "Hint : Resource is currently available";
-                                                }
-                                                const dates = assignModal.resource.currentAssignments.map(a => new Date(a.endDate));
-                                                const maxDate = new Date(Math.max(...dates));
-                                                return `Hint : Resource available after ${maxDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
-                                            })()}
-                                        </p>
+
+                                        {/* Assignment Duration */}
+                                        <div>
+                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>
+                                                Assignment Duration
+                                            </label>
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative flex-1">
+                                                    <input
+                                                        type="date"
+                                                        value={assignmentData.startDate}
+                                                        onChange={(e) => setAssignmentData(prev => ({ ...prev, startDate: e.target.value }))}
+                                                        className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                        style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
+                                                    />
+                                                </div>
+                                                <span className="text-gray-600" style={{ fontSize: '14px', fontFamily: 'SF Pro Display' }}>to</span>
+                                                <div className="relative flex-1">
+                                                    <input
+                                                        type="date"
+                                                        value={assignmentData.endDate}
+                                                        onChange={(e) => setAssignmentData(prev => ({ ...prev, endDate: e.target.value }))}
+                                                        min={assignmentData.startDate}
+                                                        className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                        style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <p className="text-gray-500 mt-2" style={{ fontSize: '12px', fontFamily: 'SF Pro Display' }}>
+                                                {(() => {
+                                                    if (!assignModal.resource?.currentAssignments?.length) {
+                                                        return "Hint : Resource is currently available";
+                                                    }
+                                                    const dates = assignModal.resource.currentAssignments.map(a => new Date(a.endDate));
+                                                    const maxDate = new Date(Math.max(...dates));
+                                                    return `Hint : Resource available after ${maxDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
+                                                })()}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Footer Buttons */}
-                        <div className="flex items-center justify-between px-8 pb-6 pt-4 border-t border-gray-300">
-                            <button
-                                onClick={closeAssignModal}
-                                className="font-bold text-black bg-white hover:bg-gray-100 transition-colors"
-                                style={{ width: '100px', height: '40px', fontSize: '14px', fontFamily: 'SF Pro Display', border: '1px solid #A9A9A9', borderRadius: '8px' }}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleAssign}
-                                disabled={
-                                    !assignmentData.project ||
-                                    !assignmentData.role ||
-                                    !assignmentData.startDate ||
-                                    !assignmentData.endDate ||
-                                    new Date(assignmentData.endDate) < new Date(assignmentData.startDate)
-                                }
-                                className="font-bold text-black hover:opacity-90 transition-colors"
-                                style={{
-                                    width: '100px',
-                                    height: '40px',
-                                    fontSize: '14px',
-                                    fontFamily: 'SF Pro Display',
-                                    backgroundColor: '#CAF0F8',
-                                    borderRadius: '8px',
-                                    opacity: (
+                            {/* Footer Buttons */}
+                            <div className="flex items-center justify-between px-8 pb-6 pt-4 border-t border-gray-300">
+                                <button
+                                    onClick={closeAssignModal}
+                                    className="px-8 py-2 bg-[#D9D9D9] text-black font-bold rounded-lg hover:bg-gray-300 transition-colors"
+                                    style={{ width: '120px', fontSize: '16px', fontFamily: 'SF Pro Display' }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleAssign}
+                                    disabled={
                                         !assignmentData.project ||
                                         !assignmentData.role ||
                                         !assignmentData.startDate ||
                                         !assignmentData.endDate ||
                                         new Date(assignmentData.endDate) < new Date(assignmentData.startDate)
-                                    ) ? 0.5 : 1,
-                                    cursor: (
-                                        !assignmentData.project ||
-                                        !assignmentData.role ||
-                                        !assignmentData.startDate ||
-                                        !assignmentData.endDate ||
-                                        new Date(assignmentData.endDate) < new Date(assignmentData.startDate)
-                                    ) ? 'not-allowed' : 'pointer'
-                                }}
-                            >
-                                Assign
-                            </button>
+                                    }
+                                    className="font-bold text-black hover:opacity-90 transition-colors"
+                                    style={{
+                                        width: '100px',
+                                        height: '40px',
+                                        fontSize: '14px',
+                                        fontFamily: 'SF Pro Display',
+                                        backgroundColor: '#CAF0F8',
+                                        borderRadius: '8px',
+                                        opacity: (
+                                            !assignmentData.project ||
+                                            !assignmentData.role ||
+                                            !assignmentData.startDate ||
+                                            !assignmentData.endDate ||
+                                            new Date(assignmentData.endDate) < new Date(assignmentData.startDate)
+                                        ) ? 0.5 : 1,
+                                        cursor: (
+                                            !assignmentData.project ||
+                                            !assignmentData.role ||
+                                            !assignmentData.startDate ||
+                                            !assignmentData.endDate ||
+                                            new Date(assignmentData.endDate) < new Date(assignmentData.startDate)
+                                        ) ? 'not-allowed' : 'pointer'
+                                    }}
+                                >
+                                    Assign
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Track Record Modal */}
-            {trackRecordModal.show && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
-                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-                >
+            {
+                trackRecordModal.show && (
                     <div
-                        className="rounded-2xl relative flex flex-col animate-scale-in bg-white"
-                        style={{ width: '1300px', height: '771px' }}
+                        className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
+                        style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
                     >
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-8 pt-6 pb-4">
-                            <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
-                                {trackRecordModal.resource?.resourceName}
-                            </h2>
-                            <button
-                                onClick={closeTrackRecordModal}
-                                className="text-gray-500 hover:text-gray-700 transition-colors"
-                            >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
+                        <div
+                            className="rounded-2xl relative flex flex-col animate-scale-in bg-white"
+                            style={{ width: '1300px', height: '771px' }}
+                        >
+                            {/* Header */}
+                            <div className="flex items-center justify-between px-8 pt-6 pb-4">
+                                <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
+                                    {trackRecordModal.resource?.resourceName}
+                                </h2>
+                                <button
+                                    onClick={closeTrackRecordModal}
+                                    className="text-gray-500 hover:text-gray-700 transition-colors"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
 
-                        {/* Line below title */}
-                        <div className="border-b border-gray-300"></div>
+                            {/* Line below title */}
+                            <div className="border-b border-gray-300"></div>
 
-                        {/* Timeline Content */}
-                        <div className="flex items-center justify-center px-8 py-6 flex-1">
-                            <div className="rounded-lg" style={{ width: '1240px', height: '588px' }}>
-                                {/* Month Headers */}
-                                <div className="grid grid-cols-9 gap-0">
-                                    {(() => {
-                                        const now = new Date();
-                                        const currentMonth = now.getMonth(); // 0-11
-                                        const currentYear = now.getFullYear();
-                                        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
-
-                                        // Generate 9 months starting from 4 months ago
-                                        const months = [];
-                                        for (let i = -4; i <= 4; i++) {
-                                            const date = new Date(currentYear, currentMonth + i, 1);
-                                            const monthName = monthNames[date.getMonth()];
-                                            const year = date.getFullYear();
-                                            months.push(`${monthName} ${year}`);
-                                        }
-
-                                        const currentMonthStr = `${monthNames[currentMonth]} ${currentYear}`;
-
-                                        return months.map((month, index) => (
-                                            <div
-                                                key={month}
-                                                className="text-center py-3 font-bold border border-gray-300"
-                                                style={{
-                                                    fontSize: '20px',
-                                                    fontFamily: 'SF Pro Display',
-                                                    backgroundColor: month === currentMonthStr ? '#0059FF' : 'rgba(0, 180, 216, 0.2)',
-                                                    color: month === currentMonthStr ? '#FFFFFF' : '#000000',
-                                                    borderTopLeftRadius: index === 0 ? '8px' : '0',
-                                                    borderTopRightRadius: index === 8 ? '8px' : '0'
-                                                }}
-                                            >
-                                                {month}
-                                            </div>
-                                        ));
-                                    })()}
-                                </div>
-
-                                {/* Scrollable Container for Rows */}
-                                <div className="overflow-y-auto" style={{ height: '470.4px' }}>
-                                    <div className="space-y-0 relative">
+                            {/* Timeline Content */}
+                            <div className="flex items-center justify-center px-8 py-6 flex-1">
+                                <div className="rounded-lg" style={{ width: '1240px', height: '588px' }}>
+                                    {/* Month Headers */}
+                                    <div className="grid grid-cols-9 gap-0">
                                         {(() => {
                                             const now = new Date();
-                                            const currentMonth = now.getMonth();
+                                            const currentMonth = now.getMonth(); // 0-11
                                             const currentYear = now.getFullYear();
-                                            const startDate = new Date(currentYear, currentMonth - 4, 1);
-                                            const assignments = trackRecordModal.resource?.currentAssignments || [];
-                                            const totalRows = Math.max(4, assignments.length);
+                                            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
 
-                                            // Function to calculate position based on date
-                                            const getMonthPosition = (date) => {
-                                                const d = new Date(date);
-                                                const monthDiff = (d.getFullYear() - startDate.getFullYear()) * 12 + (d.getMonth() - startDate.getMonth());
-                                                return Math.max(0, Math.min(9, monthDiff));
-                                            };
-
-                                            // Function to get project color based on status
-                                            const getProjectColor = (assignment) => {
-                                                if (assignment.projectStatus === 'CLOSED' || assignment.assignmentStatus === 'RELEASED') {
-                                                    return '#FF0000'; // Closed
-                                                }
-                                                if (assignment.projectStatus === 'HOLD') {
-                                                    return '#F97316'; // Hold
-                                                }
-                                                return '#06D001'; // Ongoing
-                                            };
-
-                                            // Create dynamic rows
-                                            const rows = [];
-                                            for (let i = 0; i < totalRows; i++) {
-                                                const assignment = assignments[i];
-                                                if (assignment) {
-                                                    const startPos = getMonthPosition(assignment.startDate);
-                                                    const endPos = getMonthPosition(assignment.endDate) + 1;
-                                                    const width = ((endPos - startPos) / 9) * 100;
-                                                    const left = (startPos / 9) * 100;
-                                                    const color = getProjectColor(assignment);
-                                                    const startDateObj = new Date(assignment.startDate);
-                                                    const endDateObj = new Date(assignment.endDate);
-                                                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-                                                    rows.push(
-                                                        <div key={i} className="relative" style={{ height: '117.6px' }}>
-                                                            <div className="grid grid-cols-9 h-full">
-                                                                {Array.from({ length: 9 }).map((_, index) => (
-                                                                    <div
-                                                                        key={index}
-                                                                        className="border-r border-b border-l border-gray-300"
-                                                                        style={{
-                                                                            borderBottomLeftRadius: i === totalRows - 1 && index === 0 ? '8px' : '0',
-                                                                            borderBottomRightRadius: i === totalRows - 1 && index === 8 ? '8px' : '0'
-                                                                        }}
-                                                                    ></div>
-                                                                ))}
-                                                            </div>
-                                                            <div
-                                                                className="absolute flex items-center justify-center rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                                                style={{
-                                                                    left: `${left}%`,
-                                                                    width: `${Math.min(width, 100 - left)}%`,
-                                                                    height: '60px',
-                                                                    top: '50%',
-                                                                    transform: 'translateY(-50%)',
-                                                                    backgroundColor: color
-                                                                }}
-                                                                onMouseEnter={(e) => {
-                                                                    const rect = e.currentTarget.getBoundingClientRect();
-                                                                    setTooltipState({
-                                                                        show: true,
-                                                                        x: rect.left + rect.width / 2,
-                                                                        y: rect.top,
-                                                                        data: {
-                                                                            assignment,
-                                                                            startDateObj,
-                                                                            endDateObj,
-                                                                            monthNames,
-                                                                            now
-                                                                        }
-                                                                    });
-                                                                }}
-                                                                onMouseLeave={() => setTooltipState({ show: false, x: 0, y: 0, data: null })}
-                                                            >
-                                                                <span className="font-bold text-white text-center px-4 truncate" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
-                                                                    {assignment.projectName} • {assignment.projectRole}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                } else {
-                                                    // Empty row
-                                                    rows.push(
-                                                        <div key={i} className="relative" style={{ height: '117.6px' }}>
-                                                            <div className="grid grid-cols-9 h-full">
-                                                                {Array.from({ length: 9 }).map((_, index) => (
-                                                                    <div
-                                                                        key={index}
-                                                                        className="border-r border-b border-l border-gray-300"
-                                                                        style={{
-                                                                            borderBottomLeftRadius: i === totalRows - 1 && index === 0 ? '8px' : '0',
-                                                                            borderBottomRightRadius: i === totalRows - 1 && index === 8 ? '8px' : '0'
-                                                                        }}
-                                                                    ></div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                }
+                                            // Generate 9 months starting from 4 months ago
+                                            const months = [];
+                                            for (let i = -4; i <= 4; i++) {
+                                                const date = new Date(currentYear, currentMonth + i, 1);
+                                                const monthName = monthNames[date.getMonth()];
+                                                const year = date.getFullYear();
+                                                months.push(`${monthName} ${year}`);
                                             }
-                                            return rows;
+
+                                            const currentMonthStr = `${monthNames[currentMonth]} ${currentYear}`;
+
+                                            return months.map((month, index) => (
+                                                <div
+                                                    key={month}
+                                                    className="text-center py-3 font-bold border border-gray-300"
+                                                    style={{
+                                                        fontSize: '20px',
+                                                        fontFamily: 'SF Pro Display',
+                                                        backgroundColor: month === currentMonthStr ? '#0059FF' : 'rgba(0, 180, 216, 0.2)',
+                                                        color: month === currentMonthStr ? '#FFFFFF' : '#000000',
+                                                        borderTopLeftRadius: index === 0 ? '8px' : '0',
+                                                        borderTopRightRadius: index === 8 ? '8px' : '0'
+                                                    }}
+                                                >
+                                                    {month}
+                                                </div>
+                                            ));
                                         })()}
+                                    </div>
+
+                                    {/* Scrollable Container for Rows */}
+                                    <div className="overflow-y-auto" style={{ height: '470.4px' }}>
+                                        <div className="space-y-0 relative">
+                                            {(() => {
+                                                const now = new Date();
+                                                const currentMonth = now.getMonth();
+                                                const currentYear = now.getFullYear();
+                                                const startDate = new Date(currentYear, currentMonth - 4, 1);
+                                                const assignments = trackRecordModal.resource?.currentAssignments || [];
+                                                const totalRows = Math.max(4, assignments.length);
+
+                                                // Function to calculate position based on date
+                                                const getMonthPosition = (date) => {
+                                                    const d = new Date(date);
+                                                    const monthDiff = (d.getFullYear() - startDate.getFullYear()) * 12 + (d.getMonth() - startDate.getMonth());
+                                                    return Math.max(0, Math.min(9, monthDiff));
+                                                };
+
+                                                // Function to get project color based on status
+                                                const getProjectColor = (assignment) => {
+                                                    if (assignment.projectStatus === 'CLOSED' || assignment.assignmentStatus === 'RELEASED') {
+                                                        return '#FF0000'; // Closed
+                                                    }
+                                                    if (assignment.projectStatus === 'HOLD') {
+                                                        return '#F97316'; // Hold
+                                                    }
+                                                    return '#06D001'; // Ongoing
+                                                };
+
+                                                // Create dynamic rows
+                                                const rows = [];
+                                                for (let i = 0; i < totalRows; i++) {
+                                                    const assignment = assignments[i];
+                                                    if (assignment) {
+                                                        const startPos = getMonthPosition(assignment.startDate);
+                                                        const endPos = getMonthPosition(assignment.endDate) + 1;
+                                                        const width = ((endPos - startPos) / 9) * 100;
+                                                        const left = (startPos / 9) * 100;
+                                                        const color = getProjectColor(assignment);
+                                                        const startDateObj = new Date(assignment.startDate);
+                                                        const endDateObj = new Date(assignment.endDate);
+                                                        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+                                                        rows.push(
+                                                            <div key={i} className="relative" style={{ height: '117.6px' }}>
+                                                                <div className="grid grid-cols-9 h-full">
+                                                                    {Array.from({ length: 9 }).map((_, index) => (
+                                                                        <div
+                                                                            key={index}
+                                                                            className="border-r border-b border-l border-gray-300"
+                                                                            style={{
+                                                                                borderBottomLeftRadius: i === totalRows - 1 && index === 0 ? '8px' : '0',
+                                                                                borderBottomRightRadius: i === totalRows - 1 && index === 8 ? '8px' : '0'
+                                                                            }}
+                                                                        ></div>
+                                                                    ))}
+                                                                </div>
+                                                                <div
+                                                                    className="absolute flex items-center justify-center rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                                                    style={{
+                                                                        left: `${left}%`,
+                                                                        width: `${Math.min(width, 100 - left)}%`,
+                                                                        height: '60px',
+                                                                        top: '50%',
+                                                                        transform: 'translateY(-50%)',
+                                                                        backgroundColor: color
+                                                                    }}
+                                                                    onMouseEnter={(e) => {
+                                                                        const rect = e.currentTarget.getBoundingClientRect();
+                                                                        setTooltipState({
+                                                                            show: true,
+                                                                            x: rect.left + rect.width / 2,
+                                                                            y: rect.top,
+                                                                            data: {
+                                                                                assignment,
+                                                                                startDateObj,
+                                                                                endDateObj,
+                                                                                monthNames,
+                                                                                now
+                                                                            }
+                                                                        });
+                                                                    }}
+                                                                    onMouseLeave={() => setTooltipState({ show: false, x: 0, y: 0, data: null })}
+                                                                >
+                                                                    <span className="font-bold text-white text-center px-4 truncate" style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}>
+                                                                        {assignment.projectName} • {assignment.projectRole}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    } else {
+                                                        // Empty row
+                                                        rows.push(
+                                                            <div key={i} className="relative" style={{ height: '117.6px' }}>
+                                                                <div className="grid grid-cols-9 h-full">
+                                                                    {Array.from({ length: 9 }).map((_, index) => (
+                                                                        <div
+                                                                            key={index}
+                                                                            className="border-r border-b border-l border-gray-300"
+                                                                            style={{
+                                                                                borderBottomLeftRadius: i === totalRows - 1 && index === 0 ? '8px' : '0',
+                                                                                borderBottomRightRadius: i === totalRows - 1 && index === 8 ? '8px' : '0'
+                                                                            }}
+                                                                        ></div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    }
+                                                }
+                                                return rows;
+                                            })()}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Legend */}
-                        <div className="flex items-center justify-center gap-6 pb-6">
-                            <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#06D001' }}></div>
-                                <span style={{ fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '500' }}>Ongoing</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#F97316' }}></div>
-                                <span style={{ fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '500' }}>Hold</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#FF0000' }}></div>
-                                <span style={{ fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '500' }}>Closed</span>
+                            {/* Legend */}
+                            <div className="flex items-center justify-center gap-6 pb-6">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#06D001' }}></div>
+                                    <span style={{ fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '500' }}>Ongoing</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#F97316' }}></div>
+                                    <span style={{ fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '500' }}>Hold</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#FF0000' }}></div>
+                                    <span style={{ fontSize: '14px', fontFamily: 'SF Pro Display', fontWeight: '500' }}>Closed</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Sidebar */}
             <Sidebar />
@@ -1352,181 +1357,180 @@ const AdminResources = () => {
 
             </div>
             {/* Edit Resource Modal */}
-            {editModal.show && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
-                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-                >
+            {
+                editModal.show && (
                     <div
-                        className="rounded-2xl relative flex flex-col animate-scale-in"
-                        style={{ width: '500px', maxHeight: '90vh', backgroundColor: '#F5F5F5' }}
+                        className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
+                        style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
                     >
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-8 pt-6 pb-4">
-                            <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
-                                Edit Resource
-                            </h2>
-                            <button
-                                onClick={() => setEditModal({ show: false, resource: null, formData: { resourceName: '', email: '' } })}
-                                className="text-gray-500 hover:text-gray-700 transition-colors"
-                            >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        {/* Line below title */}
-                        <div className="border-b border-gray-300 mx-0" style={{ width: '500px' }}></div>
-
-                        {/* Form Content */}
-                        <div className="px-8 py-4">
-                            <div className="mb-6">
-                                <div className="flex items-center justify-center gap-2 mb-4">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        <div
+                            className="rounded-2xl relative flex flex-col animate-scale-in"
+                            style={{ width: '500px', maxHeight: '90vh', backgroundColor: '#F5F5F5' }}
+                        >
+                            {/* Header */}
+                            <div className="flex items-center justify-between px-8 pt-6 pb-4">
+                                <h2 className="font-bold text-black" style={{ fontSize: '30px', fontFamily: 'SF Pro Display' }}>
+                                    Edit Resource
+                                </h2>
+                                <button
+                                    onClick={() => setEditModal({ show: false, resource: null, formData: { resourceName: '', email: '' } })}
+                                    className="text-gray-500 hover:text-gray-700 transition-colors"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
-                                    <span className="font-bold text-black" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>Resource Details</span>
-                                </div>
-                                <div className="space-y-4 px-4">
-                                    <div>
-                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Full Name</label>
-                                        <input
-                                            type="text"
-                                            value={editModal.formData.resourceName}
-                                            onChange={(e) => setEditModal(prev => ({ ...prev, formData: { ...prev.formData, resourceName: e.target.value } }))}
-                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
-                                            style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
-                                        />
+                                </button>
+                            </div>
+
+                            {/* Line below title */}
+                            <div className="border-b border-gray-300 mx-0" style={{ width: '500px' }}></div>
+
+                            {/* Form Content */}
+                            <div className="px-8 py-4">
+                                <div className="mb-6">
+                                    <div className="flex items-center justify-center gap-2 mb-4">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        <span className="font-bold text-black" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>Resource Details</span>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <div style={{ width: '100%' }}>
-                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Email Address</label>
+                                    <div className="space-y-4 px-4">
+                                        <div>
+                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Full Name</label>
                                             <input
-                                                type="email"
-                                                value={editModal.formData.email}
-                                                onChange={(e) => setEditModal(prev => ({ ...prev, formData: { ...prev.formData, email: e.target.value } }))}
+                                                type="text"
+                                                value={editModal.formData.resourceName}
+                                                onChange={(e) => setEditModal(prev => ({ ...prev, formData: { ...prev.formData, resourceName: e.target.value } }))}
                                                 className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
                                                 style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
                                             />
                                         </div>
+                                        <div className="flex justify-between">
+                                            <div style={{ width: '100%' }}>
+                                                <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Email Address</label>
+                                                <input
+                                                    type="email"
+                                                    value={editModal.formData.email}
+                                                    onChange={(e) => setEditModal(prev => ({ ...prev, formData: { ...prev.formData, email: e.target.value } }))}
+                                                    className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                    style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Separator before buttons */}
-                        <div className="border-b border-gray-300 mx-0 mb-4" style={{ width: '500px' }}></div>
+                            {/* Separator before buttons */}
+                            <div className="border-b border-gray-300 mx-0 mb-4" style={{ width: '500px' }}></div>
 
-                        {/* Footer Buttons */}
-                        <div className="px-8 pb-8 flex justify-center gap-4">
-                            <button
-                                onClick={() => setEditModal({ show: false, resource: null, formData: { resourceName: '', email: '' } })}
-                                className="px-8 py-2 bg-[#D9D9D9] text-black font-bold rounded-lg hover:bg-gray-300 transition-colors"
-                                style={{ width: '120px', fontSize: '16px', fontFamily: 'SF Pro Display' }}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={confirmEdit}
-                                className="px-8 py-2 bg-[#00B4D8] text-white font-bold rounded-lg hover:bg-[#0096B4] transition-colors"
-                                style={{ width: '120px', fontSize: '16px', fontFamily: 'SF Pro Display' }}
-                            >
-                                SAVE
-                            </button>
+                            {/* Footer Buttons */}
+                            <div className="px-8 pb-8">
+                                <button
+                                    onClick={confirmEdit}
+                                    className="w-full py-3 bg-[#CAF0F8] text-black font-bold rounded-lg hover:bg-[#0096B4] transition-colors"
+                                    style={{ fontSize: '16px', fontFamily: 'SF Pro Display' }}
+                                >
+                                    Save
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-            {deleteModal.show && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-                    <div className="bg-[#F5F5F5] rounded-2xl p-8 w-[400px] flex flex-col items-center animate-scale-in">
-                        <div className="mb-4">
-                            <AlertTriangle className="w-16 h-16 text-[#FBCD3F]" fill="#FBCD3F" stroke="#ffffff" />
-                        </div>
-                        <h2 className="text-3xl font-bold text-black mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Are you sure?</h2>
-                        <p className="text-black text-center mb-8" style={{ fontFamily: 'SF Pro Display' }}>
-                            You will not be able to recover this resource
-                        </p>
-                        <div className="flex gap-4 w-full">
-                            <button
-                                onClick={() => setDeleteModal({ show: false, resource: null })}
-                                className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
-                                style={{ fontFamily: 'SF Pro Display' }}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={confirmDelete}
-                                className="flex-1 py-3 bg-[#FF0000] text-white rounded-xl font-bold hover:bg-red-600 transition-colors"
-                                style={{ fontFamily: 'SF Pro Display' }}
-                            >
-                                Yes, delete it!
-                            </button>
+                )
+            }
+            {
+                deleteModal.show && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
+                        <div className="bg-[#F5F5F5] rounded-2xl p-8 w-[400px] flex flex-col items-center animate-scale-in">
+                            <div className="mb-4">
+                                <AlertTriangle className="w-16 h-16 text-[#FBCD3F]" fill="#FBCD3F" stroke="#ffffff" />
+                            </div>
+                            <h2 className="text-3xl font-bold text-black mb-2 text-center" style={{ fontFamily: 'SF Pro Display' }}>Are you sure?</h2>
+                            <p className="text-black text-center mb-8" style={{ fontFamily: 'SF Pro Display' }}>
+                                You will not be able to recover this resource
+                            </p>
+                            <div className="flex gap-4 w-full">
+                                <button
+                                    onClick={() => setDeleteModal({ show: false, resource: null })}
+                                    className="flex-1 py-3 bg-[#D9D9D9] text-black rounded-xl font-bold hover:bg-gray-300 transition-colors"
+                                    style={{ fontFamily: 'SF Pro Display' }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="flex-1 py-3 bg-[#FF0000] text-white rounded-xl font-bold hover:bg-red-600 transition-colors"
+                                    style={{ fontFamily: 'SF Pro Display' }}
+                                >
+                                    Yes, delete it!
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Hoisted Tooltip */}
-            {tooltipState.show && tooltipState.data && (
-                <div
-                    className="fixed z-[9999] bg-white rounded-lg shadow-xl p-4 border border-gray-200 pointer-events-none animate-fade-in"
-                    style={{
-                        top: tooltipState.y - 120, // Offset above the cursor/element
-                        left: tooltipState.x,
-                        transform: 'translateX(-50%)',
-                        width: '300px',
-                        fontFamily: 'SF Pro Display'
-                    }}
-                >
-                    <div className="space-y-2">
-                        <h4 className="font-bold text-black" style={{ fontSize: '16px' }}>{tooltipState.data.assignment.projectName}</h4>
-                        <div className="text-sm text-gray-700">
-                            <p><span className="font-semibold">Role:</span> {tooltipState.data.assignment.projectRole}</p>
-                            <p><span className="font-semibold">Start:</span> {tooltipState.data.monthNames[tooltipState.data.startDateObj.getMonth()]} {tooltipState.data.startDateObj.getFullYear()}</p>
-                            <p><span className="font-semibold">End:</span> {tooltipState.data.monthNames[tooltipState.data.endDateObj.getMonth()]} {tooltipState.data.endDateObj.getFullYear()}</p>
-                            <p><span className="font-semibold">Status:</span> <span className={
-                                tooltipState.data.assignment.projectStatus === 'CLOSED' ||
-                                    tooltipState.data.assignment.assignmentStatus === 'RELEASED' ||
-                                    new Date(tooltipState.data.assignment.endDate) < tooltipState.data.now
-                                    ? 'text-red-600 font-bold'
-                                    : tooltipState.data.assignment.projectStatus === 'HOLD'
-                                        ? 'text-orange-500 font-bold'
-                                        : 'text-green-600 font-bold'
-                            }>
-                                {tooltipState.data.assignment.projectStatus === 'CLOSED' ||
-                                    tooltipState.data.assignment.assignmentStatus === 'RELEASED' ||
-                                    new Date(tooltipState.data.assignment.endDate) < tooltipState.data.now
-                                    ? 'CLOSED'
-                                    : tooltipState.data.assignment.projectStatus}
-                            </span></p>
-                        </div>
-                    </div>
-                    {/* Arrow */}
+            {
+                tooltipState.show && tooltipState.data && (
                     <div
-                        className="absolute"
+                        className="fixed z-[9999] bg-white rounded-lg shadow-xl p-4 border border-gray-200 pointer-events-none animate-fade-in"
                         style={{
-                            bottom: '-8px',
-                            left: '50%',
+                            top: tooltipState.y - 120, // Offset above the cursor/element
+                            left: tooltipState.x,
                             transform: 'translateX(-50%)',
-                            width: '0',
-                            height: '0',
-                            borderLeft: '8px solid transparent',
-                            borderRight: '8px solid transparent',
-                            borderTop: '8px solid white'
+                            width: '300px',
+                            fontFamily: 'SF Pro Display'
                         }}
-                    ></div>
-                </div>
-            )}
+                    >
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-black" style={{ fontSize: '16px' }}>{tooltipState.data.assignment.projectName}</h4>
+                            <div className="text-sm text-gray-700">
+                                <p><span className="font-semibold">Role:</span> {tooltipState.data.assignment.projectRole}</p>
+                                <p><span className="font-semibold">Start:</span> {tooltipState.data.monthNames[tooltipState.data.startDateObj.getMonth()]} {tooltipState.data.startDateObj.getFullYear()}</p>
+                                <p><span className="font-semibold">End:</span> {tooltipState.data.monthNames[tooltipState.data.endDateObj.getMonth()]} {tooltipState.data.endDateObj.getFullYear()}</p>
+                                <p><span className="font-semibold">Status:</span> <span className={
+                                    tooltipState.data.assignment.projectStatus === 'CLOSED' ||
+                                        tooltipState.data.assignment.assignmentStatus === 'RELEASED' ||
+                                        new Date(tooltipState.data.assignment.endDate) < tooltipState.data.now
+                                        ? 'text-red-600 font-bold'
+                                        : tooltipState.data.assignment.projectStatus === 'HOLD'
+                                            ? 'text-orange-500 font-bold'
+                                            : 'text-green-600 font-bold'
+                                }>
+                                    {tooltipState.data.assignment.projectStatus === 'CLOSED' ||
+                                        tooltipState.data.assignment.assignmentStatus === 'RELEASED' ||
+                                        new Date(tooltipState.data.assignment.endDate) < tooltipState.data.now
+                                        ? 'CLOSED'
+                                        : tooltipState.data.assignment.projectStatus}
+                                </span></p>
+                            </div>
+                        </div>
+                        {/* Arrow */}
+                        <div
+                            className="absolute"
+                            style={{
+                                bottom: '-8px',
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                width: '0',
+                                height: '0',
+                                borderLeft: '8px solid transparent',
+                                borderRight: '8px solid transparent',
+                                borderTop: '8px solid white'
+                            }}
+                        ></div>
+                    </div>
+                )
+            }
 
             {/* Restriction Modal */}
-            {restrictionModal.show && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden transform animate-in zoom-in-95 duration-200">
-                        <div className="p-8">
-                            <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                                <AlertTriangle className="w-8 h-8 text-red-500" />
+            {
+                restrictionModal.show && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
+                        <div className="bg-[#F5F5F5] rounded-2xl p-8 w-[400px] flex flex-col items-center animate-scale-in">
+                            <div className="mb-6 flex justify-center">
+                                <AlertTriangle className="w-16 h-16 text-[#FBCD3F]" fill="#FBCD3F" stroke="#ffffff" />
                             </div>
                             <h2 className="text-2xl font-bold text-gray-800 text-center mb-4" style={{ fontFamily: 'SF Pro Display' }}>
                                 {restrictionModal.title}
@@ -1536,16 +1540,16 @@ const AdminResources = () => {
                             </p>
                             <button
                                 onClick={() => setRestrictionModal({ ...restrictionModal, show: false })}
-                                className="w-full py-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-2xl font-bold transition-all duration-200"
+                                className="w-full py-4 bg-[#D9D9D9] hover:bg-gray-300 text-black rounded-2xl font-bold transition-all duration-200"
                                 style={{ fontFamily: 'SF Pro Display' }}
                             >
                                 I Understand
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 
