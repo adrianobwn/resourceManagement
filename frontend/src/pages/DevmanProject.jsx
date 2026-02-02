@@ -729,8 +729,8 @@ const DevmanProject = () => {
                                 <div className="flex justify-end gap-4">
                                     <button
                                         onClick={() => setShowNewProjectModal(false)}
-                                        className="font-bold text-black hover:text-gray-700 transition-colors"
-                                        style={{ fontFamily: 'SF Pro Display' }}
+                                        className="px-8 py-2 bg-[#D9D9D9] text-black font-bold rounded-lg hover:bg-gray-300 transition-colors"
+                                        style={{ width: '120px', fontSize: '16px', fontFamily: 'SF Pro Display' }}
                                     >
                                         Cancel
                                     </button>
