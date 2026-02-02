@@ -254,11 +254,12 @@ const AdminProject = () => {
     };
 
     const handleDeleteClick = (project) => {
-        if (project.status !== 'CLOSED') {
+        // Check if project has any active resources (memberCount > 0)
+        if (project.memberCount > 0) {
             setRestrictionModal({
                 show: true,
                 title: 'Cannot Delete Project',
-                message: 'Only CLOSED projects can be deleted. Please ensure the project status is CLOSED first.'
+                message: `This project still has ${project.memberCount} active resource(s). Please release all resources before deleting.`
             });
             return;
         }

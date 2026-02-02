@@ -612,17 +612,15 @@ Menampilkan feedback sistem terhadap aksi yang dilakukan.
 > **Gambar 4.4.11** Notification - Success Update (Example)
 > **Gambar 4.4.12** Notification - Success Assign (Example)
 > **Gambar 4.4.13** Notification - Success Delete (Example)
-> **Gambar 4.4.20** Notification - Success Export (Example)
+> **Gambar 4.4.14** Notification - Success Export (Example)
 
 **Sub-screenshots (Filter & Export Tools):**
 Detail tampilan fitur filter, pencarian, dan export data.
-> **Gambar 4.4.14** Admin Resources - Filter Status Selection
+> **Gambar 4.4.15** Admin Resources - Filter Status Selection
 
-> **Gambar 4.4.15** Admin Resources - Filter Role Selection
+> **Gambar 4.4.16** Admin Resources - Filter Role Selection
 
-> **Gambar 4.4.16** Admin Resources - Date Filter (Period Selection)
-
-> **Gambar 4.4.17** Admin Resources - Export Data Action
+> **Gambar 4.4.17** Admin Resources - Date Filter (Period Selection)
 
 > **Gambar 4.4.18** Admin Resources - Example Exported File (Excel/CSV)
 
@@ -633,13 +631,14 @@ Detail tampilan fitur filter, pencarian, dan export data.
 ### 4.5. Admin Activities
 Halaman Log Audit.
 *   Menampilkan tabel riwayat: Tanggal, Aktor (Siapa), Aksi (Assign/Extend), Target (Resource), dan Keterangan.
+*   Tab navigasi: Extend (default), Release, Assignment, Project.
 
-> **Gambar 4.5** Admin Activities - Tab All
+> **Gambar 4.5** Admin Activities - Tab Extend (Default)
 
 **Sub-screenshots:**
-> **Gambar 4.5.1** Admin Activities - Tab Assign
-> **Gambar 4.5.2** Admin Activities - Tab Extend
-> **Gambar 4.5.3** Admin Activities - Tab Release
+> **Gambar 4.5.1** Admin Activities - Tab Release
+> **Gambar 4.5.2** Admin Activities - Tab Assignment
+> **Gambar 4.5.3** Admin Activities - Tab Project
 
 ---
 
