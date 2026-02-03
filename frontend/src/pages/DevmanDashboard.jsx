@@ -337,9 +337,9 @@ const DevmanDashboard = () => {
                                         <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Proposed Changes</span>
                                     </div>
                                     <div className="ml-8 space-y-1" style={{ fontFamily: 'SF Pro Display' }}>
-                                        <p className="text-gray-600">Current End Date : {viewDetailModal.request.currentEndDate}</p>
+                                        <p className="text-gray-600">Current End Date : {formatDate(viewDetailModal.request.currentEndDate)}</p>
                                         <p className="text-gray-600">
-                                            Requested New End : {viewDetailModal.request.newEndDate}
+                                            Requested New End : {formatDate(viewDetailModal.request.newEndDate)}
                                             {viewDetailModal.request.extensionMonths > 0 && (
                                                 <span className="text-red-500 font-medium"> (+ {viewDetailModal.request.extensionMonths} Months)</span>
                                             )}
@@ -402,9 +402,9 @@ const DevmanDashboard = () => {
                                         <span className="font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Proposed Changes</span>
                                     </div>
                                     <div className="ml-8 space-y-1" style={{ fontFamily: 'SF Pro Display' }}>
-                                        <p className="text-gray-600">Original End Date : {viewDetailModal.request.originalEndDate}</p>
+                                        <p className="text-gray-600">Original End Date : {formatDate(viewDetailModal.request.currentEndDate)}</p>
                                         <p className="text-gray-600">
-                                            Requested New End : {viewDetailModal.request.requestedEndDate}
+                                            Requested New End : {formatDate(viewDetailModal.request.newEndDate)}
                                             {viewDetailModal.request.earlyReleaseMonths > 0 && (
                                                 <span className="text-red-500 font-medium"> (Early Release by {viewDetailModal.request.earlyReleaseMonths} Month)</span>
                                             )}
@@ -507,7 +507,8 @@ const DevmanDashboard = () => {
                         </div>
                     </div>
                 </div>
-            )}
+            )
+            }
 
             {/* Main Content */}
             <div className="flex-1 ml-[267px] p-8">
@@ -733,7 +734,7 @@ const DevmanDashboard = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
