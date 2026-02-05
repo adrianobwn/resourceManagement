@@ -25,7 +25,6 @@ public class UserService {
     private final com.resourceManagement.repository.ProjectRepository projectRepository;
     private final com.resourceManagement.repository.AssignmentRequestRepository assignmentRequestRepository;
     private final com.resourceManagement.repository.HistoryLogRepository historyLogRepository;
-    private final com.resourceManagement.repository.NotificationRepository notificationRepository;
     private final HistoryLogService historyLogService;
 
     public void createPm(CreatePmRequest request) {
@@ -75,9 +74,6 @@ public class UserService {
             throw new RuntimeException(
                     "Cannot delete DevMan associated with existing projects. Please reassign or delete the projects first.");
         }
-
-        // Delete user's notifications
-        notificationRepository.deleteByRecipient_UserId(userId);
 
         // Delete user's requests (as requester)
         assignmentRequestRepository.deleteByRequester_UserId(userId);
