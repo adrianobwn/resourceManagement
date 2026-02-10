@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar';
 import StatusBadge from '../components/StatusBadge';
 import Toast from '../components/Toast';
 import api from '../utils/api';
-import { Search, UserPlus, X, Eye, Trash2, AlertTriangle, Edit2 } from 'lucide-react';
+import { Search, X, Eye, Trash2, AlertTriangle, Edit2 } from 'lucide-react';
 
 const AdminDevman = () => {
     const navigate = useNavigate();
@@ -403,8 +403,10 @@ const AdminDevman = () => {
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
-                        <div className="p-8">
+                        <div className="p-8 pb-0">
                             <h3 className="font-bold text-lg mb-4">Active Projects ({selectedDevMan.activeProjects.length})</h3>
+                        </div>
+                        <div className="px-8 pb-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
                             {selectedDevMan.activeProjects.length === 0 ? (
                                 <p className="text-gray-500 italic">No active projects currently.</p>
                             ) : (
