@@ -20,7 +20,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.resourceManagement.model.enums.RequestStatus;
+import com.resourceManagement.model.enums.RequestType;
 import com.resourceManagement.repository.AssignmentRequestRepository;
+import com.resourceManagement.model.entity.AssignmentRequest;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -134,6 +136,38 @@ public class ResourceService {
                                 .build();
 
                 assignmentRepository.save(assignment);
+
+
+                // Record Activity (Assignment Request) to make it visible in Activities page
+                // Find current admin user
+                String email = SecurityContextHolder.getContext().getAuthentication().getName();
+                User admin = userRepository.findByEmail(email).orElseThrow();
+
+                AssignmentRequest savedRequest = AssignmentRequest.builder()
+                                .requestType(RequestType.ASSIGN)
+                                .status(RequestStatus.APPROVED)
+                                .requester(admin)
+                                .project(project)
+                                .resource(resource)
+                                .role(request.getProjectRole())
+                                .startDate(startDate)
+                                .endDate(endDate)
+                                .reason("Resource assigned directly by Admin")
+                                .build();
+
+                requestRepository.save(savedRequest);
+
+                // Log to history logs
+                historyLogService.logActivity(
+                                EntityType.ASSIGNMENT,
+                                "ASSIGN",
+                                String.format("Admin directly assigned %s to project %s as %s",
+                                                resource.getResourceName(), project.getProjectName(),
+                                                request.getProjectRole()),
+                                admin,
+                                project,
+                                resource,
+                                request.getProjectRole());
 
                 // Update resource status to ASSIGNED
                 resource.setStatus(ResourceStatus.ASSIGNED);
