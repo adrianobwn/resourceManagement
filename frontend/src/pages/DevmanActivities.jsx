@@ -9,12 +9,14 @@ const DevmanActivities = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('extend');
     const [activities, setActivities] = useState([]);
+    const [historyLogs, setHistoryLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [notification, setNotification] = useState({ show: false, message: '', type: 'info', closing: false });
     const [reasonModal, setReasonModal] = useState({ show: false, reason: '' });
 
     useEffect(() => {
         fetchActivities();
+        fetchHistoryLogs();
     }, []);
 
     // Scroll locking for modal
@@ -49,6 +51,18 @@ const DevmanActivities = () => {
             setActivities([]); // Fallback to empty array on error
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchHistoryLogs = async () => {
+        try {
+            const response = await api.get('/history-logs');
+            console.log('History Logs Response:', response.data);
+            if (Array.isArray(response.data)) {
+                setHistoryLogs(response.data);
+            }
+        } catch (error) {
+            console.error('Error fetching history logs:', error);
         }
     };
 
@@ -135,6 +149,15 @@ const DevmanActivities = () => {
                                         }`}
                                 >
                                     Project
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('history')}
+                                    className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg flex items-center gap-2 ${activeTab === 'history'
+                                        ? 'bg-white text-black'
+                                        : 'text-black hover:bg-gray-200'
+                                        }`}
+                                >
+                                    History
                                 </button>
                             </div>
                         </div>
@@ -454,6 +477,60 @@ const DevmanActivities = () => {
                                 </button>
                             </div>
                         </div>
+                        {/* History Tab */}
+                        {activeTab === 'history' && (
+                            <div className="overflow-y-auto custom-scrollbar flex-1" style={{ maxHeight: 'inherit' }}>
+                                <table className="w-full relative">
+                                    <thead className="sticky top-0 z-10 bg-[#CAF0F8] shadow-sm">
+                                        <tr>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Date</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Performed By</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Entity</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Activity</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {historyLogs.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="5" className="text-center py-4 text-gray-500">No history found</td>
+                                            </tr>
+                                        ) : (
+                                            historyLogs.map((log) => (
+                                                <tr
+                                                    key={log.logId}
+                                                    className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"
+                                                >
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>
+                                                            {new Date(log.timestamp).toLocaleString('en-GB', {
+                                                                day: '2-digit',
+                                                                month: '2-digit',
+                                                                year: 'numeric',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit'
+                                                            })}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{log.performedBy}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800 font-bold" style={{ fontSize: '13px' }}>{log.entityType}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800 font-medium" style={{ fontSize: '14px' }}>{log.activityType}</span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{log.description}</span>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

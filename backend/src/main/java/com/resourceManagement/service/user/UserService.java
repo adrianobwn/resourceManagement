@@ -44,8 +44,20 @@ public class UserService {
                 .build();
 
         try {
-            userRepository.saveAndFlush(pm);
+            User savedPm = userRepository.saveAndFlush(pm);
             System.out.println("DevMan successfully saved to DB.");
+
+            // Log activity
+            String currentPrincipalName = SecurityContextHolder.getContext().getAuthentication().getName();
+            User performedBy = userRepository.findByEmail(currentPrincipalName)
+                    .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+            historyLogService.logActivity(
+                    EntityType.USER,
+                    "CREATE",
+                    "Created DevMan Account: " + pm.getName(),
+                    performedBy);
+
         } catch (Exception e) {
             System.err.println("Error saving DevMan to DB: " + e.getMessage());
             e.printStackTrace();

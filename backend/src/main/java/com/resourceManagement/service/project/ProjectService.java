@@ -35,20 +35,8 @@ public class ProjectService {
         private final AssignmentRequestRepository requestRepository;
         private final HistoryLogRepository historyLogRepository;
         private final HistoryLogService historyLogService;
+        private final com.resourceManagement.service.request.AssignmentRequestService assignmentRequestService;
 
-        private void recordDirectAction(User performedBy, RequestType type, AssignmentRequest details) {
-                details.setRequestType(type);
-                details.setStatus(RequestStatus.APPROVED);
-                details.setRequester(performedBy);
-                requestRepository.save(details);
-
-                // Log to History
-                String desc = String.format("Admin directly performed %s: %s", type,
-                                details.getReason() != null ? details.getReason() : "");
-                historyLogService.logActivity(EntityType.ASSIGNMENT, type.name(), desc, performedBy,
-                                details.getProject(),
-                                details.getResource(), details.getRole());
-        }
 
         public List<ProjectListResponse> getAllProjects() {
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -94,7 +82,7 @@ public class ProjectService {
                 String email = SecurityContextHolder.getContext().getAuthentication().getName();
                 User admin = userRepository.findByEmail(email).orElseThrow();
 
-                recordDirectAction(admin, RequestType.PROJECT, details);
+                assignmentRequestService.recordDirectAction(admin, RequestType.PROJECT, details);
 
                 return mapToProjectListResponse(savedProject);
         }

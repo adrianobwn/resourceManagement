@@ -39,6 +39,7 @@ public class ResourceService {
         private final UserRepository userRepository;
         private final HistoryLogService historyLogService;
         private final AssignmentRequestRepository requestRepository;
+        private final com.resourceManagement.service.request.AssignmentRequestService requestService;
         private final com.resourceManagement.repository.ProjectRequestResourceRepository projectRequestResourceRepository;
         private final com.resourceManagement.repository.HistoryLogRepository historyLogRepository;
 
@@ -144,9 +145,6 @@ public class ResourceService {
                 User admin = userRepository.findByEmail(email).orElseThrow();
 
                 AssignmentRequest savedRequest = AssignmentRequest.builder()
-                                .requestType(RequestType.ASSIGN)
-                                .status(RequestStatus.APPROVED)
-                                .requester(admin)
                                 .project(project)
                                 .resource(resource)
                                 .role(request.getProjectRole())
@@ -155,19 +153,7 @@ public class ResourceService {
                                 .reason("Resource assigned directly by Admin")
                                 .build();
 
-                requestRepository.save(savedRequest);
-
-                // Log to history logs
-                historyLogService.logActivity(
-                                EntityType.ASSIGNMENT,
-                                "ASSIGN",
-                                String.format("Admin directly assigned %s to project %s as %s",
-                                                resource.getResourceName(), project.getProjectName(),
-                                                request.getProjectRole()),
-                                admin,
-                                project,
-                                resource,
-                                request.getProjectRole());
+                requestService.recordDirectAction(admin, RequestType.ASSIGN, savedRequest);
 
                 // Update resource status to ASSIGNED
                 resource.setStatus(ResourceStatus.ASSIGNED);

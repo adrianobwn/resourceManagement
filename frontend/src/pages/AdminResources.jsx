@@ -530,7 +530,7 @@ const AdminResources = () => {
                 >
                     <div
                         className="bg-white rounded-2xl relative flex flex-col items-center animate-scale-in"
-                        style={{ width: '700px', height: '424px' }}
+                        style={{ width: '700px', maxHeight: '90vh' }}
                     >
                         {/* Header with Name, Status and Close Button */}
                         <div className="flex items-center justify-between mt-8 mb-4 px-8 w-full">
@@ -542,12 +542,12 @@ const AdminResources = () => {
                                     className="px-3 py-1 rounded-full font-bold whitespace-nowrap"
                                     style={{
                                         fontSize: '12px',
-                                        color: '#00B4D8',
-                                        backgroundColor: 'rgba(0, 180, 216, 0.2)',
-                                        border: '1px solid #00B4D8'
+                                        color: '#0059FF',
+                                        backgroundColor: 'rgba(0, 89, 255, 0.1)',
+                                        border: '1px solid #0059FF'
                                     }}
                                 >
-                                    ACTIVE IN {detailModal.projects.length} PROJECTS
+                                    ACTIVE IN {detailModal.projects.length} PROJECT{detailModal.projects.length !== 1 ? 'S' : ''}
                                 </span>
                                 <button
                                     onClick={closeDetailModal}
@@ -565,24 +565,24 @@ const AdminResources = () => {
 
                         {/* Projects Table */}
                         <div
-                            className="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col"
-                            style={{ width: '600px', height: '234px' }}
+                            className="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col mb-8"
+                            style={{ width: '600px', maxHeight: '400px' }}
                         >
                             <div className="overflow-y-auto custom-scrollbar flex-1">
                                 <table className="w-full table-fixed relative" style={{ borderCollapse: 'collapse' }}>
                                     <thead className="sticky top-0 z-10 shadow-sm">
                                         <tr className="bg-[#CAF0F8] border-b border-gray-200">
                                             <th className="text-center py-3 px-4 font-bold text-gray-700 border-r border-gray-200 bg-[#CAF0F8]" style={{ fontSize: '14px', width: '35%' }}>Project Name</th>
-                                            <th className="text-center py-3 px-4 font-bold text-gray-700 border-r border-gray-200 bg-[#CAF0F8]" style={{ fontSize: '14px', width: '25%' }}>Role</th>
-                                            <th className="text-center py-3 px-4 font-bold text-gray-700 border-r border-gray-200 bg-[#CAF0F8]" style={{ fontSize: '14px', width: '20%' }}>Start Date</th>
-                                            <th className="text-center py-3 px-4 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '14px', width: '20%' }}>End Date</th>
+                                            <th className="text-center py-3 px-4 font-bold text-gray-700 border-r border-gray-200 bg-[#CAF0F8]" style={{ fontSize: '14px', width: '30%' }}>Role</th>
+                                            <th className="text-center py-3 px-4 font-bold text-gray-700 border-r border-gray-200 bg-[#CAF0F8]" style={{ fontSize: '14px', width: '17.5%' }}>Start Date</th>
+                                            <th className="text-center py-3 px-4 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '14px', width: '17.5%' }}>End Date</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {detailModal.projects.map((project, index) => (
                                             <tr key={index} className="hover:bg-gray-50 border-b border-gray-200">
-                                                <td className="py-3 px-4 font-bold text-gray-800 border-r border-gray-200 truncate text-center" style={{ fontSize: '14px' }}>{project.projectName}</td>
-                                                <td className="py-3 px-4 font-bold text-gray-600 border-r border-gray-200 truncate text-center" style={{ fontSize: '14px' }}>{project.role}</td>
+                                                <td className="py-3 px-4 font-bold text-gray-800 border-r border-gray-200 text-center" style={{ fontSize: '14px' }}>{project.projectName}</td>
+                                                <td className="py-3 px-4 font-bold text-gray-600 border-r border-gray-200 text-center" style={{ fontSize: '14px' }}>{project.role}</td>
                                                 <td className="py-3 px-4 font-bold text-gray-600 border-r border-gray-200 text-center" style={{ fontSize: '14px' }}>{project.startDate}</td>
                                                 <td className="py-3 px-4 font-bold text-gray-600 text-center" style={{ fontSize: '14px' }}>{project.endDate}</td>
                                             </tr>
