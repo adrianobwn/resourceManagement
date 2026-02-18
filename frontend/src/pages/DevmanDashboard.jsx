@@ -666,7 +666,7 @@ const DevmanDashboard = () => {
                     <div>
                         <h2 className="text-2xl font-bold text-gray-800 mb-4" style={{ fontFamily: 'SF Pro Display' }}>Assignments Ending Soon</h2>
                         <div className="bg-white rounded-xl shadow-sm p-6 overflow-hidden">
-                            <div className="space-y-3">
+                            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                                 {assignmentsEndingSoon.length === 0 ? (
                                     <div className="text-center py-4 text-gray-500 font-sf font-medium">
                                         No assignments ending soon
