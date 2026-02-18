@@ -10,6 +10,7 @@ const Activities = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('extend');
     const [notification, setNotification] = useState({ show: false, message: '', type: 'info', closing: false });
+    const [statusFilter, setStatusFilter] = useState('PENDING');
 
     const showNotification = (message, type = 'info') => {
         setNotification({ show: true, message, type, closing: false });
@@ -198,15 +199,27 @@ const Activities = () => {
                                     Project
                                 </button>
                             </div>
-                            <button
-                                onClick={handleExportLogHistory}
-                                className="flex items-center gap-2 px-4 py-2 bg-[#F5F5F5] rounded-lg text-black hover:bg-gray-200 transition-colors font-sf font-bold text-sm"
-                            >
-                                <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                Export Log History
-                            </button>
+                            <div className="flex items-center gap-4">
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    className="px-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAF0F8] font-bold text-gray-700"
+                                >
+                                    <option value="ALL">All Status</option>
+                                    <option value="PENDING">Pending</option>
+                                    <option value="APPROVED">Approved</option>
+                                    <option value="REJECTED">Rejected</option>
+                                </select>
+                                <button
+                                    onClick={handleExportLogHistory}
+                                    className="flex items-center gap-2 px-4 py-2 bg-[#F5F5F5] rounded-lg text-black hover:bg-gray-200 transition-colors font-sf font-bold text-sm"
+                                >
+                                    <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Export Log History
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -231,12 +244,12 @@ const Activities = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {activities.filter(a => a.type === 'EXTEND').length === 0 ? (
+                                        {activities.filter(a => a.type === 'EXTEND' && (statusFilter === 'ALL' || a.status === statusFilter)).length === 0 ? (
                                             <tr>
                                                 <td colSpan="8" className="text-center py-4 text-gray-500">No activities found</td>
                                             </tr>
                                         ) : (
-                                            activities.filter(a => a.type === 'EXTEND').map((item, index) => (
+                                            activities.filter(a => a.type === 'EXTEND' && (statusFilter === 'ALL' || a.status === statusFilter)).map((item, index) => (
                                                 <tr
                                                     key={item.id}
                                                     className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"
@@ -303,12 +316,12 @@ const Activities = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {activities.filter(a => a.type === 'RELEASE').length === 0 ? (
+                                        {activities.filter(a => a.type === 'RELEASE' && (statusFilter === 'ALL' || a.status === statusFilter)).length === 0 ? (
                                             <tr>
                                                 <td colSpan="8" className="text-center py-4 text-gray-500">No activities found</td>
                                             </tr>
                                         ) : (
-                                            activities.filter(a => a.type === 'RELEASE').map((item, index) => (
+                                            activities.filter(a => a.type === 'RELEASE' && (statusFilter === 'ALL' || a.status === statusFilter)).map((item, index) => (
                                                 <tr
                                                     key={item.id}
                                                     className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"
@@ -374,12 +387,12 @@ const Activities = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {activities.filter(a => a.type === 'ASSIGN').length === 0 ? (
+                                        {activities.filter(a => a.type === 'ASSIGN' && (statusFilter === 'ALL' || a.status === statusFilter)).length === 0 ? (
                                             <tr>
                                                 <td colSpan="7" className="text-center py-4 text-gray-500">No activities found</td>
                                             </tr>
                                         ) : (
-                                            activities.filter(a => a.type === 'ASSIGN').map((item, index) => (
+                                            activities.filter(a => a.type === 'ASSIGN' && (statusFilter === 'ALL' || a.status === statusFilter)).map((item, index) => (
                                                 <tr
                                                     key={item.id}
                                                     className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"
@@ -440,12 +453,12 @@ const Activities = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {activities.filter(a => a.type === 'PROJECT').length === 0 ? (
+                                        {activities.filter(a => a.type === 'PROJECT' && (statusFilter === 'ALL' || a.status === statusFilter)).length === 0 ? (
                                             <tr>
                                                 <td colSpan="5" className="text-center py-4 text-gray-500">No activities found</td>
                                             </tr>
                                         ) : (
-                                            activities.filter(a => a.type === 'PROJECT').map((item, index) => (
+                                            activities.filter(a => a.type === 'PROJECT' && (statusFilter === 'ALL' || a.status === statusFilter)).map((item, index) => (
                                                 <tr
                                                     key={item.id}
                                                     className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"

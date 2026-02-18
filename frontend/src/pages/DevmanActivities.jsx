@@ -9,14 +9,13 @@ const DevmanActivities = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('extend');
     const [activities, setActivities] = useState([]);
-    const [historyLogs, setHistoryLogs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [statusFilter, setStatusFilter] = useState('PENDING');
     const [notification, setNotification] = useState({ show: false, message: '', type: 'info', closing: false });
     const [reasonModal, setReasonModal] = useState({ show: false, reason: '' });
 
     useEffect(() => {
         fetchActivities();
-        fetchHistoryLogs();
     }, []);
 
     // Scroll locking for modal
@@ -54,17 +53,6 @@ const DevmanActivities = () => {
         }
     };
 
-    const fetchHistoryLogs = async () => {
-        try {
-            const response = await api.get('/history-logs');
-            console.log('History Logs Response:', response.data);
-            if (Array.isArray(response.data)) {
-                setHistoryLogs(response.data);
-            }
-        } catch (error) {
-            console.error('Error fetching history logs:', error);
-        }
-    };
 
     const formatDate = (dateString) => {
         if (!dateString) return '-';
@@ -150,16 +138,17 @@ const DevmanActivities = () => {
                                 >
                                     Project
                                 </button>
-                                <button
-                                    onClick={() => setActiveTab('history')}
-                                    className={`px-8 py-3 font-sf font-bold text-base transition-all duration-200 rounded-lg flex items-center gap-2 ${activeTab === 'history'
-                                        ? 'bg-white text-black'
-                                        : 'text-black hover:bg-gray-200'
-                                        }`}
-                                >
-                                    History
-                                </button>
                             </div>
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="ml-4 px-4 py-2 bg-[#F5F5F5] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#CAF0F8] font-bold text-gray-700"
+                            >
+                                <option value="ALL">All Status</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="APPROVED">Approved</option>
+                                <option value="REJECTED">Rejected</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -184,12 +173,12 @@ const DevmanActivities = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {activities.filter(a => a.type === 'EXTEND').length === 0 ? (
+                                        {activities.filter(a => a.type === 'EXTEND' && (statusFilter === 'ALL' || a.status === statusFilter)).length === 0 ? (
                                             <tr>
                                                 <td colSpan="8" className="text-center py-4 text-gray-500">No activities found</td>
                                             </tr>
                                         ) : (
-                                            activities.filter(a => a.type === 'EXTEND').map((item, index) => (
+                                            activities.filter(a => a.type === 'EXTEND' && (statusFilter === 'ALL' || a.status === statusFilter)).map((item, index) => (
                                                 <tr
                                                     key={item.id}
                                                     className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"
@@ -256,12 +245,12 @@ const DevmanActivities = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {activities.filter(a => a.type === 'RELEASE').length === 0 ? (
+                                        {activities.filter(a => a.type === 'RELEASE' && (statusFilter === 'ALL' || a.status === statusFilter)).length === 0 ? (
                                             <tr>
                                                 <td colSpan="8" className="text-center py-4 text-gray-500">No activities found</td>
                                             </tr>
                                         ) : (
-                                            activities.filter(a => a.type === 'RELEASE').map((item, index) => (
+                                            activities.filter(a => a.type === 'RELEASE' && (statusFilter === 'ALL' || a.status === statusFilter)).map((item, index) => (
                                                 <tr
                                                     key={item.id}
                                                     className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"
@@ -327,12 +316,12 @@ const DevmanActivities = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {activities.filter(a => a.type === 'ASSIGN').length === 0 ? (
+                                        {activities.filter(a => a.type === 'ASSIGN' && (statusFilter === 'ALL' || a.status === statusFilter)).length === 0 ? (
                                             <tr>
                                                 <td colSpan="7" className="text-center py-4 text-gray-500">No activities found</td>
                                             </tr>
                                         ) : (
-                                            activities.filter(a => a.type === 'ASSIGN').map((item, index) => (
+                                            activities.filter(a => a.type === 'ASSIGN' && (statusFilter === 'ALL' || a.status === statusFilter)).map((item, index) => (
                                                 <tr
                                                     key={item.id}
                                                     className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"
@@ -393,12 +382,12 @@ const DevmanActivities = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {activities.filter(a => a.type === 'PROJECT').length === 0 ? (
+                                        {activities.filter(a => a.type === 'PROJECT' && (statusFilter === 'ALL' || a.status === statusFilter)).length === 0 ? (
                                             <tr>
                                                 <td colSpan="5" className="text-center py-4 text-gray-500">No activities found</td>
                                             </tr>
                                         ) : (
-                                            activities.filter(a => a.type === 'PROJECT').map((item, index) => (
+                                            activities.filter(a => a.type === 'PROJECT' && (statusFilter === 'ALL' || a.status === statusFilter)).map((item, index) => (
                                                 <tr
                                                     key={item.id}
                                                     className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"
@@ -477,60 +466,6 @@ const DevmanActivities = () => {
                                 </button>
                             </div>
                         </div>
-                        {/* History Tab */}
-                        {activeTab === 'history' && (
-                            <div className="overflow-y-auto custom-scrollbar flex-1" style={{ maxHeight: 'inherit' }}>
-                                <table className="w-full relative">
-                                    <thead className="sticky top-0 z-10 bg-[#CAF0F8] shadow-sm">
-                                        <tr>
-                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Date</th>
-                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Performed By</th>
-                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Entity</th>
-                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Activity</th>
-                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '16px' }}>Description</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {historyLogs.length === 0 ? (
-                                            <tr>
-                                                <td colSpan="5" className="text-center py-4 text-gray-500">No history found</td>
-                                            </tr>
-                                        ) : (
-                                            historyLogs.map((log) => (
-                                                <tr
-                                                    key={log.logId}
-                                                    className="border-b border-gray-200 hover:bg-[#CAF0F8]/30 transition-colors bg-white"
-                                                >
-                                                    <td className="py-4 px-6">
-                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>
-                                                            {new Date(log.timestamp).toLocaleString('en-GB', {
-                                                                day: '2-digit',
-                                                                month: '2-digit',
-                                                                year: 'numeric',
-                                                                hour: '2-digit',
-                                                                minute: '2-digit'
-                                                            })}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <span className="text-gray-800" style={{ fontSize: '14px' }}>{log.performedBy}</span>
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <span className="text-gray-800 font-bold" style={{ fontSize: '13px' }}>{log.entityType}</span>
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <span className="text-gray-800 font-medium" style={{ fontSize: '14px' }}>{log.activityType}</span>
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <span className="text-gray-800 italic" style={{ fontSize: '14px' }}>{log.description}</span>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
                     </div>
                 </div>
             )}

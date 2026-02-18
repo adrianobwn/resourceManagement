@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutGrid, Folder, Users, ClipboardList, LogOut, User } from 'lucide-react';
+import { LayoutGrid, Folder, Users, ClipboardList, LogOut, User, Bell } from 'lucide-react';
 import api from '../utils/api';
 
 const Sidebar = () => {
@@ -14,35 +14,69 @@ const Sidebar = () => {
         user.userType.toUpperCase().includes('MANAGER')
     );
 
-    const menuItems = [
-        {
-            name: 'Dashboard',
-            path: '/dashboard',
-            icon: LayoutGrid,
-        },
-        {
-            name: 'Project',
-            path: '/project',
-            icon: Folder,
-        },
-        // Only show DevMan menu for Admin (not for DevMan/PM)
-        ...(!isDevMan ? [{
-            name: 'DevMan',
-            path: '/devman',
-            icon: Users, // Or another icon like UserCog if available, reusing Users for now
-        }] : []),
-        {
-            name: 'Resources',
-            path: '/resources',
-            icon: Users,
-        },
-        {
-            name: 'Activities',
-            path: '/activities',
-            icon: ClipboardList,
-            badge: unreadCount > 0 ? unreadCount : null
-        },
-    ];
+    // Define sections based on user role
+    const getSections = () => {
+        const sections = [
+            {
+                title: 'OVERVIEW',
+                items: [
+                    {
+                        name: 'Dashboard',
+                        path: '/dashboard',
+                        icon: LayoutGrid,
+                    }
+                ]
+            },
+            {
+                title: 'MENU UTAMA',
+                items: isDevMan ? [
+                    {
+                        name: 'Resources',
+                        path: '/resources',
+                        icon: Users,
+                    },
+                    {
+                        name: 'Project',
+                        path: '/project',
+                        icon: Folder,
+                    }
+                ] : [
+                    {
+                        name: 'Project',
+                        path: '/project',
+                        icon: Folder,
+                    },
+                    {
+                        name: 'Resources',
+                        path: '/resources',
+                        icon: Users,
+                    },
+                    {
+                        name: 'Devman',
+                        path: '/devman',
+                        icon: Users,
+                    }
+                ]
+            },
+            {
+                title: 'WORKFLOW & HISTORY',
+                items: [
+                    {
+                        name: 'Activities',
+                        path: '/activities',
+                        icon: ClipboardList,
+                        badge: unreadCount > 0 ? unreadCount : null
+                    },
+                    {
+                        name: 'Notifications',
+                        path: '/notifications',
+                        icon: Bell,
+                    }
+                ]
+            }
+        ];
+        return sections;
+    };
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -76,9 +110,6 @@ const Sidebar = () => {
                 const storedReadIds = localStorage.getItem(storageKey);
 
                 // FIRST LOAD SCENARIO:
-                // If no storage exists for this user, assume this is a fresh login/device.
-                // We don't want to spam them with old notifications.
-                // Mark ALL current items as read.
                 if (storedReadIds === null) {
                     const allIds = completedRequests.map(r => r.id);
                     localStorage.setItem(storageKey, JSON.stringify(allIds));
@@ -87,7 +118,6 @@ const Sidebar = () => {
                 }
 
                 // NORMAL SCENARIO:
-                // Storage exists, compare against it.
                 const readNotificationIds = JSON.parse(storedReadIds || '[]');
                 const newUnreadCount = completedRequests.filter(r =>
                     !readNotificationIds.includes(r.id)
@@ -120,31 +150,38 @@ const Sidebar = () => {
                     />
                 </div>
 
-                {/* Menu Items */}
-                <nav className="mt-8 px-4">
-                    {menuItems.map((item) => {
-                        const IconComponent = item.icon;
-                        return (
-                            <button
-                                key={item.name}
-                                onClick={() => navigate(item.path)}
-                                className={`w-full flex items-center justify-between px-5 py-4 mb-2 text-left transition-all rounded-lg text-lg font-sf ${isActive(item.path)
-                                    ? 'bg-[#CAF0F8] text-black'
-                                    : 'text-white hover:bg-[#CAF0F8]/20'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-4">
-                                    <IconComponent className="w-6 h-6" />
-                                    <span className="font-bold">{item.name}</span>
-                                </div>
-                                {item.badge && (
-                                    <span className="flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 rounded-full">
-                                        {item.badge}
-                                    </span>
-                                )}
-                            </button>
-                        );
-                    })}
+                {/* Menu Sections */}
+                <nav className="mt-4 px-4 overflow-y-auto custom-scrollbar" style={{ maxHeight: 'calc(100vh - 180px)' }}>
+                    {getSections().map((section, idx) => (
+                        <div key={section.title} className={idx !== 0 ? 'mt-6' : ''}>
+                            <h3 className="px-5 mb-2 text-[12px] font-bold text-[#CAF0F8]/60 uppercase tracking-wider">
+                                {section.title}
+                            </h3>
+                            {section.items.map((item) => {
+                                const IconComponent = item.icon;
+                                return (
+                                    <button
+                                        key={item.name}
+                                        onClick={() => navigate(item.path)}
+                                        className={`w-full flex items-center justify-between px-5 py-3 mb-1 text-left transition-all rounded-lg text-lg font-sf ${isActive(item.path)
+                                            ? 'bg-[#CAF0F8] text-black'
+                                            : 'text-white hover:bg-[#CAF0F8]/20'
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <IconComponent className="w-5 h-5" />
+                                            <span className="font-bold text-base">{item.name}</span>
+                                        </div>
+                                        {item.badge && (
+                                            <span className="flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                                                {item.badge}
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    ))}
                 </nav>
             </div>
 

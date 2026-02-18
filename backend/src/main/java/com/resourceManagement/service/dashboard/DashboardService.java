@@ -79,6 +79,7 @@ public class DashboardService {
         return assignments.stream()
                 .map(a -> AssignmentEndingSoonResponse.builder()
                         .assignmentId(a.getAssignmentId())
+                        .projectId(a.getProject().getProjectId())
                         .resourceName(a.getResource().getResourceName())
                         .projectRole(a.getProjectRole())
                         .projectName(a.getProject().getProjectName())

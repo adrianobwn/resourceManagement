@@ -13,6 +13,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class AssignmentEndingSoonResponse {
     private Integer assignmentId;
+    private Integer projectId;
     private String resourceName;
     private String projectRole;
     private String projectName;

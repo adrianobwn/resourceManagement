@@ -10,6 +10,8 @@ import DevmanProject from './pages/DevmanProject';
 import AdminDevman from './pages/AdminDevman';
 import AdminActivities from './pages/AdminActivities';
 import DevmanActivities from './pages/DevmanActivities';
+import AdminNotifications from './pages/AdminNotifications';
+import DevmanNotifications from './pages/DevmanNotifications';
 
 // Role Checker Helper
 const useUserRole = () => {
@@ -55,6 +57,11 @@ const ActivitiesWrapper = () => {
   return isDevman ? <DevmanActivities /> : <AdminActivities />;
 };
 
+const NotificationsWrapper = () => {
+  const { isDevman } = useUserRole();
+  return isDevman ? <DevmanNotifications /> : <AdminNotifications />;
+};
+
 function App() {
   const { isDevman } = useUserRole();
 
@@ -69,6 +76,7 @@ function App() {
         <Route path="/devman" element={<AdminDevman />} />
         <Route path="/resources" element={<ResourcesWrapper />} />
         <Route path="/activities" element={<ActivitiesWrapper />} />
+        <Route path="/notifications" element={<NotificationsWrapper />} />
       </Routes>
     </BrowserRouter>
   );

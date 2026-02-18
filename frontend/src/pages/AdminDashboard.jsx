@@ -617,6 +617,7 @@ const Dashboard = () => {
                         <p className="text-5xl font-bold text-black">{stats.activeProjects}</p>
                     </div>
 
+
                     {/* Pending Request */}
                     <div
                         className="rounded-xl p-5"
@@ -639,67 +640,83 @@ const Dashboard = () => {
                 </div>
 
                 {/* Pending Request Title */}
-                <h2 className="text-2xl font-bold text-gray-800 mb-4" style={{ fontFamily: 'SF Pro Display' }}>Pending Request</h2>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>Pending Request</h2>
+                    <button
+                        onClick={() => navigate('/notifications')}
+                        className="text-[#00B4D8] font-bold hover:underline"
+                        style={{ fontFamily: 'SF Pro Display' }}
+                    >
+                        See All
+                    </button>
+                </div>
 
                 {/* Pending Request Cards */}
                 <div className="bg-white rounded-xl shadow-sm p-6 mb-8 overflow-hidden">
-                    <div className="grid grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                        {pendingRequests.map((request) => (
-                            <div
-                                key={request.id}
-                                className="flex items-center justify-between p-4 rounded-xl"
-                                style={{ backgroundColor: '#E8E8E8' }}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <StatusBadge status={request.type} />
-                                    <div style={{ fontFamily: 'SF Pro Display' }}>
-                                        <p className="font-bold text-gray-800">
-                                            {request.type === 'PROJECT' ? request.projectName : request.resource}
-                                        </p>
-                                        {['ASSIGN', 'EXTEND', 'RELEASE'].includes(request.type) && (
-                                            <p className="text-sm text-gray-500">
-                                                {request.project}
-                                            </p>
-                                        )}
-                                        {request.type === 'PROJECT' && (
-                                            <p className="text-sm text-gray-500">
-                                                {request.clientName}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setViewDetailModal({ show: true, request, isRejecting: false, reason: '' })}
-                                    className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
-                                    style={{ fontFamily: 'SF Pro Display' }}
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                    <span className="font-medium">View Detail</span>
-                                </button>
+                    <div className="grid grid-cols-2 gap-4 overflow-y-auto pr-2 custom-scrollbar">
+                        {pendingRequests.length === 0 ? (
+                            <div className="col-span-2 text-center py-4 text-gray-500 font-sf font-medium">
+                                No pending requests
                             </div>
-                        ))}
+                        ) : (
+                            pendingRequests.slice(0, 4).map((request) => (
+                                <div
+                                    key={request.id}
+                                    className="flex items-center justify-between p-4 rounded-xl"
+                                    style={{ backgroundColor: '#E8E8E8' }}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <StatusBadge status={request.type} />
+                                        <div style={{ fontFamily: 'SF Pro Display' }}>
+                                            <p className="font-bold text-gray-800">
+                                                {request.type === 'PROJECT' ? request.projectName : request.resource}
+                                            </p>
+                                            {['ASSIGN', 'EXTEND', 'RELEASE'].includes(request.type) && (
+                                                <p className="text-sm text-gray-500">
+                                                    {request.project}
+                                                </p>
+                                            )}
+                                            {request.type === 'PROJECT' && (
+                                                <p className="text-sm text-gray-500">
+                                                    {request.clientName}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setViewDetailModal({ show: true, request, isRejecting: false, reason: '' })}
+                                        className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+                                        style={{ fontFamily: 'SF Pro Display' }}
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        <span className="font-medium">View Detail</span>
+                                    </button>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
 
                 {/* Bottom Section */}
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6">
                     {/* Assignments Ending Soon */}
                     <div>
                         <h2 className="text-2xl font-bold text-gray-800 mb-4" style={{ fontFamily: 'SF Pro Display' }}>Assignments Ending Soon</h2>
-                        <div className="rounded-xl p-4" style={{ backgroundColor: '#F5F5F5' }}>
+                        <div className="bg-white rounded-xl shadow-sm p-6 overflow-hidden">
                             <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                                 {assignmentsEndingSoon.length === 0 ? (
-                                    <div className="bg-white rounded-xl p-4 text-center text-gray-500" style={{ fontFamily: 'SF Pro Display' }}>
+                                    <div className="text-center py-4 text-gray-500 font-sf font-medium">
                                         No assignments ending soon
                                     </div>
                                 ) : (
                                     assignmentsEndingSoon.filter(a => a.daysLeft === 1).map((assignment) => (
                                         <div
                                             key={assignment.assignmentId}
-                                            className="rounded-xl p-4 flex items-center justify-between"
+                                            onClick={() => navigate('/project', { state: { openProjectId: assignment.projectId } })}
+                                            className="rounded-xl p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
                                             style={{
                                                 backgroundColor: 'rgba(255, 0, 0, 0.2)',
                                                 border: '1px solid #FF0000'
@@ -714,7 +731,9 @@ const Dashboard = () => {
                                                 </div>
                                                 <div style={{ fontFamily: 'SF Pro Display' }}>
                                                     <p className="font-bold text-gray-800 text-lg">{assignment.resourceName}</p>
-                                                    <p className="font-regular text-gray-800">{assignment.projectRole}</p>
+                                                    <p className="font-regular text-gray-800">
+                                                        {assignment.projectRole} • <span className="font-bold">{assignment.projectName}</span>
+                                                    </p>
                                                 </div>
                                             </div>
                                             <div className="text-right" style={{ fontFamily: 'SF Pro Display' }}>
@@ -726,50 +745,6 @@ const Dashboard = () => {
                                             </div>
                                         </div>
                                     ))
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Active Projects */}
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4" style={{ fontFamily: 'SF Pro Display' }}>Active Projects</h2>
-                        <div className="rounded-xl p-4" style={{ backgroundColor: '#F5F5F5' }}>
-                            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                                {activeProjects.length === 0 ? (
-                                    <div className="bg-white rounded-xl p-4 text-center text-gray-500" style={{ fontFamily: 'SF Pro Display' }}>
-                                        No active projects
-                                    </div>
-                                ) : (
-                                    activeProjects
-                                        .filter(project => ['ONGOING', 'HOLD'].includes(project.status))
-                                        .map((project) => (
-                                            <div
-                                                key={project.projectId}
-                                                className="rounded-xl p-4 flex items-center justify-between shadow-sm"
-                                                style={{
-                                                    backgroundColor: '#F5F5F5',
-                                                    border: '1px solid #A9A9A9'
-                                                }}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                                        <Folder className="w-6 h-6 text-blue-500" />
-                                                    </div>
-                                                    <div style={{ fontFamily: 'SF Pro Display' }}>
-                                                        <p className="font-bold text-gray-800 text-lg">{project.projectName}</p>
-                                                        <p className="text-sm font-regular text-gray-600">{project.clientName}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-col items-end gap-1" style={{ fontFamily: 'SF Pro Display' }}>
-                                                    <StatusBadge status={project.status} />
-                                                    <div className="flex items-center gap-1 text-black font-bold">
-                                                        <Users className="w-4 h-4" />
-                                                        <span className="text-sm">{project.memberCount}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))
                                 )}
                             </div>
                         </div>

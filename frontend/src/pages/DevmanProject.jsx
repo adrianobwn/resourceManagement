@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import StatusBadge from '../components/StatusBadge';
 import Toast from '../components/Toast';
@@ -9,6 +9,7 @@ import { Search, Users, Trash2, X, Calendar, Folder } from 'lucide-react';
 
 const DevmanProject = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [projects, setProjects] = useState([]);
@@ -44,6 +45,19 @@ const DevmanProject = () => {
         fetchAvailableResources();
     }, [navigate]);
 
+    // Handle deep-linking from dashboard
+    useEffect(() => {
+        if (!loading && projects.length > 0 && location.state?.openProjectId) {
+            const projectToOpen = projects.find(p => String(p.projectId) === String(location.state.openProjectId));
+            if (projectToOpen) {
+                console.log('Auto-opening project detail for ID:', location.state.openProjectId);
+                handleViewDetail(projectToOpen);
+                // Clear state so it doesn't reopen on refresh
+                navigate(location.pathname, { replace: true, state: {} });
+            }
+        }
+    }, [loading, projects, location.state, navigate]);
+
     const fetchAvailableResources = async () => {
         try {
             const response = await api.get('/resources');
@@ -58,9 +72,11 @@ const DevmanProject = () => {
             setLoading(true);
             const response = await api.get('/projects');
             setProjects(response.data);
+            return response.data;
         } catch (error) {
             console.error('Error fetching projects:', error);
             showNotification('Failed to fetch projects', 'error');
+            return null;
         } finally {
             setLoading(false);
         }
