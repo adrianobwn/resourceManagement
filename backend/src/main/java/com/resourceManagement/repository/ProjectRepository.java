@@ -3,8 +3,6 @@ package com.resourceManagement.repository;
 import com.resourceManagement.model.entity.Project;
 import com.resourceManagement.model.enums.ProjectStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

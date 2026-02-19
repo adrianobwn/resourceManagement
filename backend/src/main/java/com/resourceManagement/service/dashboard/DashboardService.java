@@ -1,6 +1,5 @@
 package com.resourceManagement.service.dashboard;
 
-import com.resourceManagement.dto.dashboard.ActiveProjectResponse;
 import com.resourceManagement.dto.dashboard.AssignmentEndingSoonResponse;
 import com.resourceManagement.dto.dashboard.DashboardStatsResponse;
 import com.resourceManagement.model.entity.Project;
@@ -89,23 +88,4 @@ public class DashboardService {
                 .collect(Collectors.toList());
     }
 
-    public List<ActiveProjectResponse> getActiveProjects() {
-        User user = getCurrentUser();
-        List<Project> projects;
-        if (user.getUserType() == UserType.Admin) {
-            projects = projectRepository.findByStatus(ProjectStatus.ONGOING);
-        } else {
-            projects = projectRepository.findByDevMan_UserIdAndStatus(user.getUserId(), ProjectStatus.ONGOING);
-        }
-
-        return projects.stream()
-                .map(p -> ActiveProjectResponse.builder()
-                        .projectId(p.getProjectId())
-                        .projectName(p.getProjectName())
-                        .clientName(p.getClientName())
-                        .status(p.getStatus().name())
-                        .memberCount(assignmentRepository.countByProject_ProjectId(p.getProjectId()))
-                        .build())
-                .collect(Collectors.toList());
-    }
 }

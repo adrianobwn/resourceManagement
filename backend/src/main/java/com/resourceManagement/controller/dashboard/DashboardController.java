@@ -1,6 +1,5 @@
 package com.resourceManagement.controller.dashboard;
 
-import com.resourceManagement.dto.dashboard.ActiveProjectResponse;
 import com.resourceManagement.dto.dashboard.AssignmentEndingSoonResponse;
 import com.resourceManagement.dto.dashboard.DashboardStatsResponse;
 import com.resourceManagement.service.dashboard.DashboardService;
@@ -30,9 +29,4 @@ public class DashboardController {
         return ResponseEntity.ok(assignments);
     }
 
-    @GetMapping("/active-projects")
-    public ResponseEntity<List<ActiveProjectResponse>> getActiveProjects() {
-        List<ActiveProjectResponse> projects = dashboardService.getActiveProjects();
-        return ResponseEntity.ok(projects);
-    }
 }

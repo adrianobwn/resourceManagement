@@ -30,7 +30,6 @@ const Dashboard = () => {
         pendingRequests: 0
     });
     const [assignmentsEndingSoon, setAssignmentsEndingSoon] = useState([]);
-    const [activeProjects, setActiveProjects] = useState([]);
 
     // Notification state
     const [notification, setNotification] = useState({ show: false, message: '', closing: false, type: 'success' });
@@ -82,9 +81,6 @@ const Dashboard = () => {
             const assignmentsRes = await api.get('/dashboard/assignments-ending-soon?days=7');
             setAssignmentsEndingSoon(assignmentsRes.data);
 
-            // Fetch active projects
-            const projectsRes = await api.get('/dashboard/active-projects');
-            setActiveProjects(projectsRes.data);
 
             // Fetch pending requests
             const requestsRes = await api.get('/requests');
