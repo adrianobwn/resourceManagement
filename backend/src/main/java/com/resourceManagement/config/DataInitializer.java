@@ -30,8 +30,6 @@ public class DataInitializer implements CommandLineRunner {
         @Override
         @Transactional
         public void run(String... args) {
-                // Migrate old ON_GOING status to ONGOING
-                migrateProjectStatus();
 
                 int adminCount = 0;
                 // ===== 1. ADMIN =====
@@ -56,22 +54,4 @@ public class DataInitializer implements CommandLineRunner {
                 }
         }
 
-        private void migrateProjectStatus() {
-                try {
-                        // Update column definition first
-                        try {
-                                projectRepository.alterStatusColumn();
-                                System.out.println("✓ Updated projects table status column definition");
-                        } catch (Exception e) {
-                                System.err.println("Warning during schema update: " + e.getMessage());
-                        }
-
-                        int updated = projectRepository.migrateOnGoingToOngoing();
-                        if (updated > 0) {
-                                System.out.println("✓ Migrated " + updated + " project(s) from ON_GOING to ONGOING");
-                        }
-                } catch (Exception e) {
-                        System.err.println("Error during project status migration: " + e.getMessage());
-                }
-        }
 }

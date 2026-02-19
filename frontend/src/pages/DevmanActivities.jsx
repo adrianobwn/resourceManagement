@@ -10,7 +10,7 @@ const DevmanActivities = () => {
     const [activeTab, setActiveTab] = useState('extend');
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [statusFilter, setStatusFilter] = useState('PENDING');
+    const [statusFilter, setStatusFilter] = useState('ALL');
     const [notification, setNotification] = useState({ show: false, message: '', type: 'info', closing: false });
     const [reasonModal, setReasonModal] = useState({ show: false, reason: '' });
 

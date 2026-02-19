@@ -28,11 +28,4 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
 
     boolean existsByDevMan_UserId(Integer devManId);
 
-    @Modifying
-    @Query(value = "ALTER TABLE projects MODIFY COLUMN status ENUM('ONGOING', 'HOLD', 'CLOSED')", nativeQuery = true)
-    void alterStatusColumn();
-
-    @Modifying
-    @Query(value = "UPDATE projects SET status = 'ONGOING' WHERE status = 'ON_GOING'", nativeQuery = true)
-    int migrateOnGoingToOngoing();
 }

@@ -10,7 +10,7 @@ const Activities = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('extend');
     const [notification, setNotification] = useState({ show: false, message: '', type: 'info', closing: false });
-    const [statusFilter, setStatusFilter] = useState('PENDING');
+    const [statusFilter, setStatusFilter] = useState('ALL');
 
     const showNotification = (message, type = 'info') => {
         setNotification({ show: true, message, type, closing: false });
