@@ -426,7 +426,7 @@ const DevmanProject = () => {
                 {/* Detail Modal Container - Wraps both Project Detail and Action Modals */}
                 {showDetailModal && selectedProject && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-auto animate-fade-in">
-                        <div className="flex items-center gap-6 transition-smooth-layout min-w-min">
+                        <div className="flex items-start gap-6 transition-all duration-300 min-w-min">
                             {/* Project Detail Modal */}
                             <div className="bg-white rounded-2xl p-8 w-[800px] flex-shrink-0 relative shadow-xl">
                                 <button onClick={() => setShowDetailModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
@@ -447,52 +447,58 @@ const DevmanProject = () => {
 
                                 <h3 className="text-xl font-bold text-gray-800 mb-4" style={{ fontFamily: 'SF Pro Display' }}>Assigned Resources</h3>
 
-                                <div className="bg-[#F8FBFC] rounded-xl overflow-hidden flex flex-col" style={{ maxHeight: '400px' }}>
-                                    <div className="overflow-y-auto custom-scrollbar">
-                                        <table className="w-full relative">
-                                            <thead className="sticky top-0 z-10 bg-[#CAF0F8] border-b border-gray-200 text-left shadow-sm">
-                                                <tr>
-                                                    <th className="px-6 py-4 font-bold text-black text-center" style={{ fontFamily: 'SF Pro Display' }}>Name</th>
-                                                    <th className="px-6 py-4 font-bold text-center text-black" style={{ fontFamily: 'SF Pro Display' }}>Role</th>
-                                                    <th className="px-6 py-4 font-bold text-center text-black" style={{ fontFamily: 'SF Pro Display' }}>Period</th>
-                                                    <th className="px-6 py-4 font-bold text-center text-black" style={{ fontFamily: 'SF Pro Display' }}>Status</th>
-                                                    <th className="px-6 py-4 font-bold text-center text-black" style={{ fontFamily: 'SF Pro Display' }}>Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="bg-[#E6F2F1]">
-                                                {projectResources.map((res, idx) => (
-                                                    <tr key={idx} className="border-b border-gray-200 last:border-none">
-                                                        <td className="px-6 py-6 font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>{res.resourceName}</td>
-                                                        <td className="px-6 py-6 text-center font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>{res.role || '-'}</td>
-                                                        <td className="px-6 py-6 text-center font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
-                                                        <td className="px-6 py-6 text-center">
-                                                            <StatusBadge status={res.status} className="text-[10px]" />
-                                                        </td>
-                                                        <td className="px-6 py-6 text-center">
-                                                            <div className="flex justify-center gap-2">
-                                                                {res.status === 'RELEASED' || res.status === 'EXPIRED' ? (
-                                                                    <span className="text-gray-400 text-xs font-bold" style={{ fontFamily: 'SF Pro Display' }}>-</span>
-                                                                ) : pendingRequests.some(req => req.assignmentId && String(req.assignmentId) === String(res.assignmentId)) ? (
-                                                                    <StatusBadge status="PENDING" className="text-[10px]" />
-                                                                ) : res.status === 'ACTIVE' ? (
-                                                                    <>
-                                                                        <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] border border-[#F97316] hover:bg-[#F97316]/20" style={{ fontFamily: 'SF Pro Display' }}>EXTEND</button>
-                                                                        <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] border border-[#FF0000] hover:bg-[#FF0000]/20" style={{ fontFamily: 'SF Pro Display' }}>RELEASE</button>
-                                                                    </>
-                                                                ) : null}
-                                                            </div>
-                                                        </td>
+                                {loadingResources ? (
+                                    <p className="text-center py-8 text-gray-500 font-bold">Loading resources...</p>
+                                ) : projectResources.length === 0 ? (
+                                    <p className="text-center py-8 text-gray-500 font-bold">No resources assigned.</p>
+                                ) : (
+                                    <div className="bg-[#F8FBFC] rounded-xl overflow-hidden flex flex-col" style={{ maxHeight: '400px' }}>
+                                        <div className="overflow-y-auto custom-scrollbar">
+                                            <table className="w-full relative">
+                                                <thead className="sticky top-0 z-10 bg-[#E6F2F1] border-b border-gray-200 text-left shadow-sm">
+                                                    <tr>
+                                                        <th className="px-6 py-4 font-bold text-gray-700 text-center bg-[#E6F2F1]">Name</th>
+                                                        <th className="px-6 py-4 font-bold text-center text-gray-700 bg-[#E6F2F1]">Role</th>
+                                                        <th className="px-6 py-4 font-bold text-center text-gray-700 bg-[#E6F2F1]">Period</th>
+                                                        <th className="px-6 py-4 font-bold text-center text-gray-700 bg-[#E6F2F1]">Status</th>
+                                                        <th className="px-6 py-4 font-bold text-center text-gray-700 rounded-tr-xl bg-[#E6F2F1]">Action</th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody className="bg-[#E6F2F1]">
+                                                    {projectResources.map((res, idx) => (
+                                                        <tr key={idx} className="border-b border-gray-200 last:border-none">
+                                                            <td className="px-6 py-6 font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>{res.resourceName}</td>
+                                                            <td className="px-6 py-6 text-center font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>{res.role || '-'}</td>
+                                                            <td className="px-6 py-6 text-center font-bold text-gray-800" style={{ fontFamily: 'SF Pro Display' }}>{formatDate(res.startDate)} - {formatDate(res.endDate)}</td>
+                                                            <td className="px-6 py-6 text-center">
+                                                                <StatusBadge status={res.status} className="text-[10px]" />
+                                                            </td>
+                                                            <td className="px-6 py-6 text-center">
+                                                                <div className="flex justify-center gap-2">
+                                                                    {res.status === 'RELEASED' || res.status === 'EXPIRED' ? (
+                                                                        <span className="text-gray-400 text-xs font-bold" style={{ fontFamily: 'SF Pro Display' }}>-</span>
+                                                                    ) : pendingRequests.some(req => req.assignmentId && String(req.assignmentId) === String(res.assignmentId)) ? (
+                                                                        <StatusBadge status="PENDING" className="text-[10px]" />
+                                                                    ) : res.status === 'ACTIVE' ? (
+                                                                        <>
+                                                                            <button onClick={() => handleOpenExtendModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFEEDD] text-[#F97316] font-bold text-[10px] border border-[#F97316] hover:bg-[#F97316]/20" style={{ fontFamily: 'SF Pro Display' }}>EXTEND</button>
+                                                                            <button onClick={() => handleOpenReleaseModal(res)} className="px-4 py-1.5 rounded-full bg-[#FFDDEE] text-[#FF0000] font-bold text-[10px] border border-[#FF0000] hover:bg-[#FF0000]/20" style={{ fontFamily: 'SF Pro Display' }}>RELEASE</button>
+                                                                        </>
+                                                                    ) : null}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
 
                             {/* Extend/Release Actions - Rendered Side-by-Side */}
                             {(showExtendModal || showReleaseModal) && (
-                                <div className="w-[400px] h-fit bg-[#F5F5F5] shadow-2xl rounded-3xl p-6 flex flex-col animate-slide-reveal">
+                                <div className="w-[400px] h-fit bg-[#F5F5F5] shadow-2xl rounded-3xl p-6 flex flex-col animate-scale-in">
 
                                     {showExtendModal && (
                                         <>
