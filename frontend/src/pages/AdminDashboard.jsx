@@ -78,7 +78,7 @@ const Dashboard = () => {
             setStats(statsRes.data);
 
             // Fetch assignments ending soon
-            const assignmentsRes = await api.get('/dashboard/assignments-ending-soon?days=7');
+            const assignmentsRes = await api.get('/dashboard/assignments-ending-soon?days=1');
             setAssignmentsEndingSoon(assignmentsRes.data);
 
 
@@ -708,7 +708,7 @@ const Dashboard = () => {
                                         No assignments ending soon
                                     </div>
                                 ) : (
-                                    assignmentsEndingSoon.filter(a => a.daysLeft === 1).map((assignment) => (
+                                    assignmentsEndingSoon.map((assignment) => (
                                         <div
                                             key={assignment.assignmentId}
                                             onClick={() => navigate('/project', { state: { openProjectId: assignment.projectId } })}
