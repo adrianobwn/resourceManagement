@@ -219,6 +219,11 @@ const DevmanProject = () => {
         today.setHours(0, 0, 0, 0);
 
         for (const item of projectProposal.resourcePlan) {
+            if (!item.resourceId || !item.role || !item.startDate || !item.endDate) {
+                showNotification('Please fill all fields for each resource (name, role, start date, end date)', 'error');
+                return;
+            }
+
             const start = new Date(item.startDate);
             const end = new Date(item.endDate);
 
