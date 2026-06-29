@@ -156,12 +156,19 @@ public class ProjectService {
                                                         + activeResourceCount);
                 }
 
+                // Log deletion
+                String currentPrincipalName = SecurityContextHolder.getContext().getAuthentication().getName();
+                User performedBy = userRepository.findByEmail(currentPrincipalName)
+                                .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+                historyLogService.logActivity(
+                                EntityType.PROJECT,
+                                "DELETE",
+                                "Deleted Project: " + project.getProjectName(),
+                                performedBy);
+
                 // Delete all assignment requests associated with this project
                 requestRepository.deleteByProject_ProjectId(projectId);
-
-                // Log deletion (this log will be deleted below if it's pointing to the project,
-                // but we might want to log it to the resource/user instead?
-                // Actually, historyLogService.logActivity above line 181 is good)
 
                 // Delete all history logs associated with this project
                 historyLogRepository.deleteByProject_ProjectId(projectId);

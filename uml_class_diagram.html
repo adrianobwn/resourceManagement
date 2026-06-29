@@ -1,0 +1,1924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resource Management Inteleq - Interactive UML Class Diagram</title>
+  
+  <!-- Google Fonts: Outfit & Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- svg-pan-zoom library -->
+  <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+
+  <style>
+    :root {
+      --bg-base: #0b0f19;
+      --bg-surface: rgba(17, 24, 39, 0.7);
+      --bg-card: #1e293b;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      
+      --color-view: #06b6d4;      /* Cyan */
+      --color-controller: #a855f7;/* Purple */
+      --color-service: #6366f1;   /* Indigo */
+      --color-repo: #f43f5e;      /* Rose */
+      --color-entity: #10b981;    /* Emerald */
+      --color-enum: #f59e0b;      /* Amber */
+      --color-dto: #14b8a6;       /* Teal */
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header Bar */
+    header {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand i {
+      font-size: 1.5rem;
+      color: var(--color-service);
+      text-shadow: 0 0 12px rgba(99, 102, 241, 0.5);
+    }
+
+    .brand h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .brand span {
+      font-size: 0.85rem;
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-primary {
+      background: var(--color-service);
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: #4f46e5;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+    }
+
+    /* Main Container */
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Sidebar */
+    aside {
+      width: 350px;
+      background: var(--bg-surface);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      z-index: 5;
+      transition: transform 0.3s ease;
+    }
+
+    .search-box {
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-wrapper {
+      position: relative;
+    }
+
+    .search-wrapper i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+    }
+
+    .search-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .search-input:focus {
+      border-color: var(--color-service);
+      box-shadow: 0 0 8px rgba(99, 102, 241, 0.2);
+    }
+
+    /* Class List */
+    .class-list-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+
+    .category-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .category-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      padding-left: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .category-badge {
+      font-size: 0.7rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .class-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 0.25rem;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+
+    .class-item:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .class-item.active {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .class-name-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .class-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .class-title {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    /* Viewport Area */
+    .viewport {
+      flex: 1;
+      position: relative;
+      background-color: #080b12;
+      background-image: 
+        radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0),
+        radial-gradient(rgba(255, 255, 255, 0.02) 1.5px, transparent 0);
+      background-size: 24px 24px, 48px 48px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    #diagram-container {
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+
+    #diagram-container:active {
+      cursor: grabbing;
+    }
+
+    .mermaid {
+      visibility: hidden; /* Loaded dynamically */
+      height: 100%;
+      width: 100%;
+    }
+
+    /* Zoom Controls Floating Toolbar */
+    .toolbar {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-color);
+      border-radius: 30px;
+      padding: 0.4rem 1rem;
+      display: flex;
+      gap: 0.75rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      z-index: 4;
+    }
+
+    .toolbar-btn {
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+    }
+
+    .toolbar-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #818cf8;
+    }
+
+    /* Detail Overlay Panel */
+    .detail-panel {
+      position: absolute;
+      right: 1.5rem;
+      top: 1.5rem;
+      bottom: 1.5rem;
+      width: 380px;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(24px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      transform: translateX(450px);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 4;
+    }
+
+    .detail-panel.open {
+      transform: translateX(0);
+    }
+
+    .detail-header {
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .detail-header-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .detail-type-badge {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .detail-name {
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+
+    .detail-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+
+    .detail-close:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+    }
+
+    .detail-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem;
+    }
+
+    .info-section {
+      margin-bottom: 1.25rem;
+    }
+
+    .info-section-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .info-text {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: #e2e8f0;
+    }
+
+    .file-path {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      color: #a78bfa;
+      border: 1px solid rgba(167, 139, 250, 0.15);
+      word-break: break-all;
+    }
+
+    .members-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .member-row {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.82rem;
+      padding: 0.35rem 0.5rem;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      border-left: 2px solid var(--text-secondary);
+    }
+
+    .member-type {
+      color: #38bdf8;
+    }
+
+    .member-name {
+      color: #f1f5f9;
+    }
+
+    /* Style color coding badges */
+    .badge-view { background: rgba(6, 182, 212, 0.15); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.3); }
+    .badge-controller { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .badge-service { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
+    .badge-repo { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .badge-entity { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-enum { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-dto { background: rgba(20, 184, 166, 0.15); color: #2dd4bf; border: 1px solid rgba(20, 184, 166, 0.3); }
+
+    /* Custom styles injected for Mermaid Class elements on SVG */
+    g.classNode rect {
+      rx: 8px !important;
+      ry: 8px !important;
+      transition: all 0.3s ease;
+    }
+    
+    g.classNode:hover rect {
+      filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.6));
+      stroke-width: 3px !important;
+    }
+
+    g.classNode.highlighted rect {
+      animation: pulse-border 1.5s infinite alternate;
+      stroke-width: 4px !important;
+    }
+
+    @keyframes pulse-border {
+      0% { filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3)); }
+      100% { filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.8)); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <i class="fa-solid fa-network-wired"></i>
+      <h1>Inteleq Resource Management</h1>
+      <span>Interactive UML Diagram</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn" id="btn-reset-zoom"><i class="fa-solid fa-arrows-to-eye"></i> Fit Screen</button>
+      <button class="btn btn-primary" id="btn-export-svg"><i class="fa-solid fa-download"></i> Export SVG</button>
+    </div>
+  </header>
+
+  <!-- Main Wrapper -->
+  <div class="main-wrapper">
+    
+    <!-- Sidebar -->
+    <aside>
+      <div class="search-box">
+        <div class="search-wrapper">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" class="search-input" id="class-search" placeholder="Search classes, entities, DTOs...">
+        </div>
+      </div>
+      
+      <div class="class-list-container" id="class-list">
+        <!-- Categories and Classes will be populated by JavaScript -->
+      </div>
+    </aside>
+
+    <!-- Diagram Viewport -->
+    <div class="viewport">
+      <div id="diagram-container">
+        <!-- Mermaid SVG will render here -->
+        <pre class="mermaid" id="mermaid-src">
+classDiagram
+  direction TB
+
+  %% ======================================================
+  %% VIEW LAYER (BOUNDARY - REACT PAGES)
+  %% ======================================================
+  class LoginView {
+  }
+  class AdminDashboardView {
+  }
+  class AdminProjectView {
+  }
+  class AdminResourcesView {
+  }
+  class AdminDevmanView {
+  }
+  class AdminActivitiesView {
+  }
+  class AdminNotificationsView {
+  }
+  class DevmanDashboardView {
+  }
+  class DevmanProjectView {
+  }
+  class DevmanResourcesView {
+  }
+  class DevmanActivitiesView {
+  }
+  class DevmanNotificationsView {
+  }
+
+  %% ======================================================
+  %% CONTROLLER LAYER
+  %% ======================================================
+  class AuthController {
+    -AuthService authService
+    +login(request: LoginRequest) ResponseEntity~LoginResponse~
+  }
+  class DashboardController {
+    -DashboardService dashboardService
+    +getStats() ResponseEntity~DashboardStatsResponse~
+    +getAssignmentsEndingSoon(days: int) ResponseEntity~List_AssignmentEndingSoonResponse~
+  }
+  class RequestController {
+    -AssignmentRequestService requestService
+    +getRequests() ResponseEntity~List_AssignmentRequestResponse~
+    +getRequestHistory() ResponseEntity~List_AssignmentRequestResponse~
+    +getPendingRequestsByProject(projectId: Integer) ResponseEntity~List_AssignmentRequestResponse~
+    +submitProjectProposal(request: ProjectProposalRequest) ResponseEntity~String~
+    +submitAssignRequest(request: AssignResourceRequest) ResponseEntity~String~
+    +approveRequest(id: Integer) ResponseEntity~String~
+    +rejectRequest(id: Integer, body: Map~String,String~) ResponseEntity~String~
+  }
+  class UserController {
+    -UserService userService
+    +createPm(request: CreatePmRequest) ResponseEntity~?~
+    +getAllPms() ResponseEntity~List_PmListResponse~
+    +updateUser(userId: Integer, request: UpdateUserRequest) ResponseEntity~Void~
+    +deleteUser(userId: Integer) ResponseEntity~Void~
+  }
+  class ProjectController {
+    -ProjectService projectService
+    +getAllProjects() ResponseEntity~List_ProjectListResponse~
+    +createProject(request: CreateProjectRequest) ResponseEntity~ProjectListResponse~
+    +getProjectResources(projectId: Integer) ResponseEntity~List_ProjectResourceDto~
+    +updateProjectStatus(projectId: Integer, status: ProjectStatus) ResponseEntity~ProjectListResponse~
+    +updateProject(projectId: Integer, request: UpdateProjectRequest) ResponseEntity~ProjectListResponse~
+    +deleteProject(projectId: Integer) ResponseEntity~Void~
+  }
+  class ResourceController {
+    -ResourceService resourceService
+    +getAllResources() ResponseEntity~List_ResourceResponse~
+    +getResourceById(resourceId: Integer) ResponseEntity~ResourceResponse~
+    +createResource(request: CreateResourceRequest) ResponseEntity~ResourceResponse~
+    +assignResource(request: AssignResourceRequest) ResponseEntity~ResourceResponse~
+    +getResourceAssignments(resourceId: Integer) ResponseEntity~List_AssignmentInfo~
+    +updateResource(resourceId: Integer, request: UpdateResourceRequest) ResponseEntity~ResourceResponse~
+    +deleteResource(resourceId: Integer) ResponseEntity~Void~
+  }
+  class ResourceAssignmentController {
+    -ResourceAssignmentService assignmentService
+    -AssignmentRequestService requestService
+    -UserRepository userRepository
+    +createAssignment(assignment: ResourceAssignment) ResponseEntity~ResourceAssignment~
+    +getAllAssignments() ResponseEntity~List_ResourceAssignment~
+    +extendAssignment(request: ExtendAssignmentRequest) ResponseEntity~String~
+    +releaseAssignment(request: ReleaseAssignmentRequest) ResponseEntity~String~
+  }
+  class HistoryLogController {
+    -HistoryLogService historyLogService
+    +getHistoryLogs() ResponseEntity~List_HistoryLogResponse~
+  }
+
+  %% ======================================================
+  %% SERVICE LAYER
+  %% ======================================================
+  class AuthService {
+    -UserRepository userRepository
+    -JwtUtil jwtUtil
+    +login(request: LoginRequest) LoginResponse
+  }
+  class DashboardService {
+    -ResourceRepository resourceRepository
+    -ProjectRepository projectRepository
+    -ResourceAssignmentRepository assignmentRepository
+    -AssignmentRequestRepository requestRepository
+    +getStats() DashboardStatsResponse
+    +getAssignmentsEndingSoon(days: int) List~AssignmentEndingSoonResponse~
+  }
+  class AssignmentRequestService {
+    -AssignmentRequestRepository requestRepository
+    -UserRepository userRepository
+    -ProjectRepository projectRepository
+    -ResourceRepository resourceRepository
+    -ResourceAssignmentService resourceAssignmentService
+    -HistoryLogService historyLogService
+    +getPendingRequests(email: String) List~AssignmentRequest~
+    +getAllRequests(email: String) List~AssignmentRequest~
+    +getPendingRequestsByProject(projectId: Integer) List~AssignmentRequest~
+    +submitProjectProposal(email: String, request: ProjectProposalRequest) void
+    +createAssignRequest(email: String, request: AssignResourceRequest) void
+    +createExtendRequest(email: String, request: ExtendAssignmentRequest) void
+    +createReleaseRequest(email: String, request: ReleaseAssignmentRequest) void
+    +approveRequest(id: Integer) void
+    +rejectRequest(id: Integer, reason: String) void
+    +recordDirectAction(user: User, type: RequestType, details: AssignmentRequest) void
+  }
+  class ResourceAssignmentService {
+    -ResourceAssignmentRepository assignmentRepository
+    -ResourceRepository resourceRepository
+    -ProjectRepository projectRepository
+    -HistoryLogService historyLogService
+    +assignResourceToProject(assignment: ResourceAssignment) ResourceAssignment
+    +getAllAssignments() List~ResourceAssignment~
+    +getAssignmentById(id: Integer) ResourceAssignment
+    +extendAssignment(request: ExtendAssignmentRequest) ResourceAssignment
+    +releaseAssignment(request: ReleaseAssignmentRequest) ResourceAssignment
+  }
+  class HistoryLogService {
+    -HistoryLogRepository historyLogRepository
+    +log(entityType: EntityType, activityType: String, description: String, performedBy: User, project: Project, resource: Resource, role: String) void
+    +getAll() List~HistoryLog~
+  }
+  class ProjectService {
+    -ProjectRepository projectRepository
+    -UserRepository userRepository
+    -ResourceAssignmentRepository assignmentRepository
+    -HistoryLogService historyLogService
+    +getAllProjects() List~ProjectListResponse~
+    +createProject(request: CreateProjectRequest) ProjectListResponse
+    +getProjectResources(projectId: Integer) List~ProjectResourceDto~
+    +updateProjectStatus(projectId: Integer, status: ProjectStatus) ProjectListResponse
+    +updateProject(projectId: Integer, request: UpdateProjectRequest) ProjectListResponse
+    +deleteProject(projectId: Integer) void
+  }
+  class ResourceService {
+    -ResourceRepository resourceRepository
+    -ResourceAssignmentRepository assignmentRepository
+    -AssignmentRequestRepository requestRepository
+    -HistoryLogService historyLogService
+    +getAllResources() List~ResourceResponse~
+    +getResourceById(id: Integer) ResourceResponse
+    +createResource(request: CreateResourceRequest) ResourceResponse
+    +assignResourceToProject(request: AssignResourceRequest) ResourceResponse
+    +getResourceAssignments(resourceId: Integer) List~AssignmentInfo~
+    +updateResource(id: Integer, request: UpdateResourceRequest) ResourceResponse
+    +deleteResource(id: Integer) void
+  }
+  class UserService {
+    -UserRepository userRepository
+    -HistoryLogService historyLogService
+    +createPm(request: CreatePmRequest) void
+    +getAllPms() List~PmListResponse~
+    +updateUser(userId: Integer, request: UpdateUserRequest) void
+    +deleteUser(userId: Integer) void
+  }
+
+  %% ======================================================
+  %% REPOSITORY LAYER (INTERFACES)
+  %% ======================================================
+  class UserRepository {
+    <<interface>>
+  }
+  class ProjectRepository {
+    <<interface>>
+  }
+  class ResourceRepository {
+    <<interface>>
+  }
+  class ResourceAssignmentRepository {
+    <<interface>>
+  }
+  class AssignmentRequestRepository {
+    <<interface>>
+  }
+  class HistoryLogRepository {
+    <<interface>>
+  }
+  class ProjectRequestResourceRepository {
+    <<interface>>
+  }
+
+  %% ======================================================
+  %% ENTITY LAYER
+  %% ======================================================
+  class User {
+    -Integer userId
+    -String name
+    -String email
+    -String password
+    -UserType userType
+    -AccountStatus accountStatus
+  }
+  class Project {
+    -Integer projectId
+    -String projectName
+    -String clientName
+    -User devMan
+    -ProjectStatus status
+  }
+  class Resource {
+    -Integer resourceId
+    -String resourceName
+    -String employeeId
+    -String email
+    -ResourceStatus status
+  }
+  class ResourceAssignment {
+    -Integer assignmentId
+    -Resource resource
+    -Project project
+    -String projectRole
+    -LocalDate startDate
+    -LocalDate endDate
+    -AssignmentStatus status
+  }
+  class HistoryLog {
+    -Integer logId
+    -EntityType entityType
+    -String activityType
+    -String description
+    -User performedBy
+    -Project project
+    -Resource resource
+    -String resourceRole
+    -LocalDateTime timestamp
+  }
+  class AssignmentRequest {
+    -Integer requestId
+    -RequestType requestType
+    -RequestStatus status
+    -User requester
+    -Project project
+    -Resource resource
+    -String projectName
+    -String clientName
+    -String description
+    -Collection~ProjectRequestResource~ resourcePlan
+    -Integer assignmentId
+    -String role
+    -LocalDate startDate
+    -LocalDate endDate
+    -LocalDate newEndDate
+    -LocalDate currentEndDate
+    -String reason
+    -String rejectionReason
+    -LocalDateTime createdAt
+    #onCreate() void
+  }
+  class ProjectRequestResource {
+    -Integer id
+    -AssignmentRequest assignmentRequest
+    -Resource resource
+    -String role
+    -LocalDate startDate
+    -LocalDate endDate
+  }
+
+  %% ======================================================
+  %% DTO LAYER
+  %% ======================================================
+  class LoginRequest {
+    +String email
+    +String password
+  }
+  class LoginResponse {
+    +String token
+    +String name
+    +String email
+    +String userType
+  }
+  class CreatePmRequest {
+    +String name
+    +String email
+    +String password
+  }
+  class PmListResponse {
+    +Integer userId
+    +String name
+    +String email
+    +String accountStatus
+  }
+  class UpdateUserRequest {
+    +String name
+    +String email
+    +String password
+    +String accountStatus
+  }
+  class CreateProjectRequest {
+    +String projectName
+    +String clientName
+    +Integer devManId
+  }
+  class UpdateProjectRequest {
+    +String projectName
+    +String clientName
+    +Integer devManId
+    +ProjectStatus status
+  }
+  class ProjectListResponse {
+    +Integer projectId
+    +String projectName
+    +String clientName
+    +String devManName
+    +int memberCount
+    +String status
+  }
+  class ProjectResourceDto {
+    +Integer resourceId
+    +String resourceName
+    +String role
+    +LocalDate startDate
+    +LocalDate endDate
+  }
+  class CreateResourceRequest {
+    +String resourceName
+    +String employeeId
+    +String email
+  }
+  class UpdateResourceRequest {
+    +String resourceName
+    +String employeeId
+    +String email
+    +ResourceStatus status
+  }
+  class AssignResourceRequest {
+    +Integer projectId
+    +Integer resourceId
+    +String role
+    +LocalDate startDate
+    +LocalDate endDate
+  }
+  class ResourceResponse {
+    +Integer resourceId
+    +String resourceName
+    +String employeeId
+    +String email
+    +ResourceStatus status
+    +int projectCount
+    +int totalAssignments
+  }
+  class ExtendAssignmentRequest {
+    +Integer assignmentId
+    +LocalDate newEndDate
+    +String reason
+  }
+  class ReleaseAssignmentRequest {
+    +Integer assignmentId
+    +LocalDate releaseDate
+    +String reason
+  }
+  class ProjectProposalRequest {
+    +String projectName
+    +String clientName
+    +String description
+    +List~ResourcePlanItem~ resourcePlan
+  }
+  class AssignmentRequestResponse {
+    +Integer id
+    +Integer assignmentId
+    +String type
+    +String status
+    +String requester
+    +String resource
+    +String project
+    +String projectName
+    +String clientName
+    +String description
+    +String role
+    +LocalDate startDate
+    +LocalDate newEndDate
+    +LocalDate currentEndDate
+    +String reason
+    +String rejectionReason
+    +LocalDateTime submittedDate
+    +List~ResourcePlanItem~ resourcePlan
+  }
+  class DashboardStatsResponse {
+    +long totalResources
+    +long availableResources
+    +long activeProjects
+    +long pendingRequests
+  }
+  class AssignmentEndingSoonResponse {
+    +Integer assignmentId
+    +String resourceName
+    +String projectName
+    +LocalDate endDate
+    +long daysLeft
+  }
+
+  %% ======================================================
+  %% ENUM LAYER
+  %% ======================================================
+  class UserType {
+    <<enumeration>>
+    Admin
+    DEV_MANAGER
+  }
+  class AccountStatus {
+    <<enumeration>>
+    ACTIVE
+  }
+  class ProjectStatus {
+    <<enumeration>>
+    ONGOING
+    HOLD
+    CLOSED
+  }
+  class ResourceStatus {
+    <<enumeration>>
+    AVAILABLE
+    ASSIGNED
+  }
+  class AssignmentStatus {
+    <<enumeration>>
+    ACTIVE
+    RELEASED
+    EXPIRED
+  }
+  class RequestType {
+    <<enumeration>>
+    ASSIGN
+    EXTEND
+    RELEASE
+    PROJECT
+  }
+  class RequestStatus {
+    <<enumeration>>
+    PENDING
+    APPROVED
+    REJECTED
+  }
+  class EntityType {
+    <<enumeration>>
+    PROJECT
+    ASSIGNMENT
+    REQUEST
+    USER
+    RESOURCE
+  }
+
+  %% ======================================================
+  %% RELATIONSHIPS
+  %% ======================================================
+  
+  %% Views to Controllers
+  LoginView --> AuthController
+  AdminDashboardView --> DashboardController
+  AdminProjectView --> ProjectController
+  AdminResourcesView --> ResourceController
+  AdminDevmanView --> UserController
+  AdminActivitiesView --> HistoryLogController
+  AdminNotificationsView --> RequestController
+  DevmanDashboardView --> DashboardController
+  DevmanDashboardView --> RequestController
+  DevmanProjectView --> ProjectController
+  DevmanResourcesView --> ResourceController
+  DevmanResourcesView --> ResourceAssignmentController
+  DevmanActivitiesView --> HistoryLogController
+  DevmanNotificationsView --> RequestController
+
+  %% Controllers to Services
+  AuthController --> AuthService
+  DashboardController --> DashboardService
+  RequestController --> AssignmentRequestService
+  UserController --> UserService
+  ProjectController --> ProjectService
+  ResourceController --> ResourceService
+  ResourceAssignmentController --> ResourceAssignmentService
+  ResourceAssignmentController --> AssignmentRequestService
+  HistoryLogController --> HistoryLogService
+
+  %% Service to Service
+  AssignmentRequestService ..> ResourceAssignmentService
+  AssignmentRequestService ..> HistoryLogService
+  ResourceAssignmentService ..> HistoryLogService
+  ProjectService ..> HistoryLogService
+  ResourceService ..> HistoryLogService
+  UserService ..> HistoryLogService
+  DashboardService ..> AssignmentRequestService
+
+  %% Services to Repositories
+  AuthService --> UserRepository
+  DashboardService --> ResourceRepository
+  DashboardService --> ProjectRepository
+  DashboardService --> ResourceAssignmentRepository
+  DashboardService --> AssignmentRequestRepository
+  AssignmentRequestService --> AssignmentRequestRepository
+  AssignmentRequestService --> UserRepository
+  AssignmentRequestService --> ProjectRepository
+  AssignmentRequestService --> ResourceRepository
+  ResourceAssignmentService --> ResourceAssignmentRepository
+  ResourceAssignmentService --> ResourceRepository
+  ResourceAssignmentService --> ProjectRepository
+  HistoryLogService --> HistoryLogRepository
+  ProjectService --> ProjectRepository
+  ProjectService --> UserRepository
+  ProjectService --> ResourceAssignmentRepository
+  ResourceService --> ResourceRepository
+  ResourceService --> ResourceAssignmentRepository
+  ResourceService --> AssignmentRequestRepository
+  ResourceService --> ProjectRequestResourceRepository
+  UserService --> UserRepository
+  ResourceAssignmentController --> UserRepository
+
+  %% Entity Relationships
+  Project *-- User : devMan
+  ResourceAssignment *-- Resource : resource
+  ResourceAssignment *-- Project : project
+  AssignmentRequest *-- User : requester
+  AssignmentRequest *-- Project : project
+  AssignmentRequest *-- Resource : resource
+  AssignmentRequest "1" *-- "0..*" ProjectRequestResource : resourcePlan
+  ProjectRequestResource *-- Resource : resource
+  HistoryLog *-- User : performedBy
+  HistoryLog *-- Project : project
+  HistoryLog *-- Resource : resource
+
+  %% Entity to Enum Usage
+  User ..> UserType
+  User ..> AccountStatus
+  Project ..> ProjectStatus
+  Resource ..> ResourceStatus
+  ResourceAssignment ..> AssignmentStatus
+  AssignmentRequest ..> RequestType
+  AssignmentRequest ..> RequestStatus
+  HistoryLog ..> EntityType
+
+  %% Controller/Service to DTO Usage
+  AuthController ..> LoginRequest
+  AuthController ..> LoginResponse
+  DashboardController ..> DashboardStatsResponse
+  DashboardController ..> AssignmentEndingSoonResponse
+  UserController ..> CreatePmRequest
+  ProjectController ..> ProjectListResponse
+  ResourceController ..> ResourceResponse
+  RequestController ..> AssignmentRequestResponse
+
+  %% ======================================================
+  %% STYLE DECLARATIONS (Color Coding Categories)
+  %% ======================================================
+  
+  %% Views (Cyan)
+  style LoginView fill:#0b0f19,stroke:#06b6d4,stroke-width:2px,color:#f8fafc
+  style AdminDashboardView fill:#0b0f19,stroke:#06b6d4,stroke-width:2px,color:#f8fafc
+  style AdminProjectView fill:#0b0f19,stroke:#06b6d4,stroke-width:2px,color:#f8fafc
+  style AdminResourcesView fill:#0b0f19,stroke:#06b6d4,stroke-width:2px,color:#f8fafc
+  style AdminDevmanView fill:#0b0f19,stroke:#06b6d4,stroke-width:2px,color:#f8fafc
+  style AdminActivitiesView fill:#0b0f19,stroke:#06b6d4,stroke-width:2px,color:#f8fafc
+  style AdminNotificationsView fill:#0b0f19,stroke:#06b6d4,stroke-width:2px,color:#f8fafc
+  style DevmanDashboardView fill:#0b0f19,stroke:#06b6d4,stroke-width:2px,color:#f8fafc
+  style DevmanProjectView fill:#0b0f19,stroke:#06b6d4,stroke-width:2px,color:#f8fafc
+  style DevmanResourcesView fill:#0b0f19,stroke:#06b6d4,stroke-width:2px,color:#f8fafc
+  style DevmanActivitiesView fill:#0b0f19,stroke:#06b6d4,stroke-width:2px,color:#f8fafc
+  style DevmanNotificationsView fill:#0b0f19,stroke:#06b6d4,stroke-width:2px,color:#f8fafc
+
+  %% Controllers (Purple)
+  style AuthController fill:#0b0f19,stroke:#a855f7,stroke-width:2px,color:#f8fafc
+  style DashboardController fill:#0b0f19,stroke:#a855f7,stroke-width:2px,color:#f8fafc
+  style RequestController fill:#0b0f19,stroke:#a855f7,stroke-width:2px,color:#f8fafc
+  style UserController fill:#0b0f19,stroke:#a855f7,stroke-width:2px,color:#f8fafc
+  style ProjectController fill:#0b0f19,stroke:#a855f7,stroke-width:2px,color:#f8fafc
+  style ResourceController fill:#0b0f19,stroke:#a855f7,stroke-width:2px,color:#f8fafc
+  style ResourceAssignmentController fill:#0b0f19,stroke:#a855f7,stroke-width:2px,color:#f8fafc
+  style HistoryLogController fill:#0b0f19,stroke:#a855f7,stroke-width:2px,color:#f8fafc
+
+  %% Services (Indigo)
+  style AuthService fill:#0b0f19,stroke:#6366f1,stroke-width:2px,color:#f8fafc
+  style DashboardService fill:#0b0f19,stroke:#6366f1,stroke-width:2px,color:#f8fafc
+  style AssignmentRequestService fill:#0b0f19,stroke:#6366f1,stroke-width:2px,color:#f8fafc
+  style ResourceAssignmentService fill:#0b0f19,stroke:#6366f1,stroke-width:2px,color:#f8fafc
+  style HistoryLogService fill:#0b0f19,stroke:#6366f1,stroke-width:2px,color:#f8fafc
+  style ProjectService fill:#0b0f19,stroke:#6366f1,stroke-width:2px,color:#f8fafc
+  style ResourceService fill:#0b0f19,stroke:#6366f1,stroke-width:2px,color:#f8fafc
+  style UserService fill:#0b0f19,stroke:#6366f1,stroke-width:2px,color:#f8fafc
+
+  %% Repositories (Rose)
+  style UserRepository fill:#0b0f19,stroke:#f43f5e,stroke-width:2px,color:#f8fafc
+  style ProjectRepository fill:#0b0f19,stroke:#f43f5e,stroke-width:2px,color:#f8fafc
+  style ResourceRepository fill:#0b0f19,stroke:#f43f5e,stroke-width:2px,color:#f8fafc
+  style ResourceAssignmentRepository fill:#0b0f19,stroke:#f43f5e,stroke-width:2px,color:#f8fafc
+  style AssignmentRequestRepository fill:#0b0f19,stroke:#f43f5e,stroke-width:2px,color:#f8fafc
+  style HistoryLogRepository fill:#0b0f19,stroke:#f43f5e,stroke-width:2px,color:#f8fafc
+  style ProjectRequestResourceRepository fill:#0b0f19,stroke:#f43f5e,stroke-width:2px,color:#f8fafc
+
+  %% Entities (Emerald)
+  style User fill:#0b0f19,stroke:#10b981,stroke-width:2px,color:#f8fafc
+  style Project fill:#0b0f19,stroke:#10b981,stroke-width:2px,color:#f8fafc
+  style Resource fill:#0b0f19,stroke:#10b981,stroke-width:2px,color:#f8fafc
+  style ResourceAssignment fill:#0b0f19,stroke:#10b981,stroke-width:2px,color:#f8fafc
+  style HistoryLog fill:#0b0f19,stroke:#10b981,stroke-width:2px,color:#f8fafc
+  style AssignmentRequest fill:#0b0f19,stroke:#10b981,stroke-width:2px,color:#f8fafc
+  style ProjectRequestResource fill:#0b0f19,stroke:#10b981,stroke-width:2px,color:#f8fafc
+
+  %% Enums (Amber)
+  style UserType fill:#0b0f19,stroke:#f59e0b,stroke-width:2px,color:#f8fafc
+  style AccountStatus fill:#0b0f19,stroke:#f59e0b,stroke-width:2px,color:#f8fafc
+  style ProjectStatus fill:#0b0f19,stroke:#f59e0b,stroke-width:2px,color:#f8fafc
+  style ResourceStatus fill:#0b0f19,stroke:#f59e0b,stroke-width:2px,color:#f8fafc
+  style AssignmentStatus fill:#0b0f19,stroke:#f59e0b,stroke-width:2px,color:#f8fafc
+  style RequestType fill:#0b0f19,stroke:#f59e0b,stroke-width:2px,color:#f8fafc
+  style RequestStatus fill:#0b0f19,stroke:#f59e0b,stroke-width:2px,color:#f8fafc
+  style EntityType fill:#0b0f19,stroke:#f59e0b,stroke-width:2px,color:#f8fafc
+
+  %% DTOs (Teal)
+  style LoginRequest fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style LoginResponse fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style CreatePmRequest fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style PmListResponse fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style UpdateUserRequest fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style CreateProjectRequest fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style UpdateProjectRequest fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style ProjectListResponse fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style ProjectResourceDto fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style CreateResourceRequest fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style UpdateResourceRequest fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style AssignResourceRequest fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style ResourceResponse fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style ExtendAssignmentRequest fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style ReleaseAssignmentRequest fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style ProjectProposalRequest fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style AssignmentRequestResponse fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style DashboardStatsResponse fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+  style AssignmentEndingSoonResponse fill:#0b0f19,stroke:#14b8a6,stroke-width:2px,color:#f8fafc
+        </pre>
+      </div>
+
+      <!-- Floating Toolbar -->
+      <div class="toolbar">
+        <button class="toolbar-btn" id="zoom-in-btn" title="Zoom In"><i class="fa-solid fa-plus"></i></button>
+        <button class="toolbar-btn" id="zoom-out-btn" title="Zoom Out"><i class="fa-solid fa-minus"></i></button>
+        <button class="toolbar-btn" id="zoom-reset-btn" title="Reset Zoom"><i class="fa-solid fa-compress"></i></button>
+      </div>
+
+      <!-- Detail Panel Overlay -->
+      <div class="detail-panel" id="detail-panel">
+        <div class="detail-header">
+          <div class="detail-header-title">
+            <span class="detail-type-badge" id="panel-class-type-badge">Class</span>
+            <span class="detail-name" id="panel-class-name">User</span>
+          </div>
+          <button class="detail-close" id="panel-close-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="detail-body">
+          <div class="info-section">
+            <div class="info-section-title">Description</div>
+            <p class="info-text" id="panel-class-desc">Class description goes here.</p>
+          </div>
+          <div class="info-section" id="panel-path-section">
+            <div class="info-section-title">Source File Location</div>
+            <div class="file-path" id="panel-class-path">c:/Users/...</div>
+          </div>
+          <div class="info-section" id="panel-attributes-section">
+            <div class="info-section-title">Attributes (Fields)</div>
+            <div class="members-list" id="panel-class-attributes">
+              <!-- JS Injected -->
+            </div>
+          </div>
+          <div class="info-section" id="panel-methods-section">
+            <div class="info-section-title">Methods (Endpoints / Business Logic)</div>
+            <div class="members-list" id="panel-class-methods">
+              <!-- JS Injected -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Mermaid.js ESM import and dynamic rendering script -->
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    
+    // Initialize Mermaid with custom styles
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'dark',
+      securityLevel: 'loose',
+      themeVariables: {
+        background: '#0b0f19',
+        primaryColor: '#1e293b',
+        primaryTextColor: '#f8fafc',
+        lineColor: 'rgba(255,255,255,0.15)',
+        secondaryColor: '#0f172a',
+        tertiaryColor: '#1e293b'
+      }
+    });
+
+    // Class Data Dictionary containing descriptions, source paths, fields, and methods
+    const classData = {
+      // Views
+      'LoginView': { type: 'View', desc: 'The React login page providing authentication fields (email and password). Accesses AuthController for token exchange.', path: 'frontend/src/pages/Login.jsx' },
+      'AdminDashboardView': { type: 'View', desc: 'The default homepage for Administrators, displaying overall system statistics, metrics, and shortcuts.', path: 'frontend/src/pages/AdminDashboard.jsx' },
+      'AdminProjectView': { type: 'View', desc: 'Allows Admins to view, create, edit, close, and delete software projects.', path: 'frontend/src/pages/AdminProject.jsx' },
+      'AdminResourcesView': { type: 'View', desc: 'Enables Admins to manage the general resource pool, add new resources, view status, and edit details.', path: 'frontend/src/pages/AdminResources.jsx' },
+      'AdminDevmanView': { type: 'View', desc: 'Admin interface to manage Development Manager accounts (PMs), create new managers, suspend them, or reset details.', path: 'frontend/src/pages/AdminDevman.jsx' },
+      'AdminActivitiesView': { type: 'View', desc: 'Audit log page for Admins to monitor logs of all allocation events, extensions, releases, and user logins.', path: 'frontend/src/pages/AdminActivities.jsx' },
+      'AdminNotificationsView': { type: 'View', desc: 'A critical view showing pending requests from Dev Managers that need Admin approval (Resource requests, proposals, releases, extensions).', path: 'frontend/src/pages/AdminNotifications.jsx' },
+      'DevmanDashboardView': { type: 'View', desc: 'Dashboard tailored for Development Managers showing their active projects, members, and upcoming assignment expirations.', path: 'frontend/src/pages/DevmanDashboard.jsx' },
+      'DevmanProjectView': { type: 'View', desc: 'Allows Dev Managers to see projects assigned to them and submit resource proposals or assignments.', path: 'frontend/src/pages/DevmanProject.jsx' },
+      'DevmanResourcesView': { type: 'View', desc: 'A rich visual resource pool dashboard showing a timeline of developer availability. Dev Managers can request allocations directly here.', path: 'frontend/src/pages/DevmanResources.jsx' },
+      'DevmanActivitiesView': { type: 'View', desc: 'Read-only history logs of allocation activities relevant to the projects of the logged-in Dev Manager.', path: 'frontend/src/pages/DevmanActivities.jsx' },
+      'DevmanNotificationsView': { type: 'View', desc: 'List of requests submitted by the Dev Manager showing status (Approved/Rejected) and Admin rejection comments.', path: 'frontend/src/pages/DevmanNotifications.jsx' },
+
+      // Controllers
+      'AuthController': {
+        type: 'Controller',
+        desc: 'Spring REST Controller mapping endpoints under /api/auth. Handles user authentication and returns JWT tokens.',
+        path: 'backend/src/main/java/com/resourceManagement/controller/auth/AuthController.java',
+        attributes: [{ name: 'authService', type: 'AuthService' }],
+        methods: [{ signature: 'login(request: LoginRequest)', returnType: 'ResponseEntity<LoginResponse>' }]
+      },
+      'DashboardController': {
+        type: 'Controller',
+        desc: 'Spring REST Controller under /api/dashboard. Provides aggregate metrics and lists assignments ending soon for dashboard cards.',
+        path: 'backend/src/main/java/com/resourceManagement/controller/dashboard/DashboardController.java',
+        attributes: [{ name: 'dashboardService', type: 'DashboardService' }],
+        methods: [
+          { signature: 'getStats()', returnType: 'ResponseEntity<DashboardStatsResponse>' },
+          { signature: 'getAssignmentsEndingSoon(days: int)', returnType: 'ResponseEntity<List<AssignmentEndingSoonResponse>>' }
+        ]
+      },
+      'RequestController': {
+        type: 'Controller',
+        desc: 'Spring REST Controller under /api/requests. Handles submission, history tracking, approval, and rejection of resource assignments and project proposals.',
+        path: 'backend/src/main/java/com/resourceManagement/controller/request/RequestController.java',
+        attributes: [{ name: 'requestService', type: 'AssignmentRequestService' }],
+        methods: [
+          { signature: 'getRequests()', returnType: 'ResponseEntity<List<AssignmentRequestResponse>>' },
+          { signature: 'getRequestHistory()', returnType: 'ResponseEntity<List<AssignmentRequestResponse>>' },
+          { signature: 'getPendingRequestsByProject(projectId: Integer)', returnType: 'ResponseEntity<List<AssignmentRequestResponse>>' },
+          { signature: 'submitProjectProposal(request: ProjectProposalRequest)', returnType: 'ResponseEntity<String>' },
+          { signature: 'submitAssignRequest(request: AssignResourceRequest)', returnType: 'ResponseEntity<String>' },
+          { signature: 'approveRequest(id: Integer)', returnType: 'ResponseEntity<String>' },
+          { signature: 'rejectRequest(id: Integer, body: Map)', returnType: 'ResponseEntity<String>' }
+        ]
+      },
+      'UserController': {
+        type: 'Controller',
+        desc: 'REST Endpoints under /api/users to manage user roles and metadata, primarily used by Admin to manage Dev Managers (PMs).',
+        path: 'backend/src/main/java/com/resourceManagement/controller/user/UserController.java',
+        attributes: [{ name: 'userService', type: 'UserService' }],
+        methods: [
+          { signature: 'createPm(request: CreatePmRequest)', returnType: 'ResponseEntity<?>' },
+          { signature: 'getAllPms()', returnType: 'ResponseEntity<List<PmListResponse>>' },
+          { signature: 'updateUser(userId: Integer, request: UpdateUserRequest)', returnType: 'ResponseEntity<Void>' },
+          { signature: 'deleteUser(userId: Integer)', returnType: 'ResponseEntity<Void>' }
+        ]
+      },
+      'ProjectController': {
+        type: 'Controller',
+        desc: 'REST Endpoints under /api/projects. Coordinates creation of new projects, mapping resources to a project, and changing project statuses.',
+        path: 'backend/src/main/java/com/resourceManagement/controller/project/ProjectController.java',
+        attributes: [{ name: 'projectService', type: 'ProjectService' }],
+        methods: [
+          { signature: 'getAllProjects()', returnType: 'ResponseEntity<List<ProjectListResponse>>' },
+          { signature: 'createProject(request: CreateProjectRequest)', returnType: 'ResponseEntity<ProjectListResponse>' },
+          { signature: 'getProjectResources(projectId: Integer)', returnType: 'ResponseEntity<List<ProjectResourceDto>>' },
+          { signature: 'updateProjectStatus(projectId: Integer, status: ProjectStatus)', returnType: 'ResponseEntity<ProjectListResponse>' },
+          { signature: 'updateProject(projectId: Integer, request: UpdateProjectRequest)', returnType: 'ResponseEntity<ProjectListResponse>' },
+          { signature: 'deleteProject(projectId: Integer)', returnType: 'ResponseEntity<Void>' }
+        ]
+      },
+      'ResourceController': {
+        type: 'Controller',
+        desc: 'REST Endpoints under /api/resources. Manages resource pool entries, queries resource details, and assigns resources directly.',
+        path: 'backend/src/main/java/com/resourceManagement/controller/resource/ResourceController.java',
+        attributes: [{ name: 'resourceService', type: 'ResourceService' }],
+        methods: [
+          { signature: 'getAllResources()', returnType: 'ResponseEntity<List<ResourceResponse>>' },
+          { signature: 'getResourceById(resourceId: Integer)', returnType: 'ResponseEntity<ResourceResponse>' },
+          { signature: 'createResource(request: CreateResourceRequest)', returnType: 'ResponseEntity<ResourceResponse>' },
+          { signature: 'assignResource(request: AssignResourceRequest)', returnType: 'ResponseEntity<ResourceResponse>' },
+          { signature: 'getResourceAssignments(resourceId: Integer)', returnType: 'ResponseEntity<List<AssignmentInfo>>' },
+          { signature: 'updateResource(resourceId: Integer, request: UpdateResourceRequest)', returnType: 'ResponseEntity<ResourceResponse>' },
+          { signature: 'deleteResource(resourceId: Integer)', returnType: 'ResponseEntity<Void>' }
+        ]
+      },
+      'ResourceAssignmentController': {
+        type: 'Controller',
+        desc: 'REST Endpoints under /api/assignments. Coordinates direct allocations, extensions, and releases. Differentiates workflow dynamically: Dev Managers request approval, Admins execute actions directly.',
+        path: 'backend/src/main/java/com/resourceManagement/controller/assignment/ResourceAssignmentController.java',
+        attributes: [
+          { name: 'assignmentService', type: 'ResourceAssignmentService' },
+          { name: 'requestService', type: 'AssignmentRequestService' },
+          { name: 'userRepository', type: 'UserRepository' }
+        ],
+        methods: [
+          { signature: 'createAssignment(assignment: ResourceAssignment)', returnType: 'ResponseEntity<ResourceAssignment>' },
+          { signature: 'getAllAssignments()', returnType: 'ResponseEntity<List<ResourceAssignment>>' },
+          { signature: 'extendAssignment(request: ExtendAssignmentRequest)', returnType: 'ResponseEntity<String>' },
+          { signature: 'releaseAssignment(request: ReleaseAssignmentRequest)', returnType: 'ResponseEntity<String>' }
+        ]
+      },
+      'HistoryLogController': {
+        type: 'Controller',
+        desc: 'REST Endpoints under /api/history. Fetches activity log records for tracking operations and auditing.',
+        path: 'backend/src/main/java/com/resourceManagement/controller/project/HistoryLogController.java',
+        attributes: [{ name: 'historyLogService', type: 'HistoryLogService' }],
+        methods: [{ signature: 'getHistoryLogs()', returnType: 'ResponseEntity<List<HistoryLogResponse>>' }]
+      },
+
+      // Services
+      'AuthService': {
+        type: 'Service',
+        desc: 'Spring Service handling login verification, password matching, and generating token details.',
+        path: 'backend/src/main/java/com/resourceManagement/service/auth/AuthService.java',
+        attributes: [{ name: 'userRepository', type: 'UserRepository' }, { name: 'jwtUtil', type: 'JwtUtil' }],
+        methods: [{ signature: 'login(request: LoginRequest)', returnType: 'LoginResponse' }]
+      },
+      'DashboardService': {
+        type: 'Service',
+        desc: 'Queries and formats dashboard metrics (active projects, available resources, upcoming expirations).',
+        path: 'backend/src/main/java/com/resourceManagement/service/dashboard/DashboardService.java',
+        attributes: [
+          { name: 'resourceRepository', type: 'ResourceRepository' },
+          { name: 'projectRepository', type: 'ProjectRepository' },
+          { name: 'assignmentRepository', type: 'ResourceAssignmentRepository' },
+          { name: 'requestRepository', type: 'AssignmentRequestRepository' }
+        ],
+        methods: [
+          { signature: 'getStats()', returnType: 'DashboardStatsResponse' },
+          { signature: 'getAssignmentsEndingSoon(days: int)', returnType: 'List<AssignmentEndingSoonResponse>' }
+        ]
+      },
+      'AssignmentRequestService': {
+        type: 'Service',
+        desc: 'Core business service. Manages the lifecycle of requests (Submit Proposal, Request Allocation, Approve/Reject). Injects directly into database tables and logs transactions in HistoryLogs.',
+        path: 'backend/src/main/java/com/resourceManagement/service/request/AssignmentRequestService.java',
+        attributes: [
+          { name: 'requestRepository', type: 'AssignmentRequestRepository' },
+          { name: 'userRepository', type: 'UserRepository' },
+          { name: 'projectRepository', type: 'ProjectRepository' },
+          { name: 'resourceRepository', type: 'ResourceRepository' },
+          { name: 'resourceAssignmentService', type: 'ResourceAssignmentService' },
+          { name: 'historyLogService', type: 'HistoryLogService' }
+        ],
+        methods: [
+          { signature: 'getPendingRequests(email: String)', returnType: 'List<AssignmentRequest>' },
+          { signature: 'getAllRequests(email: String)', returnType: 'List<AssignmentRequest>' },
+          { signature: 'getPendingRequestsByProject(projectId: Integer)', returnType: 'List<AssignmentRequest>' },
+          { signature: 'submitProjectProposal(email: String, request: ProjectProposalRequest)', returnType: 'void' },
+          { signature: 'createAssignRequest(email: String, request: AssignResourceRequest)', returnType: 'void' },
+          { signature: 'createExtendRequest(email: String, request: ExtendAssignmentRequest)', returnType: 'void' },
+          { signature: 'createReleaseRequest(email: String, request: ReleaseAssignmentRequest)', returnType: 'void' },
+          { signature: 'approveRequest(id: Integer)', returnType: 'void' },
+          { signature: 'rejectRequest(id: Integer, reason: String)', returnType: 'void' },
+          { signature: 'recordDirectAction(user: User, type: RequestType, details: AssignmentRequest)', returnType: 'void' }
+        ]
+      },
+      'ResourceAssignmentService': {
+        type: 'Service',
+        desc: 'Manages physical allocation records, updates developer status (AVAILABLE / ASSIGNED), and writes direct changes (Admin updates).',
+        path: 'backend/src/main/java/com/resourceManagement/service/assignment/ResourceAssignmentService.java',
+        attributes: [
+          { name: 'assignmentRepository', type: 'ResourceAssignmentRepository' },
+          { name: 'resourceRepository', type: 'ResourceRepository' },
+          { name: 'projectRepository', type: 'ProjectRepository' },
+          { name: 'historyLogService', type: 'HistoryLogService' }
+        ],
+        methods: [
+          { signature: 'assignResourceToProject(assignment: ResourceAssignment)', returnType: 'ResourceAssignment' },
+          { signature: 'getAllAssignments()', returnType: 'List<ResourceAssignment>' },
+          { signature: 'getAssignmentById(id: Integer)', returnType: 'ResourceAssignment' },
+          { signature: 'extendAssignment(request: ExtendAssignmentRequest)', returnType: 'ResourceAssignment' },
+          { signature: 'releaseAssignment(request: ReleaseAssignmentRequest)', returnType: 'ResourceAssignment' }
+        ]
+      },
+      'HistoryLogService': {
+        type: 'Service',
+        desc: 'Utility service called by other services to log audit statements. Persists history logs and fetches logs.',
+        path: 'backend/src/main/java/com/resourceManagement/service/project/HistoryLogService.java',
+        attributes: [{ name: 'historyLogRepository', type: 'HistoryLogRepository' }],
+        methods: [
+          { signature: 'log(entityType, activityType, description, performedBy, project, resource, role)', returnType: 'void' },
+          { signature: 'getAll()', returnType: 'List<HistoryLog>' }
+        ]
+      },
+      'ProjectService': {
+        type: 'Service',
+        desc: 'Manages project entity lifecycle (creation, status update, deletion) and computes member counts.',
+        path: 'backend/src/main/java/com/resourceManagement/service/project/ProjectService.java',
+        attributes: [
+          { name: 'projectRepository', type: 'ProjectRepository' },
+          { name: 'userRepository', type: 'UserRepository' },
+          { name: 'assignmentRepository', type: 'ResourceAssignmentRepository' },
+          { name: 'historyLogService', type: 'HistoryLogService' }
+        ],
+        methods: [
+          { signature: 'getAllProjects()', returnType: 'List<ProjectListResponse>' },
+          { signature: 'createProject(request: CreateProjectRequest)', returnType: 'ProjectListResponse' },
+          { signature: 'getProjectResources(projectId: Integer)', returnType: 'List<ProjectResourceDto>' },
+          { signature: 'updateProjectStatus(projectId: Integer, status: ProjectStatus)', returnType: 'ProjectListResponse' },
+          { signature: 'updateProject(projectId: Integer, request: UpdateProjectRequest)', returnType: 'ProjectListResponse' },
+          { signature: 'deleteProject(projectId: Integer)', returnType: 'void' }
+        ]
+      },
+      'ResourceService': {
+        type: 'Service',
+        desc: 'Handles resource CRUD, querying skills/availability, and calculating historical project counts.',
+        path: 'backend/src/main/java/com/resourceManagement/service/resource/ResourceService.java',
+        attributes: [
+          { name: 'resourceRepository', type: 'ResourceRepository' },
+          { name: 'assignmentRepository', type: 'ResourceAssignmentRepository' },
+          { name: 'requestRepository', type: 'AssignmentRequestRepository' },
+          { name: 'historyLogService', type: 'HistoryLogService' }
+        ],
+        methods: [
+          { signature: 'getAllResources()', returnType: 'List<ResourceResponse>' },
+          { signature: 'getResourceById(id: Integer)', returnType: 'ResourceResponse' },
+          { signature: 'createResource(request: CreateResourceRequest)', returnType: 'ResourceResponse' },
+          { signature: 'assignResourceToProject(request: AssignResourceRequest)', returnType: 'ResourceResponse' },
+          { signature: 'getResourceAssignments(resourceId: Integer)', returnType: 'List<AssignmentInfo>' },
+          { signature: 'updateResource(id: Integer, request: UpdateResourceRequest)', returnType: 'ResourceResponse' },
+          { signature: 'deleteResource(id: Integer)', returnType: 'void' }
+        ]
+      },
+      'UserService': {
+        type: 'Service',
+        desc: 'Spring Service managing Dev Manager users. Encrypts passwords on creation using BCrypt.',
+        path: 'backend/src/main/java/com/resourceManagement/service/user/UserService.java',
+        attributes: [{ name: 'userRepository', type: 'UserRepository' }, { name: 'historyLogService', type: 'HistoryLogService' }],
+        methods: [
+          { signature: 'createPm(request: CreatePmRequest)', returnType: 'void' },
+          { signature: 'getAllPms()', returnType: 'List<PmListResponse>' },
+          { signature: 'updateUser(userId: Integer, request: UpdateUserRequest)', returnType: 'void' },
+          { signature: 'deleteUser(userId: Integer)', returnType: 'void' }
+        ]
+      },
+
+      // Repositories
+      'UserRepository': { type: 'Repository', desc: 'JpaRepository interface mapping Spring methods to the `users` table.', path: 'backend/src/main/java/com/resourceManagement/repository/UserRepository.java' },
+      'ProjectRepository': { type: 'Repository', desc: 'JpaRepository interface mapping Spring methods to the `projects` table.', path: 'backend/src/main/java/com/resourceManagement/repository/ProjectRepository.java' },
+      'ResourceRepository': { type: 'Repository', desc: 'JpaRepository interface mapping Spring methods to the `resources` table.', path: 'backend/src/main/java/com/resourceManagement/repository/ResourceRepository.java' },
+      'ResourceAssignmentRepository': { type: 'Repository', desc: 'JpaRepository interface mapping Spring methods to the `resource_assignments` table. Houses custom queries for checking active resource count.', path: 'backend/src/main/java/com/resourceManagement/repository/ResourceAssignmentRepository.java' },
+      'AssignmentRequestRepository': { type: 'Repository', desc: 'JpaRepository interface mapping Spring methods to the `assignment_requests` table.', path: 'backend/src/main/java/com/resourceManagement/repository/AssignmentRequestRepository.java' },
+      'HistoryLogRepository': { type: 'Repository', desc: 'JpaRepository interface mapping Spring methods to the `history_logs` table.', path: 'backend/src/main/java/com/resourceManagement/repository/HistoryLogRepository.java' },
+      'ProjectRequestResourceRepository': { type: 'Repository', desc: 'JpaRepository interface mapping Spring methods to the `project_request_resources` table.', path: 'backend/src/main/java/com/resourceManagement/repository/ProjectRequestResourceRepository.java' },
+
+      // Entities
+      'User': {
+        type: 'Entity',
+        desc: 'Database entity mapping to the `users` table. Represents Admins or Development Managers.',
+        path: 'backend/src/main/java/com/resourceManagement/model/entity/User.java',
+        attributes: [
+          { name: 'userId', type: 'Integer' },
+          { name: 'name', type: 'String' },
+          { name: 'email', type: 'String' },
+          { name: 'password', type: 'String' },
+          { name: 'userType', type: 'UserType' },
+          { name: 'accountStatus', type: 'AccountStatus' }
+        ]
+      },
+      'Project': {
+        type: 'Entity',
+        desc: 'Database entity mapping to the `projects` table. Tracks project information and references the Dev Manager in charge.',
+        path: 'backend/src/main/java/com/resourceManagement/model/entity/Project.java',
+        attributes: [
+          { name: 'projectId', type: 'Integer' },
+          { name: 'projectName', type: 'String' },
+          { name: 'clientName', type: 'String' },
+          { name: 'devMan', type: 'User' },
+          { name: 'status', type: 'ProjectStatus' }
+        ]
+      },
+      'Resource': {
+        type: 'Entity',
+        desc: 'Database entity mapping to the `resources` table. Represents developers, testers, leads, or QAs available for project allocation.',
+        path: 'backend/src/main/java/com/resourceManagement/model/entity/Resource.java',
+        attributes: [
+          { name: 'resourceId', type: 'Integer' },
+          { name: 'resourceName', type: 'String' },
+          { name: 'employeeId', type: 'String' },
+          { name: 'email', type: 'String' },
+          { name: 'status', type: 'ResourceStatus' }
+        ]
+      },
+      'ResourceAssignment': {
+        type: 'Entity',
+        desc: 'Database entity mapping to the `resource_assignments` table. Records physical resource-project bonds, dates, and roles.',
+        path: 'backend/src/main/java/com/resourceManagement/model/entity/ResourceAssignment.java',
+        attributes: [
+          { name: 'assignmentId', type: 'Integer' },
+          { name: 'resource', type: 'Resource' },
+          { name: 'project', type: 'Project' },
+          { name: 'projectRole', type: 'String' },
+          { name: 'startDate', type: 'LocalDate' },
+          { name: 'endDate', type: 'LocalDate' },
+          { name: 'status', type: 'AssignmentStatus' }
+        ]
+      },
+      'HistoryLog': {
+        type: 'Entity',
+        desc: 'Database entity mapping to the `history_logs` table. Tracks chronological system activities performed by users.',
+        path: 'backend/src/main/java/com/resourceManagement/model/entity/HistoryLog.java',
+        attributes: [
+          { name: 'logId', type: 'Integer' },
+          { name: 'entityType', type: 'EntityType' },
+          { name: 'activityType', type: 'String' },
+          { name: 'description', type: 'String' },
+          { name: 'performedBy', type: 'User' },
+          { name: 'project', type: 'Project' },
+          { name: 'resource', type: 'Resource' },
+          { name: 'resourceRole', type: 'String' },
+          { name: 'timestamp', type: 'LocalDateTime' }
+        ]
+      },
+      'AssignmentRequest': {
+        type: 'Entity',
+        desc: 'Database entity mapping to the `assignment_requests` table. Houses parameters for both single allocations and composite project proposals.',
+        path: 'backend/src/main/java/com/resourceManagement/model/entity/AssignmentRequest.java',
+        attributes: [
+          { name: 'requestId', type: 'Integer' },
+          { name: 'requestType', type: 'RequestType' },
+          { name: 'status', type: 'RequestStatus' },
+          { name: 'requester', type: 'User' },
+          { name: 'project', type: 'Project' },
+          { name: 'resource', type: 'Resource' },
+          { name: 'projectName', type: 'String' },
+          { name: 'clientName', type: 'String' },
+          { name: 'description', type: 'String' },
+          { name: 'resourcePlan', type: 'Collection<ProjectRequestResource>' },
+          { name: 'assignmentId', type: 'Integer' },
+          { name: 'role', type: 'String' },
+          { name: 'startDate', type: 'LocalDate' },
+          { name: 'endDate', type: 'LocalDate' },
+          { name: 'newEndDate', type: 'LocalDate' },
+          { name: 'currentEndDate', type: 'LocalDate' },
+          { name: 'reason', type: 'String' },
+          { name: 'rejectionReason', type: 'String' },
+          { name: 'createdAt', type: 'LocalDateTime' }
+        ],
+        methods: [{ signature: 'onCreate()', returnType: 'void' }]
+      },
+      'ProjectRequestResource': {
+        type: 'Entity',
+        desc: 'Database entity mapping to the `project_request_resources` table. Handles detailed project proposal resource allocation plans (nested inside AssignmentRequest).',
+        path: 'backend/src/main/java/com/resourceManagement/model/entity/ProjectRequestResource.java',
+        attributes: [
+          { name: 'id', type: 'Integer' },
+          { name: 'assignmentRequest', type: 'AssignmentRequest' },
+          { name: 'resource', type: 'Resource' },
+          { name: 'role', type: 'String' },
+          { name: 'startDate', type: 'LocalDate' },
+          { name: 'endDate', type: 'LocalDate' }
+        ]
+      },
+
+      // DTOs
+      'LoginRequest': { type: 'DTO', desc: 'Encapsulates data required to authenticate a user.', path: 'backend/.../dto/auth/LoginRequest.java', attributes: [{ name: 'email', type: 'String' }, { name: 'password', type: 'String' }] },
+      'LoginResponse': { type: 'DTO', desc: 'Encapsulates response parameters on successful authentication.', path: 'backend/.../dto/auth/LoginResponse.java', attributes: [{ name: 'token', type: 'String' }, { name: 'name', type: 'String' }, { name: 'email', type: 'String' }, { name: 'userType', type: 'String' }] },
+      'CreatePmRequest': { type: 'DTO', desc: 'Payload for creating a new Dev Manager (Project Manager).', path: 'backend/.../dto/user/CreatePmRequest.java', attributes: [{ name: 'name', type: 'String' }, { name: 'email', type: 'String' }, { name: 'password', type: 'String' }] },
+      'PmListResponse': { type: 'DTO', desc: 'Data returned when displaying PM lists to Admin.', path: 'backend/.../dto/user/PmListResponse.java', attributes: [{ name: 'userId', type: 'Integer' }, { name: 'name', type: 'String' }, { name: 'email', type: 'String' }, { name: 'accountStatus', type: 'String' }] },
+      'UpdateUserRequest': { type: 'DTO', desc: 'Payload to update user information.', path: 'backend/.../dto/user/UpdateUserRequest.java', attributes: [{ name: 'name', type: 'String' }, { name: 'email', type: 'String' }, { name: 'password', type: 'String' }, { name: 'accountStatus', type: 'String' }] },
+      'CreateProjectRequest': { type: 'DTO', desc: 'Payload to initialize a new project.', path: 'backend/.../dto/project/CreateProjectRequest.java', attributes: [{ name: 'projectName', type: 'String' }, { name: 'clientName', type: 'String' }, { name: 'devManId', type: 'Integer' }] },
+      'UpdateProjectRequest': { type: 'DTO', desc: 'Payload to update existing project credentials.', path: 'backend/.../dto/project/UpdateProjectRequest.java', attributes: [{ name: 'projectName', type: 'String' }, { name: 'clientName', type: 'String' }, { name: 'devManId', type: 'Integer' }, { name: 'status', type: 'ProjectStatus' }] },
+      'ProjectListResponse': { type: 'DTO', desc: 'Data structure for displaying list-oriented project details.', path: 'backend/.../dto/project/ProjectListResponse.java', attributes: [{ name: 'projectId', type: 'Integer' }, { name: 'projectName', type: 'String' }, { name: 'clientName', type: 'String' }, { name: 'devManName', type: 'String' }, { name: 'memberCount', type: 'int' }, { name: 'status', type: 'String' }] },
+      'ProjectResourceDto': { type: 'DTO', desc: 'Details of resources allocated to a specific project.', path: 'backend/.../dto/project/ProjectResourceDto.java', attributes: [{ name: 'resourceId', type: 'Integer' }, { name: 'resourceName', type: 'String' }, { name: 'role', type: 'String' }, { name: 'startDate', type: 'LocalDate' }, { name: 'endDate', type: 'LocalDate' }] },
+      'CreateResourceRequest': { type: 'DTO', desc: 'Payload to add a new resource to the resource pool.', path: 'backend/.../dto/resource/CreateResourceRequest.java', attributes: [{ name: 'resourceName', type: 'String' }, { name: 'employeeId', type: 'String' }, { name: 'email', type: 'String' }] },
+      'UpdateResourceRequest': { type: 'DTO', desc: 'Payload to edit resource credentials.', path: 'backend/.../dto/resource/UpdateResourceRequest.java', attributes: [{ name: 'resourceName', type: 'String' }, { name: 'employeeId', type: 'String' }, { name: 'email', type: 'String' }, { name: 'status', type: 'ResourceStatus' }] },
+      'AssignResourceRequest': { type: 'DTO', desc: 'Data payload when requesting or direct-assigning a resource.', path: 'backend/.../dto/resource/AssignResourceRequest.java', attributes: [{ name: 'projectId', type: 'Integer' }, { name: 'resourceId', type: 'Integer' }, { name: 'role', type: 'String' }, { name: 'startDate', type: 'LocalDate' }, { name: 'endDate', type: 'LocalDate' }] },
+      'ResourceResponse': { type: 'DTO', desc: 'Object returned to list resource information including historical counts.', path: 'backend/.../dto/resource/ResourceResponse.java', attributes: [{ name: 'resourceId', type: 'Integer' }, { name: 'resourceName', type: 'String' }, { name: 'employeeId', type: 'String' }, { name: 'email', type: 'String' }, { name: 'status', type: 'ResourceStatus' }, { name: 'projectCount', type: 'int' }, { name: 'totalAssignments', type: 'int' }] },
+      'ExtendAssignmentRequest': { type: 'DTO', desc: 'Payload to extend an assignment.', path: 'backend/.../dto/assignment/ExtendAssignmentRequest.java', attributes: [{ name: 'assignmentId', type: 'Integer' }, { name: 'newEndDate', type: 'LocalDate' }, { name: 'reason', type: 'String' }] },
+      'ReleaseAssignmentRequest': { type: 'DTO', desc: 'Payload to release an assignment early.', path: 'backend/.../dto/assignment/ReleaseAssignmentRequest.java', attributes: [{ name: 'assignmentId', type: 'Integer' }, { name: 'releaseDate', type: 'LocalDate' }, { name: 'reason', type: 'String' }] },
+      'ProjectProposalRequest': { type: 'DTO', desc: 'DTO containing project creation metadata and array of resources planned.', path: 'backend/.../dto/request/ProjectProposalRequest.java', attributes: [{ name: 'projectName', type: 'String' }, { name: 'clientName', type: 'String' }, { name: 'description', type: 'String' }, { name: 'resourcePlan', type: 'List<ResourcePlanItem>' }] },
+      'AssignmentRequestResponse': { type: 'DTO', desc: 'Comprehensive response detail representing assignment request status, logs, plans, and types.', path: 'backend/.../dto/request/AssignmentRequestResponse.java', attributes: [
+        { name: 'id', type: 'Integer' }, { name: 'assignmentId', type: 'Integer' }, { name: 'type', type: 'String' }, { name: 'status', type: 'String' },
+        { name: 'requester', type: 'String' }, { name: 'resource', type: 'String' }, { name: 'project', type: 'String' }, { name: 'projectName', type: 'String' },
+        { name: 'clientName', type: 'String' }, { name: 'description', type: 'String' }, { name: 'role', type: 'String' }, { name: 'startDate', type: 'LocalDate' },
+        { name: 'newEndDate', type: 'LocalDate' }, { name: 'currentEndDate', type: 'LocalDate' }, { name: 'reason', type: 'String' },
+        { name: 'rejectionReason', type: 'String' }, { name: 'submittedDate', type: 'LocalDateTime' }, { name: 'resourcePlan', type: 'List<ResourcePlanItem>' }
+      ] },
+      'DashboardStatsResponse': { type: 'DTO', desc: 'General metrics for dashboard cards.', path: 'backend/.../dto/dashboard/DashboardStatsResponse.java', attributes: [{ name: 'totalResources', type: 'long' }, { name: 'availableResources', type: 'long' }, { name: 'activeProjects', type: 'long' }, { name: 'pendingRequests', type: 'long' }] },
+      'AssignmentEndingSoonResponse': { type: 'DTO', desc: 'Details of assignments expiring soon.', path: 'backend/.../dto/dashboard/AssignmentEndingSoonResponse.java', attributes: [{ name: 'assignmentId', type: 'Integer' }, { name: 'resourceName', type: 'String' }, { name: 'projectName', type: 'String' }, { name: 'endDate', type: 'LocalDate' }, { name: 'daysLeft', type: 'long' }] },
+
+      // Enums
+      'UserType': { type: 'Enum', desc: 'Types of system users. Restricts access level.', path: 'backend/.../enums/UserType.java', attributes: [{ name: 'Admin', type: 'value' }, { name: 'DEV_MANAGER', type: 'value' }] },
+      'AccountStatus': { type: 'Enum', desc: 'Status of manager account.', path: 'backend/.../enums/AccountStatus.java', attributes: [{ name: 'ACTIVE', type: 'value' }] },
+      'ProjectStatus': { type: 'Enum', desc: 'Project lifecycle stages.', path: 'backend/.../enums/ProjectStatus.java', attributes: [{ name: 'ONGOING', type: 'value' }, { name: 'HOLD', type: 'value' }, { name: 'CLOSED', type: 'value' }] },
+      'ResourceStatus': { type: 'Enum', desc: 'Resource availability flags.', path: 'backend/.../enums/ResourceStatus.java', attributes: [{ name: 'AVAILABLE', type: 'value' }, { name: 'ASSIGNED', type: 'value' }] },
+      'AssignmentStatus': { type: 'Enum', desc: 'Individual allocation status.', path: 'backend/.../enums/AssignmentStatus.java', attributes: [{ name: 'ACTIVE', type: 'value' }, { name: 'RELEASED', type: 'value' }, { name: 'EXPIRED', type: 'value' }] },
+      'RequestType': { type: 'Enum', desc: 'Request types.', path: 'backend/.../enums/RequestType.java', attributes: [{ name: 'ASSIGN', type: 'value' }, { name: 'EXTEND', type: 'value' }, { name: 'RELEASE', type: 'value' }, { name: 'PROJECT', type: 'value' }] },
+      'RequestStatus': { type: 'Enum', desc: 'Workflow approval status.', path: 'backend/.../enums/RequestStatus.java', attributes: [{ name: 'PENDING', type: 'value' }, { name: 'APPROVED', type: 'value' }, { name: 'REJECTED', type: 'value' }] },
+      'EntityType': { type: 'Enum', desc: 'Database tables used for history mapping.', path: 'backend/.../enums/EntityType.java', attributes: [{ name: 'PROJECT', type: 'value' }, { name: 'ASSIGNMENT', type: 'value' }, { name: 'REQUEST', type: 'value' }, { name: 'USER', type: 'value' }, { name: 'RESOURCE', type: 'value' }] }
+    };
+
+    // Helper: Map colors to category names
+    const typeBadgeClasses = {
+      'View': 'badge-view',
+      'Controller': 'badge-controller',
+      'Service': 'badge-service',
+      'Repository': 'badge-repo',
+      'Entity': 'badge-entity',
+      'Enum': 'badge-enum',
+      'DTO': 'badge-dto'
+    };
+
+    // Render Class list sidebar
+    function populateSidebar(searchQuery = '') {
+      const listContainer = document.getElementById('class-list');
+      listContainer.innerHTML = '';
+      
+      const categories = {};
+      Object.keys(classData).forEach(className => {
+        const item = classData[className];
+        if (searchQuery && !className.toLowerCase().includes(searchQuery.toLowerCase()) && !item.type.toLowerCase().includes(searchQuery.toLowerCase())) {
+          return;
+        }
+        if (!categories[item.type]) {
+          categories[item.type] = [];
+        }
+        categories[item.type].push(className);
+      });
+
+      Object.keys(typeBadgeClasses).forEach(type => {
+        if (!categories[type] || categories[type].length === 0) return;
+        
+        const group = document.createElement('div');
+        group.className = 'category-group';
+        
+        const header = document.createElement('div');
+        header.className = 'category-title';
+        header.innerHTML = `<span>${type}s</span> <span class="category-badge ${typeBadgeClasses[type]}">${categories[type].length}</span>`;
+        group.appendChild(header);
+
+        categories[type].forEach(name => {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'class-item';
+          itemDiv.setAttribute('data-class-name', name);
+          itemDiv.innerHTML = `
+            <div class="class-name-info">
+              <div class="class-dot" style="background-color: var(--color-${type.toLowerCase()})"></div>
+              <span class="class-title">${name}</span>
+            </div>
+            <i class="fa-solid fa-angle-right" style="font-size: 0.8rem; color: var(--text-secondary)"></i>
+          `;
+
+          itemDiv.addEventListener('click', () => {
+            selectClass(name);
+          });
+          
+          group.appendChild(itemDiv);
+        });
+
+        listContainer.appendChild(group);
+      });
+    }
+
+    // Active Selection State
+    let selectedClassName = null;
+    let panZoomInstance = null;
+
+    function selectClass(className) {
+      // De-highlight previous select
+      if (selectedClassName) {
+        document.querySelectorAll(`.class-item[data-class-name="${selectedClassName}"]`).forEach(el => el.classList.remove('active'));
+        const prevSvgNode = findSvgNode(selectedClassName);
+        if (prevSvgNode) prevSvgNode.classList.remove('highlighted');
+      }
+
+      selectedClassName = className;
+      
+      // Highlight in sidebar
+      const activeEl = document.querySelector(`.class-item[data-class-name="${className}"]`);
+      if (activeEl) activeEl.classList.add('active');
+
+      // Highlight in diagram SVG
+      const svgNode = findSvgNode(className);
+      if (svgNode) {
+        svgNode.classList.add('highlighted');
+        // Smoothly zoom/center to the node
+        zoomToSvgNode(svgNode);
+      }
+
+      // Populate Detail Panel
+      const item = classData[className];
+      if (item) {
+        document.getElementById('panel-class-name').textContent = className;
+        
+        const badge = document.getElementById('panel-class-type-badge');
+        badge.textContent = item.type;
+        badge.className = `detail-type-badge ${typeBadgeClasses[item.type]}`;
+        
+        document.getElementById('panel-class-desc').textContent = item.desc;
+        
+        if (item.path) {
+          document.getElementById('panel-path-section').style.display = 'block';
+          document.getElementById('panel-class-path').textContent = item.path;
+        } else {
+          document.getElementById('panel-path-section').style.display = 'none';
+        }
+
+        // Attributes
+        const attrContainer = document.getElementById('panel-class-attributes');
+        if (item.attributes && item.attributes.length > 0) {
+          document.getElementById('panel-attributes-section').style.display = 'block';
+          attrContainer.innerHTML = item.attributes.map(attr => `
+            <div class="member-row">
+              <span class="member-name">${attr.name}</span>
+              <span class="member-type">${attr.type}</span>
+            </div>
+          `).join('');
+        } else {
+          document.getElementById('panel-attributes-section').style.display = 'none';
+        }
+
+        // Methods
+        const methodContainer = document.getElementById('panel-class-methods');
+        if (item.methods && item.methods.length > 0) {
+          document.getElementById('panel-methods-section').style.display = 'block';
+          methodContainer.innerHTML = item.methods.map(meth => `
+            <div class="member-row">
+              <span class="member-name">${meth.signature}</span>
+              <span class="member-type">${meth.returnType}</span>
+            </div>
+          `).join('');
+        } else {
+          document.getElementById('panel-methods-section').style.display = 'none';
+        }
+
+        // Open Panel
+        document.getElementById('detail-panel').classList.add('open');
+      }
+    }
+
+    // SVG Node Helpers
+    function findSvgNode(className) {
+      const nodes = document.querySelectorAll('g.classNode');
+      for (let node of nodes) {
+        const textNodes = node.querySelectorAll('text');
+        for (let t of textNodes) {
+          if (t.textContent.trim() === className) {
+            return node;
+          }
+        }
+      }
+      return null;
+    }
+
+    function zoomToSvgNode(svgNode) {
+      if (!panZoomInstance || !svgNode) return;
+      
+      const sizes = panZoomInstance.getSizes();
+      const ctm = svgNode.getCTM();
+      const bbox = svgNode.getBBox();
+      
+      // Calculate node coordinates relative to SVG
+      const nodeX = bbox.x + bbox.width / 2;
+      const nodeY = bbox.y + bbox.height / 2;
+      
+      // Transform coordinates
+      const transformedPoint = svgNode.ownerSVGElement.createSVGPoint();
+      transformedPoint.x = nodeX;
+      transformedPoint.y = nodeY;
+      
+      const matrix = svgNode.getTransformToElement ? svgNode.getTransformToElement(svgNode.ownerSVGElement) : svgNode.transform.baseVal.consolidate().matrix;
+      const targetPoint = transformedPoint.matrixTransform(matrix);
+
+      const destX = sizes.width / 2 - targetPoint.x * 1.5;
+      const destY = sizes.height / 2 - targetPoint.y * 1.5;
+      
+      panZoomInstance.zoom(1.5);
+      panZoomInstance.pan({ x: destX, y: destY });
+    }
+
+    // Dynamic Binding of SVG Clicks once Mermaid completes
+    function bindSvgClickEvents() {
+      const nodes = document.querySelectorAll('g.classNode');
+      nodes.forEach(node => {
+        const titleEl = node.querySelector('.title') || node.querySelector('text');
+        if (titleEl) {
+          const className = titleEl.textContent.trim();
+          node.style.cursor = 'pointer';
+          node.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectClass(className);
+          });
+        }
+      });
+    }
+
+    // Compile and Render Mermaid Code
+    async function initMermaid() {
+      const container = document.getElementById('diagram-container');
+      const source = document.getElementById('mermaid-src').textContent;
+      
+      try {
+        const { svg } = await mermaid.render('mermaid-svg', source);
+        container.innerHTML = svg;
+        
+        // Setup Pan Zoom on generated SVG
+        const svgEl = document.getElementById('mermaid-svg');
+        svgEl.style.width = '100%';
+        svgEl.style.height = '100%';
+        
+        panZoomInstance = svgPanZoom(svgEl, {
+          zoomEnabled: true,
+          controlIconsEnabled: false,
+          fit: true,
+          center: true,
+          minZoom: 0.1,
+          maxZoom: 10,
+          zoomScaleSensitivity: 0.2
+        });
+
+        // Fit screen by default
+        panZoomInstance.resize();
+        panZoomInstance.fit();
+        panZoomInstance.center();
+
+        bindSvgClickEvents();
+        
+      } catch (err) {
+        console.error("Mermaid Render Error:", err);
+      }
+    }
+
+    // Initialization
+    window.addEventListener('DOMContentLoaded', async () => {
+      populateSidebar();
+      await initMermaid();
+
+      // Search Filter
+      document.getElementById('class-search').addEventListener('input', (e) => {
+        populateSidebar(e.target.value);
+      });
+
+      // Toolbar zoom actions
+      document.getElementById('zoom-in-btn').addEventListener('click', () => {
+        if (panZoomInstance) panZoomInstance.zoomIn();
+      });
+      document.getElementById('zoom-out-btn').addEventListener('click', () => {
+        if (panZoomInstance) panZoomInstance.zoomOut();
+      });
+      document.getElementById('zoom-reset-btn').addEventListener('click', () => {
+        if (panZoomInstance) {
+          panZoomInstance.resetZoom();
+          panZoomInstance.resetPan();
+          panZoomInstance.fit();
+          panZoomInstance.center();
+        }
+      });
+      document.getElementById('btn-reset-zoom').addEventListener('click', () => {
+        if (panZoomInstance) {
+          panZoomInstance.resetZoom();
+          panZoomInstance.resetPan();
+          panZoomInstance.fit();
+          panZoomInstance.center();
+        }
+      });
+
+      // Detail Panel close
+      document.getElementById('panel-close-btn').addEventListener('click', () => {
+        document.getElementById('detail-panel').classList.remove('open');
+        if (selectedClassName) {
+          document.querySelectorAll(`.class-item[data-class-name="${selectedClassName}"]`).forEach(el => el.classList.remove('active'));
+          const svgNode = findSvgNode(selectedClassName);
+          if (svgNode) svgNode.classList.remove('highlighted');
+          selectedClassName = null;
+        }
+      });
+
+      // Export SVG Action
+      document.getElementById('btn-export-svg').addEventListener('click', () => {
+        const svgEl = document.getElementById('mermaid-svg');
+        if (!svgEl) return;
+        
+        const serializer = new XMLSerializer();
+        const svgString = serializer.serializeToString(svgEl);
+        const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "inteleq_resource_management_uml.svg";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      });
+    });
+  </script>
+</body>
+</html>

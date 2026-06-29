@@ -82,6 +82,18 @@ public class ResourceService {
                         Resource savedResource = resourceRepository.saveAndFlush(resource);
                         long totalCount = resourceRepository.count();
                         System.out.println("Resource successfully saved. Total resources in DB: " + totalCount);
+
+                        // Log activity
+                        String currentPrincipalName = SecurityContextHolder.getContext().getAuthentication().getName();
+                        User performedBy = userRepository.findByEmail(currentPrincipalName)
+                                        .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+                        historyLogService.logActivity(
+                                        EntityType.RESOURCE,
+                                        "CREATE",
+                                        "Created Resource: " + savedResource.getResourceName(),
+                                        performedBy);
+
                         return mapToResourceResponse(savedResource);
                 } catch (Exception e) {
                         System.err.println("Error saving resource to DB: " + e.getMessage());
