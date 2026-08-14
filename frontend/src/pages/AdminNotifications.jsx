@@ -38,6 +38,10 @@ const AdminNotifications = () => {
 
         setUser(JSON.parse(storedUser));
         fetchRequests();
+        // Opening this page counts as reading them, so the sidebar badge clears.
+        api.patch('/notifications/read-all').catch(err =>
+            console.error('Error marking notifications as read:', err)
+        );
     }, [navigate]);
 
     const fetchRequests = async () => {

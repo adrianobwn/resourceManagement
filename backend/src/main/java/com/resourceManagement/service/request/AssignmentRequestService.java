@@ -28,6 +28,7 @@ public class AssignmentRequestService {
         private final ProjectRepository projectRepository;
         private final ResourceRepository resourceRepository;
         private final com.resourceManagement.service.project.HistoryLogService historyLogService;
+        private final com.resourceManagement.service.project.NotificationService notificationService;
 
         private void logToHistory(User performedBy, EntityType entityType, String activityType, String description,
                         Project project, Resource resource, String role) {
@@ -56,6 +57,13 @@ public class AssignmentRequestService {
                                 .build();
 
                 requestRepository.save(request);
+
+                notificationService.notifyAllAdmins(NotificationType.RESOURCE_REQUEST,
+                                String.format("%s requested to extend %s on %s until %s",
+                                                requester.getName(),
+                                                currentAssignment.getResource().getResourceName(),
+                                                currentAssignment.getProject().getProjectName(),
+                                                dto.getNewEndDate()));
         }
 
         @Transactional
@@ -79,6 +87,13 @@ public class AssignmentRequestService {
                                 .build();
 
                 requestRepository.save(request);
+
+                notificationService.notifyAllAdmins(NotificationType.RESOURCE_REQUEST,
+                                String.format("%s requested to release %s from %s on %s",
+                                                requester.getName(),
+                                                currentAssignment.getResource().getResourceName(),
+                                                currentAssignment.getProject().getProjectName(),
+                                                dto.getReleaseDate()));
         }
 
         @Transactional
@@ -138,6 +153,13 @@ public class AssignmentRequestService {
                                 .build();
 
                 requestRepository.save(request);
+
+                notificationService.notifyAllAdmins(NotificationType.RESOURCE_REQUEST,
+                                String.format("%s requested to assign %s to %s as %s",
+                                                requester.getName(),
+                                                resource.getResourceName(),
+                                                project.getProjectName(),
+                                                dto.getProjectRole()));
         }
 
         @Transactional
@@ -200,6 +222,12 @@ public class AssignmentRequestService {
                 }
 
                 requestRepository.save(request);
+
+                notificationService.notifyAllAdmins(NotificationType.PROJECT_REQUEST,
+                                String.format("%s proposed a new project: %s (%s)",
+                                                requester.getName(),
+                                                dto.getProjectName(),
+                                                dto.getClientName()));
         }
 
         public List<AssignmentRequest> getPendingRequests(String userEmail) {
@@ -351,6 +379,21 @@ public class AssignmentRequestService {
 
                 req.setStatus(RequestStatus.APPROVED);
                 requestRepository.save(req);
+
+                notificationService.createNotification(req.getRequester(), NotificationType.APPROVAL_RESULT,
+                                String.format("Your %s request for %s has been approved",
+                                                req.getRequestType(),
+                                                describeRequestTarget(req)));
+        }
+
+        /** Project proposals carry a name instead of a linked project/resource. */
+        private String describeRequestTarget(AssignmentRequest req) {
+                if (req.getRequestType() == RequestType.PROJECT) {
+                        return req.getProjectName();
+                }
+                String resourceName = req.getResource() != null ? req.getResource().getResourceName() : "resource";
+                String projectName = req.getProject() != null ? req.getProject().getProjectName() : "project";
+                return resourceName + " on " + projectName;
         }
 
         private User getCurrentUser() {
@@ -373,6 +416,16 @@ public class AssignmentRequestService {
                                 req.getRequester().getName());
                 logToHistory(getCurrentUser(), EntityType.REQUEST, "REJECT", desc, req.getProject(), req.getResource(),
                                 req.getRole());
+
+                String target = describeRequestTarget(req);
+                String reasonSuffix = (reason != null && !reason.isBlank()) ? " - " + reason : "";
+
+                // Only the requester is notified: whoever performs an action never gets a
+                // notification about their own action. Admins still see the REJECTED status
+                // on the Activities page.
+                notificationService.createNotification(req.getRequester(), NotificationType.APPROVAL_RESULT,
+                                String.format("Your %s request for %s has been rejected%s",
+                                                req.getRequestType(), target, reasonSuffix));
         }
 
         @Transactional

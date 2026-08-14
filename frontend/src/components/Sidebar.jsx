@@ -8,6 +8,7 @@ const Sidebar = () => {
     const location = useLocation();
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const [unreadCount, setUnreadCount] = useState(0);
+    const [notifCount, setNotifCount] = useState(0);
 
     const isDevMan = user.userType && (
         user.userType.toUpperCase().includes('DEV') ||
@@ -71,6 +72,7 @@ const Sidebar = () => {
                         name: 'Notifications',
                         path: '/notifications',
                         icon: Bell,
+                        badge: notifCount > 0 ? notifCount : null
                     }
                 ]
             }
@@ -86,57 +88,24 @@ const Sidebar = () => {
 
     const isActive = (path) => location.pathname === path;
 
-    // Fetch activities and calculate unread count
+    // Unread notification badge, for both Admin and DevMan.
     useEffect(() => {
-        if (!isDevMan || !user.email) return;
-
-        const storageKey = `readNotifications_${user.email}`;
-
-        const checkNotifications = async () => {
+        const fetchUnreadCount = async () => {
             try {
-                const response = await api.get('/requests/history');
-                const completedRequests = response.data.filter(r =>
-                    r.status === 'APPROVED' || r.status === 'REJECTED'
-                );
-
-                // If on activities page, mark all as read immediately
-                if (location.pathname === '/activities') {
-                    setUnreadCount(0);
-                    const allIds = completedRequests.map(r => r.id);
-                    localStorage.setItem(storageKey, JSON.stringify(allIds));
-                    return;
-                }
-
-                const storedReadIds = localStorage.getItem(storageKey);
-
-                // FIRST LOAD SCENARIO:
-                if (storedReadIds === null) {
-                    const allIds = completedRequests.map(r => r.id);
-                    localStorage.setItem(storageKey, JSON.stringify(allIds));
-                    setUnreadCount(0);
-                    return;
-                }
-
-                // NORMAL SCENARIO:
-                const readNotificationIds = JSON.parse(storedReadIds || '[]');
-                const newUnreadCount = completedRequests.filter(r =>
-                    !readNotificationIds.includes(r.id)
-                ).length;
-
-                setUnreadCount(newUnreadCount);
-
+                const { data } = await api.get('/notifications/unread-count');
+                setNotifCount(data.count || 0);
+                setUnreadCount(data.activities || 0);
             } catch (error) {
-                console.error('Error fetching notifications:', error);
+                console.error('Error fetching unread notifications:', error);
             }
         };
 
-        checkNotifications();
-
-        // Optional: Poll every 30 seconds to keep fresh
-        const interval = setInterval(checkNotifications, 30000);
+        fetchUnreadCount();
+        // ponytail: polling every 30s, swap for websockets if it ever needs to be instant
+        const interval = setInterval(fetchUnreadCount, 30000);
         return () => clearInterval(interval);
+    }, [location.pathname]);
 
-    }, [location.pathname, isDevMan, user.email]);
 
     return (
         <div className="w-[267px] min-h-screen bg-[#025D66] flex flex-col justify-between fixed left-0 top-0 font-sf">

@@ -35,6 +35,10 @@ const Activities = () => {
 
     useEffect(() => {
         fetchActivities();
+        // Opening this page clears the approve/reject badge in the sidebar.
+        api.patch('/notifications/read-activities').catch(err =>
+            console.error('Error marking activities as read:', err)
+        );
     }, []);
 
     // Scroll locking for modal
