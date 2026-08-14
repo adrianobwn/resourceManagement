@@ -185,7 +185,9 @@ public class ResourceAssignmentService {
         return savedAssignment;
     }
 
-    @Scheduled(cron = "0 0 0 * * *") // Runs every day at midnight
+    // Also invoked at startup by DataIntegrityInitializer, so assignments that expired
+    // while the app was down don't stay ACTIVE until midnight.
+    @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void autoReleaseAssignments() {
         LocalDate today = LocalDate.now();

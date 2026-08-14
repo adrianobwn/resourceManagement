@@ -5,6 +5,7 @@ import Sidebar from '../components/Sidebar';
 import StatusBadge from '../components/StatusBadge';
 import Toast from '../components/Toast';
 import api from '../utils/api';
+import { currentAssignments } from '../utils/assignments';
 import * as XLSX from 'xlsx';
 
 const DevmanResources = () => {
@@ -74,14 +75,17 @@ const DevmanResources = () => {
 
     const handleExport = () => {
         try {
-            const exportData = filteredResources.map(resource => ({
-                'Resource Name': resource.resourceName,
-                'Status': resource.status,
-                'Current Project': resource.currentAssignments?.[0]?.projectName || '-',
-                'Role': resource.currentAssignments?.[0]?.projectRole || '-',
-                'Start Date': resource.currentAssignments?.[0]?.startDate || '-',
-                'End Date': resource.currentAssignments?.[0]?.endDate || '-'
-            }));
+            const exportData = filteredResources.map(resource => {
+                const current = currentAssignments(resource.currentAssignments)[0];
+                return {
+                    'Resource Name': resource.resourceName,
+                    'Status': resource.status,
+                    'Current Project': current?.projectName || '-',
+                    'Role': current?.projectRole || '-',
+                    'Start Date': current?.startDate || '-',
+                    'End Date': current?.endDate || '-'
+                };
+            });
 
             const ws = XLSX.utils.json_to_sheet(exportData);
             const wb = XLSX.utils.book_new();
@@ -247,8 +251,7 @@ const DevmanResources = () => {
                 const assignments = response.data;
 
                 // Format assignments for display
-                const formattedProjects = assignments
-                    .filter(a => a.projectStatus !== 'CLOSED')
+                const formattedProjects = currentAssignments(assignments)
                     .map(a => ({
                         projectName: a.projectName,
                         role: a.projectRole,
@@ -432,13 +435,13 @@ const DevmanResources = () => {
                             </div>
 
                             {/* Current Projects */}
-                            {assignModal.resource?.currentAssignments && assignModal.resource.currentAssignments.length > 0 && (
+                            {currentAssignments(assignModal.resource?.currentAssignments).length > 0 && (
                                 <div className="mb-6">
                                     <h4 className="font-bold text-black mb-3" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>
-                                        Current Project{assignModal.resource.currentAssignments.length > 1 ? 's' : ''}
+                                        Current Project{currentAssignments(assignModal.resource?.currentAssignments).length > 1 ? 's' : ''}
                                     </h4>
                                     <div className="space-y-2">
-                                        {assignModal.resource.currentAssignments.map((assignment, index) => (
+                                        {currentAssignments(assignModal.resource?.currentAssignments).map((assignment, index) => (
                                             <p key={assignment.assignmentId} className="text-black" style={{ fontSize: '14px', fontFamily: 'SF Pro Display' }}>
                                                 {index + 1}. {assignment.projectName} - Ends : {new Date(assignment.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
                                             </p>

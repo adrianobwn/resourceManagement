@@ -4,6 +4,7 @@ import Sidebar from '../components/Sidebar';
 import StatusBadge from '../components/StatusBadge';
 import Toast from '../components/Toast';
 import api from '../utils/api';
+import { currentAssignments } from '../utils/assignments';
 import * as XLSX from 'xlsx';
 import { Trash2, AlertTriangle, Edit2 } from 'lucide-react';
 
@@ -474,8 +475,8 @@ const AdminResources = () => {
                 const response = await api.get(`/resources/${resource.resourceId}/assignments`);
                 const assignments = response.data;
 
-                // Format assignments for display
-                const formattedProjects = assignments.map(a => ({
+                // Format assignments for display (current ones only)
+                const formattedProjects = currentAssignments(assignments).map(a => ({
                     projectName: a.projectName,
                     role: a.projectRole,
                     startDate: new Date(a.startDate).toLocaleDateString('en-GB'),
@@ -766,15 +767,13 @@ const AdminResources = () => {
                                 </div>
 
                                 {/* Current Projects (Only show Active) */}
-                                {assignModal.resource?.currentAssignments &&
-                                    assignModal.resource.currentAssignments.filter(a => a.assignmentStatus === 'ACTIVE').length > 0 && (
+                                {currentAssignments(assignModal.resource?.currentAssignments).length > 0 && (
                                         <div className="mb-6">
                                             <h4 className="font-bold text-black mb-3" style={{ fontSize: '20px', fontFamily: 'SF Pro Display' }}>
-                                                Current Project{assignModal.resource.currentAssignments.filter(a => a.assignmentStatus === 'ACTIVE').length > 1 ? 's' : ''}
+                                                Current Project{currentAssignments(assignModal.resource?.currentAssignments).length > 1 ? 's' : ''}
                                             </h4>
                                             <div className="space-y-2">
-                                                {assignModal.resource.currentAssignments
-                                                    .filter(a => a.assignmentStatus === 'ACTIVE')
+                                                {currentAssignments(assignModal.resource?.currentAssignments)
                                                     .map((assignment, index) => (
                                                         <p key={assignment.assignmentId} className="text-black" style={{ fontSize: '14px', fontFamily: 'SF Pro Display' }}>
                                                             {index + 1}. {assignment.projectName} - Ends : {new Date(assignment.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}

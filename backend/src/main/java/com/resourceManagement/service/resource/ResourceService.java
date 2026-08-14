@@ -7,6 +7,7 @@ import com.resourceManagement.model.entity.Project;
 import com.resourceManagement.model.entity.Resource;
 import com.resourceManagement.model.entity.ResourceAssignment;
 import com.resourceManagement.model.enums.AssignmentStatus;
+import com.resourceManagement.model.enums.ProjectStatus;
 import com.resourceManagement.model.enums.ResourceStatus;
 import com.resourceManagement.repository.ProjectRepository;
 import com.resourceManagement.repository.ResourceAssignmentRepository;
@@ -261,9 +262,9 @@ public class ResourceService {
                 List<ResourceAssignment> assignments = assignmentRepository
                                 .findByResource_ResourceId(resource.getResourceId());
 
-                // Count active assignments
+                // Count assignments that are still current (active, project open, not ended)
                 long projectCount = assignments.stream()
-                                .filter(a -> a.getStatus() == AssignmentStatus.ACTIVE)
+                                .filter(ResourceService::isCurrentAssignment)
                                 .count();
 
                 // Include all assignments for track record purposes
@@ -281,6 +282,16 @@ public class ResourceService {
                                 .totalAssignments(assignments.size())
                                 .currentAssignments(assignmentInfos)
                                 .build();
+        }
+
+        /**
+         * An assignment is "current" only while it is ACTIVE, its project is still open,
+         * and its end date has not passed.
+         */
+        static boolean isCurrentAssignment(ResourceAssignment assignment) {
+                return assignment.getStatus() == AssignmentStatus.ACTIVE
+                                && assignment.getProject().getStatus() != ProjectStatus.CLOSED
+                                && !assignment.getEndDate().isBefore(LocalDate.now());
         }
 
         private ResourceResponse.AssignmentInfo mapToAssignmentInfo(ResourceAssignment assignment) {
