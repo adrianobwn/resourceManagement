@@ -164,10 +164,7 @@ const DevmanResources = () => {
                 }
 
                 // Fallback to original logic: check any current assignment
-                if (!r.currentAssignments || r.currentAssignments.length === 0) {
-                    return false;
-                }
-                return r.currentAssignments.some(
+                return currentAssignments(r.currentAssignments).some(
                     (assignment) => assignment.projectRole === roleFilter
                 );
             });

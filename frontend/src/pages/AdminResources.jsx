@@ -167,10 +167,7 @@ const AdminResources = () => {
                 }
 
                 // Fallback to original logic: check any current assignment
-                if (!r.currentAssignments || r.currentAssignments.length === 0) {
-                    return false;
-                }
-                return r.currentAssignments.some(
+                return currentAssignments(r.currentAssignments).some(
                     (assignment) => assignment.projectRole === roleFilter
                 );
             });
@@ -882,10 +879,11 @@ const AdminResources = () => {
                                             </div>
                                             <p className="text-gray-500 mt-2" style={{ fontSize: '12px', fontFamily: 'SF Pro Display' }}>
                                                 {(() => {
-                                                    if (!assignModal.resource?.currentAssignments?.length) {
+                                                    const ongoing = currentAssignments(assignModal.resource?.currentAssignments);
+                                                    if (!ongoing.length) {
                                                         return "Hint : Resource is currently available";
                                                     }
-                                                    const dates = assignModal.resource.currentAssignments.map(a => new Date(a.endDate));
+                                                    const dates = ongoing.map(a => new Date(a.endDate));
                                                     const maxDate = new Date(Math.max(...dates));
                                                     return `Hint : Resource available after ${maxDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
                                                 })()}
