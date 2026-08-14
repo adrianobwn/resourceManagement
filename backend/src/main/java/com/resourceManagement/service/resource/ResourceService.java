@@ -45,7 +45,9 @@ public class ResourceService {
         private final com.resourceManagement.repository.HistoryLogRepository historyLogRepository;
 
         public List<ResourceResponse> getAllResources() {
-                List<Resource> resources = resourceRepository.findAll();
+                // People are looked up by name, so alphabetical beats newest-first here.
+                List<Resource> resources = resourceRepository
+                                .findAll(org.springframework.data.domain.Sort.by("resourceName"));
                 return resources.stream()
                                 .map(this::mapToResourceResponse)
                                 .collect(Collectors.toList());
@@ -176,7 +178,8 @@ public class ResourceService {
         }
 
         public List<ResourceResponse.AssignmentInfo> getResourceAssignments(Integer resourceId) {
-                List<ResourceAssignment> assignments = assignmentRepository.findByResource_ResourceId(resourceId);
+                List<ResourceAssignment> assignments = assignmentRepository
+                                .findByResource_ResourceIdOrderByStartDateDesc(resourceId);
                 return assignments.stream()
                                 .map(this::mapToAssignmentInfo)
                                 .collect(Collectors.toList());
@@ -259,8 +262,9 @@ public class ResourceService {
         }
 
         private ResourceResponse mapToResourceResponse(Resource resource) {
+                // Feeds currentAssignments, which the resource modals list.
                 List<ResourceAssignment> assignments = assignmentRepository
-                                .findByResource_ResourceId(resource.getResourceId());
+                                .findByResource_ResourceIdOrderByStartDateDesc(resource.getResourceId());
 
                 // Count assignments that are still current (active, project open, not ended)
                 long projectCount = assignments.stream()

@@ -13,4 +13,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     boolean existsByEmail(String email);
 
     List<User> findByUserType(com.resourceManagement.model.enums.UserType userType);
+
+    List<User> findByUserTypeOrderByNameAsc(com.resourceManagement.model.enums.UserType userType);
 }

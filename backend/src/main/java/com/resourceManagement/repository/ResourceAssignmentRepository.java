@@ -13,17 +13,20 @@ public interface ResourceAssignmentRepository extends JpaRepository<ResourceAssi
 
         List<ResourceAssignment> findByResource_ResourceId(Integer resourceId);
 
-        List<ResourceAssignment> findByProject_ProjectId(Integer projectId);
+        List<ResourceAssignment> findByResource_ResourceIdOrderByStartDateDesc(Integer resourceId);
+
+        List<ResourceAssignment> findByProject_ProjectIdOrderByStartDateDesc(Integer projectId);
 
         List<ResourceAssignment> findByStatus(AssignmentStatus status);
 
-        List<ResourceAssignment> findByStatusAndEndDateBetween(AssignmentStatus status, LocalDate startDate,
-                        LocalDate endDate);
+        // Ascending on purpose: for a deadline warning the soonest one matters most.
+        List<ResourceAssignment> findByStatusAndEndDateBetweenOrderByEndDateAsc(AssignmentStatus status,
+                        LocalDate startDate, LocalDate endDate);
 
         List<ResourceAssignment> findByStatusAndEndDateBefore(AssignmentStatus status, LocalDate date);
 
-        List<ResourceAssignment> findByStatusAndProject_DevMan_UserIdAndEndDateBetween(AssignmentStatus status,
-                        Integer devManId, LocalDate startDate, LocalDate endDate);
+        List<ResourceAssignment> findByStatusAndProject_DevMan_UserIdAndEndDateBetweenOrderByEndDateAsc(
+                        AssignmentStatus status, Integer devManId, LocalDate startDate, LocalDate endDate);
 
         long countByProject_ProjectId(Integer projectId);
 

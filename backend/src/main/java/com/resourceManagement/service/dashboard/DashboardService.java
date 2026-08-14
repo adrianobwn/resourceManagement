@@ -69,10 +69,11 @@ public class DashboardService {
         List<ResourceAssignment> assignments;
         if (user.getUserType() == UserType.Admin) {
             assignments = assignmentRepository
-                    .findByStatusAndEndDateBetween(AssignmentStatus.ACTIVE, today, endDate);
+                    .findByStatusAndEndDateBetweenOrderByEndDateAsc(AssignmentStatus.ACTIVE, today, endDate);
         } else {
             assignments = assignmentRepository
-                    .findByStatusAndProject_DevMan_UserIdAndEndDateBetween(AssignmentStatus.ACTIVE, user.getUserId(), today, endDate);
+                    .findByStatusAndProject_DevMan_UserIdAndEndDateBetweenOrderByEndDateAsc(AssignmentStatus.ACTIVE,
+                            user.getUserId(), today, endDate);
         }
 
         return assignments.stream()

@@ -12,7 +12,7 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
 
     List<Project> findByProjectName(String projectName);
 
-    List<Project> findByDevMan_UserId(Integer devManId);
+    List<Project> findByDevMan_UserId(Integer devManId, org.springframework.data.domain.Sort sort);
 
     long countByDevMan_UserId(Integer devManId);
 

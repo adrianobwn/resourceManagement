@@ -18,6 +18,7 @@ import com.resourceManagement.repository.ResourceAssignmentRepository;
 import com.resourceManagement.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -44,11 +45,15 @@ public class ProjectService {
                 User currentUser = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+                // Newest project first. Project has no date column, so id order stands in
+                // for creation order.
+                Sort newestFirst = Sort.by(Sort.Direction.DESC, "projectId");
+
                 List<Project> projects;
                 if (currentUser.getUserType() == UserType.DEV_MANAGER) {
-                        projects = projectRepository.findByDevMan_UserId(currentUser.getUserId());
+                        projects = projectRepository.findByDevMan_UserId(currentUser.getUserId(), newestFirst);
                 } else {
-                        projects = projectRepository.findAll();
+                        projects = projectRepository.findAll(newestFirst);
                 }
 
                 return projects.stream()
@@ -105,7 +110,7 @@ public class ProjectService {
 
         public List<com.resourceManagement.dto.project.ProjectResourceDto> getProjectResources(Integer projectId) {
                 List<com.resourceManagement.model.entity.ResourceAssignment> assignments = resourceAssignmentRepository
-                                .findByProject_ProjectId(projectId);
+                                .findByProject_ProjectIdOrderByStartDateDesc(projectId);
 
                 return assignments.stream()
                                 .map(assignment -> com.resourceManagement.dto.project.ProjectResourceDto.builder()

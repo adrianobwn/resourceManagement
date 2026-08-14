@@ -220,7 +220,9 @@ public class ResourceAssignmentService {
     }
 
     public List<ResourceAssignment> getAllAssignments() {
-        return assignmentRepository.findAll();
+        return assignmentRepository.findAll(
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC,
+                        "assignmentId"));
     }
 
     public ResourceAssignment getAssignmentById(Integer id) {

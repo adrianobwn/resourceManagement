@@ -66,7 +66,7 @@ public class UserService {
     }
 
     public List<PmListResponse> getAllPms() {
-        List<User> pms = userRepository.findByUserType(UserType.DEV_MANAGER);
+        List<User> pms = userRepository.findByUserTypeOrderByNameAsc(UserType.DEV_MANAGER);
         return pms.stream()
                 .map(pm -> PmListResponse.builder()
                         .userId(pm.getUserId())

@@ -10,6 +10,7 @@ import com.resourceManagement.repository.*;
 import com.resourceManagement.service.assignment.ResourceAssignmentService;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -235,7 +236,7 @@ public class AssignmentRequestService {
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
                 if (user.getUserType() == UserType.Admin) {
-                        return requestRepository.findByStatus(RequestStatus.PENDING);
+                        return requestRepository.findByStatusOrderByCreatedAtDesc(RequestStatus.PENDING);
                 } else {
                         // Re-use current behavior: only show what they requested?
                         // Actually, if we want them to see what's pending for their project (maybe
@@ -243,7 +244,7 @@ public class AssignmentRequestService {
                         // But usually only one DevMan per project.
                         // Let's stick to the user's specific requirement: "berhubungan dengan devman
                         // tersebut".
-                        return requestRepository.findByRequester_UserIdAndStatus(user.getUserId(),
+                        return requestRepository.findByRequester_UserIdAndStatusOrderByCreatedAtDesc(user.getUserId(),
                                         RequestStatus.PENDING);
                 }
         }
@@ -253,16 +254,17 @@ public class AssignmentRequestService {
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
                 if (user.getUserType() == UserType.Admin) {
-                        return requestRepository.findAll();
+                        return requestRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
                 } else {
-                        return requestRepository.findByRequester_UserIdOrProject_DevMan_UserId(user.getUserId(),
-                                        user.getUserId());
+                        return requestRepository.findByRequester_UserIdOrProject_DevMan_UserIdOrderByCreatedAtDesc(
+                                        user.getUserId(), user.getUserId());
                 }
         }
 
         public List<AssignmentRequest> getPendingRequestsByProject(Integer projectId) {
                 // Find all PENDING requests (EXTEND/RELEASE) for assignments in this project
-                return requestRepository.findByProject_ProjectIdAndStatus(projectId, RequestStatus.PENDING)
+                return requestRepository.findByProject_ProjectIdAndStatusOrderByCreatedAtDesc(projectId,
+                                RequestStatus.PENDING)
                                 .stream()
                                 .filter(req -> req.getRequestType() == RequestType.EXTEND
                                                 || req.getRequestType() == RequestType.RELEASE)
