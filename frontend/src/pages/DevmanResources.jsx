@@ -27,6 +27,8 @@ const DevmanResources = () => {
         endDate: ''
     });
     const [assignModal, setAssignModal] = useState({ show: false, resource: null });
+    // End date of the selected project = latest end date among its assignments.
+    const [projectEndDate, setProjectEndDate] = useState(null);
     const [trackRecordModal, setTrackRecordModal] = useState({ show: false, resource: null });
     const [hoveredProject, setHoveredProject] = useState(null);
     const [projects, setProjects] = useState([]);
@@ -190,12 +192,28 @@ const DevmanResources = () => {
 
     const closeAssignModal = () => {
         setAssignModal({ show: false, resource: null });
+        setProjectEndDate(null);
         setAssignmentData({
             project: '',
             role: '',
             startDate: '',
             endDate: ''
         });
+    };
+
+    // A project has no end date of its own; it ends when its last resource does.
+    const fetchProjectEndDate = async (projectId) => {
+        setProjectEndDate(null);
+        if (!projectId) return;
+        try {
+            const { data } = await api.get(`/projects/${projectId}/resources`);
+            const dates = (data || [])
+                .filter(r => r.endDate)
+                .map(r => new Date(r.endDate).getTime());
+            setProjectEndDate(dates.length ? new Date(Math.max(...dates)) : null);
+        } catch (error) {
+            console.error('Error fetching project resources:', error);
+        }
     };
 
     const handleAssign = async () => {
@@ -460,7 +478,10 @@ const DevmanResources = () => {
                                     <div className="relative">
                                         <select
                                             value={assignmentData.project}
-                                            onChange={(e) => setAssignmentData(prev => ({ ...prev, project: e.target.value }))}
+                                            onChange={(e) => {
+                                                setAssignmentData(prev => ({ ...prev, project: e.target.value }));
+                                                fetchProjectEndDate(e.target.value);
+                                            }}
                                             className="bg-white focus:outline-none focus:ring-1 focus:ring-[#CAF0F8] w-full appearance-none"
                                             style={{ height: '40px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 35px 0 12px', fontSize: '14px', fontFamily: 'SF Pro Display' }}
                                         >
@@ -537,7 +558,11 @@ const DevmanResources = () => {
                                             </div>
                                         </div>
                                         <p className="text-gray-500 mt-2" style={{ fontSize: '12px', fontFamily: 'SF Pro Display' }}>
-                                            Hint : Project ends Mar 2025
+                                            {!assignmentData.project
+                                                ? 'Hint : Select a project to see when it ends'
+                                                : projectEndDate
+                                                    ? `Hint : Project ends ${projectEndDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                                                    : 'Hint : Project has no assigned resources yet'}
                                         </p>
                                     </div>
                                 </div>

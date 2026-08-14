@@ -879,13 +879,14 @@ const AdminResources = () => {
                                             </div>
                                             <p className="text-gray-500 mt-2" style={{ fontSize: '12px', fontFamily: 'SF Pro Display' }}>
                                                 {(() => {
-                                                    const ongoing = currentAssignments(assignModal.resource?.currentAssignments);
-                                                    if (!ongoing.length) {
+                                                    const dates = currentAssignments(assignModal.resource?.currentAssignments)
+                                                        .map(a => new Date(a.endDate).getTime())
+                                                        .filter(t => !isNaN(t));
+                                                    if (!dates.length) {
                                                         return "Hint : Resource is currently available";
                                                     }
-                                                    const dates = ongoing.map(a => new Date(a.endDate));
                                                     const maxDate = new Date(Math.max(...dates));
-                                                    return `Hint : Resource available after ${maxDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
+                                                    return `Hint : Resource available after ${maxDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
                                                 })()}
                                             </p>
                                         </div>
