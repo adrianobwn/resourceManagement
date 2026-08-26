@@ -179,7 +179,8 @@ const AdminDevman = () => {
         const activeProjects = projects.filter(p =>
             p.devManId === devManId && (p.status === 'ONGOING' || p.status === 'HOLD')
         );
-        return activeProjects.length > 0 ? 'UNAVAILABLE' : 'AVAILABLE';
+        // Same wording as Resources: ASSIGNED when they are holding a project.
+        return activeProjects.length > 0 ? 'ASSIGNED' : 'AVAILABLE';
     };
 
     const getDevManProjects = (devManId) => {
@@ -204,7 +205,7 @@ const AdminDevman = () => {
         let matchesStatus = true;
         if (statusFilter === 'available') {
             matchesStatus = !hasActiveProjects;
-        } else if (statusFilter === 'unavailable') {
+        } else if (statusFilter === 'assigned') {
             matchesStatus = hasActiveProjects;
         }
 
@@ -248,7 +249,7 @@ const AdminDevman = () => {
                                 >
                                     <option value="all">All Status</option>
                                     <option value="available">Available</option>
-                                    <option value="unavailable">Unavailable</option>
+                                    <option value="assigned">Assigned</option>
                                 </select>
                                 <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
