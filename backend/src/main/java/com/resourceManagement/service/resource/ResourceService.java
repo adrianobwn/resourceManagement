@@ -62,9 +62,10 @@ public class ResourceService {
                                 .collect(Collectors.toList());
         }
 
+        /** Null is allowed: a resource may have no RM yet. */
         private Resource resolveReportingManager(Integer reportingManagerId) {
                 if (reportingManagerId == null) {
-                        throw new RuntimeException("Reporting manager is required");
+                        return null;
                 }
                 Resource manager = resourceRepository.findById(reportingManagerId)
                                 .orElseThrow(() -> new RuntimeException(
@@ -288,7 +289,9 @@ public class ResourceService {
                                 oldName, request.getResourceName(),
                                 oldEmail, request.getEmail(),
                                 oldLevel, updated.getLevel(),
-                                oldManager, updated.getReportingManager().getResourceName());
+                                oldManager, updated.getReportingManager() != null
+                                                ? updated.getReportingManager().getResourceName()
+                                                : "-");
 
                 historyLogService.logActivity(
                                 EntityType.RESOURCE,

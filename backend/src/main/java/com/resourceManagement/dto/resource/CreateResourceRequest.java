@@ -27,6 +27,6 @@ public class CreateResourceRequest {
     /** Defaults to ABT when the form leaves it blank. */
     private ResourceLevel level;
 
-    @NotNull(message = "Reporting manager is required")
+    /** Optional: can be filled in later via edit. */
     private Integer reportingManagerId;
 }

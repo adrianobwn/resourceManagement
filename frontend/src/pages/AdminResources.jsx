@@ -403,15 +403,14 @@ const AdminResources = () => {
 
         const emptyForm = { resourceName: '', email: '', level: 'ABT', reportingManagerId: '' };
 
-        if (!editModal.formData.reportingManagerId) {
-            showNotification('Reporting manager is required', 'error');
-            return;
-        }
+        const newRmId = editModal.formData.reportingManagerId
+            ? parseInt(editModal.formData.reportingManagerId)
+            : null;
 
         const isChanged = editModal.formData.resourceName !== editModal.resource.resourceName ||
             editModal.formData.email !== editModal.resource.email ||
             editModal.formData.level !== editModal.resource.level ||
-            parseInt(editModal.formData.reportingManagerId) !== editModal.resource.reportingManagerId;
+            newRmId !== (editModal.resource.reportingManagerId || null);
 
         if (!isChanged) {
             setEditModal({ show: false, resource: null, formData: emptyForm });
@@ -421,7 +420,7 @@ const AdminResources = () => {
         try {
             await api.put(`/resources/${editModal.resource.resourceId}`, {
                 ...editModal.formData,
-                reportingManagerId: parseInt(editModal.formData.reportingManagerId)
+                reportingManagerId: newRmId
             });
             showNotification('Resource updated successfully!', 'success');
             setEditModal({ show: false, resource: null, formData: emptyForm });
@@ -469,7 +468,7 @@ const AdminResources = () => {
 
     const handleSaveResource = async () => {
         // Validation
-        if (!newResource.fullName || !newResource.email || !newResource.reportingManagerId) {
+        if (!newResource.fullName || !newResource.email) {
             showNotification('Please fill in all fields', 'error');
             return;
         }
@@ -480,7 +479,10 @@ const AdminResources = () => {
                 email: newResource.email,
                 status: 'AVAILABLE',
                 level: newResource.level,
-                reportingManagerId: parseInt(newResource.reportingManagerId)
+                // Optional: can be set later via edit.
+                reportingManagerId: newResource.reportingManagerId
+                    ? parseInt(newResource.reportingManagerId)
+                    : null
             };
             const response = await api.post('/resources', resourceData);
             console.log('Resource API Response Status:', response.status);
@@ -588,39 +590,40 @@ const AdminResources = () => {
                                             />
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Level</label>
-                                        <select
-                                            value={newResource.level}
-                                            onChange={(e) => setNewResource(prev => ({ ...prev, level: e.target.value }))}
-                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
-                                            style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
-                                        >
-                                            {RESOURCE_LEVELS.map(lvl => (
-                                                <option key={lvl} value={lvl}>{lvl}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Reporting Manager</label>
-                                        <select
-                                            value={newResource.reportingManagerId}
-                                            onChange={(e) => setNewResource(prev => ({ ...prev, reportingManagerId: e.target.value }))}
-                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
-                                            style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
-                                        >
-                                            <option value="">Select reporting manager</option>
-                                            {rmCandidates.map(rm => (
-                                                <option key={rm.resourceId} value={rm.resourceId}>
-                                                    {rm.resourceName} ({rm.level})
+                                    <div className="flex gap-4">
+                                        <div style={{ width: '35%' }}>
+                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Level</label>
+                                            <select
+                                                value={newResource.level}
+                                                onChange={(e) => setNewResource(prev => ({ ...prev, level: e.target.value }))}
+                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                            >
+                                                {RESOURCE_LEVELS.map(lvl => (
+                                                    <option key={lvl} value={lvl}>{lvl}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div style={{ width: '65%' }}>
+                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>
+                                                Reporting Manager <span className="text-gray-400 font-normal">(optional)</span>
+                                            </label>
+                                            <select
+                                                value={newResource.reportingManagerId}
+                                                onChange={(e) => setNewResource(prev => ({ ...prev, reportingManagerId: e.target.value }))}
+                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                            >
+                                                <option value="">
+                                                    {rmCandidates.length === 0 ? 'No manager above ABT yet' : 'Not set'}
                                                 </option>
-                                            ))}
-                                        </select>
-                                        {rmCandidates.length === 0 && (
-                                            <p className="text-gray-500 mt-1" style={{ fontSize: '12px' }}>
-                                                No eligible manager yet — promote someone above ABT first.
-                                            </p>
-                                        )}
+                                                {rmCandidates.map(rm => (
+                                                    <option key={rm.resourceId} value={rm.resourceId}>
+                                                        {rm.resourceName} ({rm.level})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -633,15 +636,15 @@ const AdminResources = () => {
                         <div className="px-8 pb-6">
                             <button
                                 onClick={handleSaveResource}
-                                disabled={!newResource.fullName || !newResource.email || !newResource.reportingManagerId}
+                                disabled={!newResource.fullName || !newResource.email}
                                 className="w-full py-3 bg-[#CAF0F8] text-black font-bold rounded-lg hover:opacity-90 transition-colors"
                                 style={{
                                     fontSize: '14px',
                                     fontFamily: 'SF Pro Display',
                                     backgroundColor: '#CAF0F8',
                                     borderRadius: '8px',
-                                    opacity: (!newResource.fullName || !newResource.email || !newResource.reportingManagerId) ? 0.5 : 1,
-                                    cursor: (!newResource.fullName || !newResource.email || !newResource.reportingManagerId) ? 'not-allowed' : 'pointer'
+                                    opacity: (!newResource.fullName || !newResource.email) ? 0.5 : 1,
+                                    cursor: (!newResource.fullName || !newResource.email) ? 'not-allowed' : 'pointer'
                                 }}
                             >
                                 Save & Create Resource
@@ -953,7 +956,9 @@ const AdminResources = () => {
                                 </div>
                                 <div>
                                     <span className="text-gray-500">Reporting Manager: </span>
-                                    <span className="font-bold text-gray-800">{trackRecordModal.resource?.reportingManagerName || '-'}</span>
+                                    <span className="font-bold text-gray-800">
+                                        {trackRecordModal.resource?.reportingManagerName || 'Not set'}
+                                    </span>
                                 </div>
                                 <div>
                                     <span className="text-gray-500">Status: </span>
@@ -1279,9 +1284,17 @@ const AdminResources = () => {
                                                             {resource.resourceName}
                                                         </span>
                                                     </td>
-                                                    <td className="py-4 px-6 text-gray-700">{resource.level || '-'}</td>
-                                                    <td className="py-4 px-6 text-gray-700">{resource.email}</td>
-                                                    <td className="py-4 px-6 text-gray-700">{resource.reportingManagerName || '-'}</td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="px-2 py-1 rounded-md font-bold text-xs bg-gray-100 text-gray-700">
+                                                            {resource.level || 'ABT'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4 px-6 text-gray-600" style={{ fontSize: '13px' }}>{resource.email}</td>
+                                                    <td className="py-4 px-6" style={{ fontSize: '13px' }}>
+                                                        {resource.reportingManagerName
+                                                            ? <span className="text-gray-700">{resource.reportingManagerName}</span>
+                                                            : <span className="text-gray-400 italic">Not set</span>}
+                                                    </td>
                                                     <td className="py-4 px-6">
                                                         <span
                                                             className="px-3 py-1 rounded-full font-bold text-xs"
@@ -1402,36 +1415,40 @@ const AdminResources = () => {
                                                 />
                                             </div>
                                         </div>
-                                        <div>
-                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Level</label>
-                                            <select
-                                                value={editModal.formData.level}
-                                                onChange={(e) => setEditModal(prev => ({ ...prev, formData: { ...prev.formData, level: e.target.value } }))}
-                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
-                                                style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
-                                            >
-                                                {RESOURCE_LEVELS.map(lvl => (
-                                                    <option key={lvl} value={lvl}>{lvl}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Reporting Manager</label>
-                                            <select
-                                                value={editModal.formData.reportingManagerId}
-                                                onChange={(e) => setEditModal(prev => ({ ...prev, formData: { ...prev.formData, reportingManagerId: e.target.value } }))}
-                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
-                                                style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
-                                            >
-                                                <option value="">Select reporting manager</option>
-                                                {rmCandidates
-                                                    .filter(rm => rm.resourceId !== editModal.resource?.resourceId)
-                                                    .map(rm => (
-                                                        <option key={rm.resourceId} value={rm.resourceId}>
-                                                            {rm.resourceName} ({rm.level})
-                                                        </option>
+                                        <div className="flex gap-4">
+                                            <div style={{ width: '35%' }}>
+                                                <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Level</label>
+                                                <select
+                                                    value={editModal.formData.level}
+                                                    onChange={(e) => setEditModal(prev => ({ ...prev, formData: { ...prev.formData, level: e.target.value } }))}
+                                                    className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                    style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                                >
+                                                    {RESOURCE_LEVELS.map(lvl => (
+                                                        <option key={lvl} value={lvl}>{lvl}</option>
                                                     ))}
-                                            </select>
+                                                </select>
+                                            </div>
+                                            <div style={{ width: '65%' }}>
+                                                <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>
+                                                    Reporting Manager <span className="text-gray-400 font-normal">(optional)</span>
+                                                </label>
+                                                <select
+                                                    value={editModal.formData.reportingManagerId}
+                                                    onChange={(e) => setEditModal(prev => ({ ...prev, formData: { ...prev.formData, reportingManagerId: e.target.value } }))}
+                                                    className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                    style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                                >
+                                                    <option value="">Not set</option>
+                                                    {rmCandidates
+                                                        .filter(rm => rm.resourceId !== editModal.resource?.resourceId)
+                                                        .map(rm => (
+                                                            <option key={rm.resourceId} value={rm.resourceId}>
+                                                                {rm.resourceName} ({rm.level})
+                                                            </option>
+                                                        ))}
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

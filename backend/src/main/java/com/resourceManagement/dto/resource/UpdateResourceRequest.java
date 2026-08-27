@@ -22,6 +22,6 @@ public class UpdateResourceRequest {
     @NotNull(message = "Level is required")
     private ResourceLevel level;
 
-    @NotNull(message = "Reporting manager is required")
+    /** Optional: clearing it is allowed. */
     private Integer reportingManagerId;
 }

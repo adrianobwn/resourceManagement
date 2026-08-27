@@ -566,7 +566,9 @@ const DevmanResources = () => {
                             </div>
                             <div>
                                 <span className="text-gray-500">Reporting Manager: </span>
-                                <span className="font-bold text-gray-800">{trackRecordModal.resource?.reportingManagerName || '-'}</span>
+                                <span className="font-bold text-gray-800">
+                                    {trackRecordModal.resource?.reportingManagerName || 'Not set'}
+                                </span>
                             </div>
                             <div>
                                 <span className="text-gray-500">Status: </span>
@@ -851,9 +853,17 @@ const DevmanResources = () => {
                                                             {resource.resourceName}
                                                         </span>
                                                     </td>
-                                                    <td className="py-4 px-6 text-gray-700">{resource.level || '-'}</td>
-                                                    <td className="py-4 px-6 text-gray-700">{resource.email}</td>
-                                                    <td className="py-4 px-6 text-gray-700">{resource.reportingManagerName || '-'}</td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="px-2 py-1 rounded-md font-bold text-xs bg-gray-100 text-gray-700">
+                                                            {resource.level || 'ABT'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4 px-6 text-gray-600" style={{ fontSize: '13px' }}>{resource.email}</td>
+                                                    <td className="py-4 px-6" style={{ fontSize: '13px' }}>
+                                                        {resource.reportingManagerName
+                                                            ? <span className="text-gray-700">{resource.reportingManagerName}</span>
+                                                            : <span className="text-gray-400 italic">Not set</span>}
+                                                    </td>
                                                     <td className="py-4 px-6">
                                                         <StatusBadge status={resource.status} />
                                                     </td>
