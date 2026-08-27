@@ -8,6 +8,7 @@ import com.resourceManagement.model.entity.Resource;
 import com.resourceManagement.model.entity.ResourceAssignment;
 import com.resourceManagement.model.enums.AssignmentStatus;
 import com.resourceManagement.model.enums.ProjectStatus;
+import com.resourceManagement.model.enums.ResourceLevel;
 import com.resourceManagement.model.enums.ResourceStatus;
 import com.resourceManagement.repository.ProjectRepository;
 import com.resourceManagement.repository.ResourceAssignmentRepository;
@@ -53,6 +54,27 @@ public class ResourceService {
                                 .collect(Collectors.toList());
         }
 
+        /** Only resources above ABT may mentor, so the picker offers just those. */
+        public List<ResourceResponse> getReportingManagerCandidates() {
+                return resourceRepository.findAll(org.springframework.data.domain.Sort.by("resourceName")).stream()
+                                .filter(r -> r.getLevel() != null && r.getLevel().canBeReportingManager())
+                                .map(this::mapToResourceResponse)
+                                .collect(Collectors.toList());
+        }
+
+        private Resource resolveReportingManager(Integer reportingManagerId) {
+                if (reportingManagerId == null) {
+                        throw new RuntimeException("Reporting manager is required");
+                }
+                Resource manager = resourceRepository.findById(reportingManagerId)
+                                .orElseThrow(() -> new RuntimeException(
+                                                "Reporting manager not found with id: " + reportingManagerId));
+                if (manager.getLevel() == null || !manager.getLevel().canBeReportingManager()) {
+                        throw new RuntimeException("Reporting manager must be above ABT level");
+                }
+                return manager;
+        }
+
         public ResourceResponse getResourceById(Integer resourceId) {
                 Resource resource = resourceRepository.findById(resourceId)
                                 .orElseThrow(() -> new RuntimeException("Resource not found with id: " + resourceId));
@@ -79,6 +101,8 @@ public class ResourceService {
                                 .employeeId(employeeId) // Fallback for stability
                                 .email(request.getEmail())
                                 .status(request.getStatus() != null ? request.getStatus() : ResourceStatus.AVAILABLE)
+                                .level(request.getLevel() != null ? request.getLevel() : ResourceLevel.ABT)
+                                .reportingManager(resolveReportingManager(request.getReportingManagerId()))
                                 .build();
 
                 try {
@@ -238,9 +262,20 @@ public class ResourceService {
 
                 String oldName = resource.getResourceName();
                 String oldEmail = resource.getEmail();
+                ResourceLevel oldLevel = resource.getLevel();
+                String oldManager = resource.getReportingManager() != null
+                                ? resource.getReportingManager().getResourceName()
+                                : "-";
+
+                if (request.getReportingManagerId() != null
+                                && request.getReportingManagerId().equals(resourceId)) {
+                        throw new RuntimeException("A resource cannot be its own reporting manager");
+                }
 
                 resource.setResourceName(request.getResourceName());
                 resource.setEmail(request.getEmail());
+                resource.setLevel(request.getLevel());
+                resource.setReportingManager(resolveReportingManager(request.getReportingManagerId()));
 
                 Resource updated = resourceRepository.save(resource);
 
@@ -248,9 +283,12 @@ public class ResourceService {
                 String email = SecurityContextHolder.getContext().getAuthentication().getName();
                 User actor = userRepository.findByEmail(email).orElseThrow();
 
-                String changeLog = String.format("Updated Resource: %s -> %s, %s -> %s",
+                String changeLog = String.format(
+                                "Updated Resource: %s -> %s, %s -> %s, level %s -> %s, RM %s -> %s",
                                 oldName, request.getResourceName(),
-                                oldEmail, request.getEmail());
+                                oldEmail, request.getEmail(),
+                                oldLevel, updated.getLevel(),
+                                oldManager, updated.getReportingManager().getResourceName());
 
                 historyLogService.logActivity(
                                 EntityType.RESOURCE,
@@ -282,6 +320,13 @@ public class ResourceService {
                                 .employeeId(resource.getEmployeeId())
                                 .email(resource.getEmail())
                                 .status(resource.getStatus())
+                                .level(resource.getLevel())
+                                .reportingManagerId(resource.getReportingManager() != null
+                                                ? resource.getReportingManager().getResourceId()
+                                                : null)
+                                .reportingManagerName(resource.getReportingManager() != null
+                                                ? resource.getReportingManager().getResourceName()
+                                                : null)
                                 .projectCount((int) projectCount)
                                 .totalAssignments(assignments.size())
                                 .currentAssignments(assignmentInfos)

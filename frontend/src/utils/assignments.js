@@ -1,3 +1,6 @@
+// Junior to senior. Anything above ABT may act as a Reporting Manager.
+export const RESOURCE_LEVELS = ['ABT', 'BT', 'SBT', 'CEO'];
+
 // An assignment counts as "current" only while it is ACTIVE, its project is still
 // open, and its end date has not passed.
 export const isCurrentAssignment = (a) => {

@@ -18,7 +18,6 @@ const DevmanResources = () => {
     const [dateFilter, setDateFilter] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [notification, setNotification] = useState({ show: false, message: '', type: 'info', closing: false });
-    const [detailModal, setDetailModal] = useState({ show: false, resource: null, projects: [] });
 
     const [assignmentData, setAssignmentData] = useState({
         project: '',
@@ -257,35 +256,6 @@ const DevmanResources = () => {
         }
     };
 
-    const handleViewDetail = async (resource) => {
-        if (resource.status === 'AVAILABLE') {
-            showNotification(`${resource.resourceName} Currently Available for Assignment`, 'info');
-        } else {
-            try {
-                const response = await api.get(`/resources/${resource.resourceId}/assignments`);
-                const assignments = response.data;
-
-                // Format assignments for display
-                const formattedProjects = currentAssignments(assignments)
-                    .map(a => ({
-                        projectName: a.projectName,
-                        role: a.projectRole,
-                        startDate: new Date(a.startDate).toLocaleDateString('en-GB'),
-                        endDate: new Date(a.endDate).toLocaleDateString('en-GB')
-                    }));
-
-                setDetailModal({ show: true, resource, projects: formattedProjects });
-            } catch (error) {
-                console.error('Error fetching assignments:', error);
-                showNotification('Failed to fetch resource assignments', 'error');
-            }
-        }
-    };
-
-    const closeDetailModal = () => {
-        setDetailModal({ show: false, resource: null, projects: [] });
-    };
-
     const handleViewTrackRecord = (resource) => {
         console.log('Track Record Resource:', resource);
         console.log('Resource Status:', resource.status);
@@ -305,7 +275,7 @@ const DevmanResources = () => {
 
     // Body scroll locking
     useEffect(() => {
-        if (detailModal.show || assignModal.show || trackRecordModal.show) {
+        if (assignModal.show || trackRecordModal.show) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'auto';
@@ -314,7 +284,7 @@ const DevmanResources = () => {
         return () => {
             document.body.style.overflow = 'auto';
         };
-    }, [detailModal.show, assignModal.show, trackRecordModal.show]);
+    }, [assignModal.show, trackRecordModal.show]);
 
     return (
         <div className="flex min-h-screen bg-[#E6F2F1] font-['SF_Pro_Display']">
@@ -328,68 +298,6 @@ const DevmanResources = () => {
             />
 
             {/* Detail Modal for ASSIGNED resources */}
-            {detailModal.show && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
-                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-                >
-                    <div
-                        className="bg-white rounded-2xl relative flex flex-col items-center animate-scale-in"
-                        style={{ width: '700px', height: 'auto', maxHeight: '90vh' }}
-                    >
-                        {/* Header with Name, Status and Close Button */}
-                        <div className="flex items-center justify-between mt-8 mb-4 px-8 w-full">
-                            <h2 className="font-bold text-gray-800 whitespace-nowrap" style={{ fontSize: '30px' }}>
-                                {detailModal.resource?.resourceName}
-                            </h2>
-                            <div className="flex items-center gap-4">
-                                <ProjectCountBadge count={detailModal.projects.length} />
-                                <button
-                                    onClick={closeDetailModal}
-                                    className="text-gray-500 hover:text-gray-700 transition-colors"
-                                >
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Separator Line */}
-                        <div className="w-[calc(100%-4rem)] border-b border-gray-200 mb-4"></div>
-
-                        {/* Projects Table */}
-                        <div
-                            className="bg-white rounded-lg border border-gray-200 mx-8 mb-8 flex flex-col overflow-hidden"
-                            style={{ width: 'calc(100%-4rem)', maxHeight: 'calc(90vh - 200px)' }}
-                        >
-                            <div className="overflow-y-auto custom-scrollbar flex-1">
-                                <table className="w-full table-fixed relative" style={{ borderCollapse: 'collapse' }}>
-                                    <thead className="sticky top-0 z-10 shadow-sm">
-                                        <tr className="bg-[#CAF0F8] border-b border-gray-200">
-                                            <th className="text-center py-3 px-4 font-bold text-black border-r border-gray-200 bg-[#CAF0F8]" style={{ fontSize: '14px', width: '35%' }}>Project Name</th>
-                                            <th className="text-center py-3 px-4 font-bold text-black border-r border-gray-200 bg-[#CAF0F8]" style={{ fontSize: '14px', width: '25%' }}>Role</th>
-                                            <th className="text-center py-3 px-4 font-bold text-black border-r border-gray-200 bg-[#CAF0F8]" style={{ fontSize: '14px', width: '20%' }}>Start Date</th>
-                                            <th className="text-center py-3 px-4 font-bold text-black bg-[#CAF0F8]" style={{ fontSize: '14px', width: '20%' }}>End Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {detailModal.projects.map((project, index) => (
-                                            <tr key={index} className="hover:bg-gray-50 border-b border-gray-200">
-                                                <td className="py-3 px-4 font-bold text-gray-800 border-r border-gray-200 truncate text-center" style={{ fontSize: '14px' }}>{project.projectName}</td>
-                                                <td className="py-3 px-4 font-bold text-gray-600 border-r border-gray-200 truncate text-center" style={{ fontSize: '14px' }}>{project.role}</td>
-                                                <td className="py-3 px-4 font-bold text-gray-600 border-r border-gray-200 text-center" style={{ fontSize: '14px' }}>{project.startDate}</td>
-                                                <td className="py-3 px-4 font-bold text-gray-600 text-center" style={{ fontSize: '14px' }}>{project.endDate}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* Assign to Project Modal */}
             {assignModal.show && (
                 <div
@@ -646,6 +554,32 @@ const DevmanResources = () => {
                         {/* Line below title */}
                         <div className="border-b border-gray-300"></div>
 
+                        {/* Detail summary, merged in from the old Detail modal */}
+                        <div className="px-8 pt-4 flex flex-wrap gap-x-10 gap-y-2" style={{ fontSize: '14px' }}>
+                            <div>
+                                <span className="text-gray-500">Level: </span>
+                                <span className="font-bold text-gray-800">{trackRecordModal.resource?.level || '-'}</span>
+                            </div>
+                            <div>
+                                <span className="text-gray-500">Email: </span>
+                                <span className="font-bold text-gray-800">{trackRecordModal.resource?.email}</span>
+                            </div>
+                            <div>
+                                <span className="text-gray-500">Reporting Manager: </span>
+                                <span className="font-bold text-gray-800">{trackRecordModal.resource?.reportingManagerName || '-'}</span>
+                            </div>
+                            <div>
+                                <span className="text-gray-500">Status: </span>
+                                <span className="font-bold text-gray-800">{trackRecordModal.resource?.status}</span>
+                            </div>
+                            <div>
+                                <span className="text-gray-500">Active Projects: </span>
+                                <span className="font-bold text-gray-800">
+                                    {currentAssignments(trackRecordModal.resource?.currentAssignments).length}
+                                </span>
+                            </div>
+                        </div>
+
                         {/* Timeline Content */}
                         <div className="flex items-center justify-center px-8 py-6 flex-1">
                             <div className="rounded-lg" style={{ width: '1240px', height: '588px' }}>
@@ -891,8 +825,10 @@ const DevmanResources = () => {
                                     <thead className="sticky top-0 z-10 bg-[#CAF0F8] shadow-sm">
                                         <tr className="border-b border-gray-200">
                                             <th className="text-left py-4 px-6 font-bold text-black bg-[#CAF0F8]">Name</th>
+                                            <th className="text-left py-4 px-6 font-bold text-black bg-[#CAF0F8]">Level</th>
+                                            <th className="text-left py-4 px-6 font-bold text-black bg-[#CAF0F8]">Email</th>
+                                            <th className="text-left py-4 px-6 font-bold text-black bg-[#CAF0F8]">Reporting Manager</th>
                                             <th className="text-left py-4 px-6 font-bold text-black bg-[#CAF0F8]">Status</th>
-                                            <th className="text-center py-4 px-6 font-bold text-black bg-[#CAF0F8]">Detail</th>
                                             <th className="text-center py-4 px-6 font-bold text-black bg-[#CAF0F8]">Track Record</th>
                                             <th className="text-right py-4 px-6 font-bold text-black bg-[#CAF0F8]"></th>
                                         </tr>
@@ -900,7 +836,7 @@ const DevmanResources = () => {
                                     <tbody>
                                         {filteredResources.length === 0 ? (
                                             <tr>
-                                                <td colSpan="5" className="py-8 text-center text-gray-500">
+                                                <td colSpan="7" className="py-8 text-center text-gray-500">
                                                     No resources found
                                                 </td>
                                             </tr>
@@ -915,20 +851,11 @@ const DevmanResources = () => {
                                                             {resource.resourceName}
                                                         </span>
                                                     </td>
+                                                    <td className="py-4 px-6 text-gray-700">{resource.level || '-'}</td>
+                                                    <td className="py-4 px-6 text-gray-700">{resource.email}</td>
+                                                    <td className="py-4 px-6 text-gray-700">{resource.reportingManagerName || '-'}</td>
                                                     <td className="py-4 px-6">
                                                         <StatusBadge status={resource.status} />
-                                                    </td>
-                                                    <td className="py-4 px-6 text-center">
-                                                        <button
-                                                            onClick={() => handleViewDetail(resource)}
-                                                            className="inline-flex items-center gap-1 text-gray-600 hover:text-[#0059FF] transition-colors"
-                                                        >
-                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                            </svg>
-                                                            <span style={{ fontSize: '15px' }}>View Detail</span>
-                                                        </button>
                                                     </td>
                                                     <td className="py-4 px-6 text-center">
                                                         <button

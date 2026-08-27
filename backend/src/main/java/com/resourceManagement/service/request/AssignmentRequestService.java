@@ -382,10 +382,17 @@ public class AssignmentRequestService {
                 req.setStatus(RequestStatus.APPROVED);
                 requestRepository.save(req);
 
+                String approvedTarget = describeRequestTarget(req);
+
                 notificationService.createNotification(req.getRequester(), NotificationType.APPROVAL_RESULT,
                                 String.format("Your %s request for %s has been approved",
-                                                req.getRequestType(),
-                                                describeRequestTarget(req)));
+                                                req.getRequestType(), approvedTarget));
+
+                // Admins get it too, so the outcome shows up on their Activities badge.
+                notificationService.notifyAllAdmins(NotificationType.APPROVAL_RESULT,
+                                String.format("%s request for %s by %s was approved",
+                                                req.getRequestType(), approvedTarget,
+                                                req.getRequester().getName()));
         }
 
         /** Project proposals carry a name instead of a linked project/resource. */
@@ -422,12 +429,15 @@ public class AssignmentRequestService {
                 String target = describeRequestTarget(req);
                 String reasonSuffix = (reason != null && !reason.isBlank()) ? " - " + reason : "";
 
-                // Only the requester is notified: whoever performs an action never gets a
-                // notification about their own action. Admins still see the REJECTED status
-                // on the Activities page.
                 notificationService.createNotification(req.getRequester(), NotificationType.APPROVAL_RESULT,
                                 String.format("Your %s request for %s has been rejected%s",
                                                 req.getRequestType(), target, reasonSuffix));
+
+                // Admins get it too, so the outcome shows up on their Activities badge.
+                notificationService.notifyAllAdmins(NotificationType.APPROVAL_RESULT,
+                                String.format("%s request for %s by %s was rejected%s",
+                                                req.getRequestType(), target, req.getRequester().getName(),
+                                                reasonSuffix));
         }
 
         @Transactional

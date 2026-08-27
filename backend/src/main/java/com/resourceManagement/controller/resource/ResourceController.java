@@ -25,6 +25,12 @@ public class ResourceController {
         return ResponseEntity.ok(resources);
     }
 
+    /** Declared before /{resourceId} so the literal path is not swallowed by it. */
+    @GetMapping("/reporting-managers")
+    public ResponseEntity<List<ResourceResponse>> getReportingManagerCandidates() {
+        return ResponseEntity.ok(resourceService.getReportingManagerCandidates());
+    }
+
     @GetMapping("/{resourceId}")
     public ResponseEntity<ResourceResponse> getResourceById(@PathVariable Integer resourceId) {
         ResourceResponse resource = resourceService.getResourceById(resourceId);

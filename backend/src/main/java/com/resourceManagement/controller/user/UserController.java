@@ -23,6 +23,14 @@ public class UserController {
         return ResponseEntity.ok("DevMan account created successfully");
     }
 
+    /** Promote an existing Resource into a DevMan account. */
+    @PostMapping("/devman/assign")
+    public ResponseEntity<?> assignDevMan(
+            @Valid @RequestBody com.resourceManagement.dto.user.AssignDevManRequest request) {
+        userService.assignDevMan(request);
+        return ResponseEntity.ok("Resource assigned as DevMan successfully");
+    }
+
     @GetMapping("/pms")
     public ResponseEntity<List<PmListResponse>> getAllPms() {
         return ResponseEntity.ok(userService.getAllPms());

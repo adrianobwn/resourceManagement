@@ -1,5 +1,6 @@
 package com.resourceManagement.dto.resource;
 
+import com.resourceManagement.model.enums.ResourceLevel;
 import com.resourceManagement.model.enums.ResourceStatus;
 import lombok.*;
 
@@ -16,6 +17,9 @@ public class ResourceResponse {
     private String employeeId;
     private String email;
     private ResourceStatus status;
+    private ResourceLevel level;
+    private Integer reportingManagerId;
+    private String reportingManagerName;
     private Integer projectCount;
     private Integer totalAssignments;
     private List<AssignmentInfo> currentAssignments;

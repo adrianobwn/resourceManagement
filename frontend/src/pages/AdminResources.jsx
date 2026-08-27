@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar';
 import StatusBadge from '../components/StatusBadge';
 import Toast from '../components/Toast';
 import api from '../utils/api';
-import { currentAssignments } from '../utils/assignments';
+import { currentAssignments, RESOURCE_LEVELS } from '../utils/assignments';
 import * as XLSX from 'xlsx';
 import { Trash2, AlertTriangle, Edit2 } from 'lucide-react';
 
@@ -18,7 +18,6 @@ const AdminResources = () => {
     const [dateFilter, setDateFilter] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [notification, setNotification] = useState({ show: false, message: '', type: 'info', closing: false });
-    const [detailModal, setDetailModal] = useState({ show: false, resource: null, projects: [] });
     const [addResourceModal, setAddResourceModal] = useState({ show: false });
     const [assignModal, setAssignModal] = useState({ show: false, resource: null });
     const [trackRecordModal, setTrackRecordModal] = useState({ show: false, resource: null });
@@ -27,12 +26,16 @@ const AdminResources = () => {
     const [editModal, setEditModal] = useState({
         show: false,
         resource: null,
-        formData: { resourceName: '', email: '' }
+        formData: { resourceName: '', email: '', level: 'ABT', reportingManagerId: '' }
     });
     const [newResource, setNewResource] = useState({
         fullName: '',
-        email: ''
+        email: '',
+        level: 'ABT',
+        reportingManagerId: ''
     });
+    // Only resources above ABT can mentor, so the backend hands back that subset.
+    const [rmCandidates, setRmCandidates] = useState([]);
 
     const [assignmentData, setAssignmentData] = useState({
         project: '',
@@ -54,7 +57,7 @@ const AdminResources = () => {
 
     // Body scroll locking
     useEffect(() => {
-        if (detailModal.show || addResourceModal.show || assignModal.show || trackRecordModal.show || deleteModal.show || editModal.show || restrictionModal.show) {
+        if (addResourceModal.show || assignModal.show || trackRecordModal.show || deleteModal.show || editModal.show || restrictionModal.show) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'auto';
@@ -63,7 +66,7 @@ const AdminResources = () => {
         return () => {
             document.body.style.overflow = 'auto';
         };
-    }, [detailModal.show, addResourceModal.show, assignModal.show, trackRecordModal.show, deleteModal.show, editModal.show, restrictionModal.show]);
+    }, [addResourceModal.show, assignModal.show, trackRecordModal.show, deleteModal.show, editModal.show, restrictionModal.show]);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -73,6 +76,7 @@ const AdminResources = () => {
         }
         fetchResources();
         fetchProjects();
+        fetchRmCandidates();
     }, [navigate]);
 
     const fetchResources = async () => {
@@ -96,6 +100,15 @@ const AdminResources = () => {
             setProjects(response.data);
         } catch (error) {
             console.error('Error fetching projects:', error);
+        }
+    };
+
+    const fetchRmCandidates = async () => {
+        try {
+            const response = await api.get('/resources/reporting-managers');
+            setRmCandidates(response.data);
+        } catch (error) {
+            console.error('Error fetching reporting managers:', error);
         }
     };
 
@@ -378,7 +391,9 @@ const AdminResources = () => {
             resource: resource,
             formData: {
                 resourceName: resource.resourceName,
-                email: resource.email
+                email: resource.email,
+                level: resource.level || 'ABT',
+                reportingManagerId: resource.reportingManagerId || ''
             }
         });
     };
@@ -386,19 +401,32 @@ const AdminResources = () => {
     const confirmEdit = async () => {
         if (!editModal.resource) return;
 
+        const emptyForm = { resourceName: '', email: '', level: 'ABT', reportingManagerId: '' };
+
+        if (!editModal.formData.reportingManagerId) {
+            showNotification('Reporting manager is required', 'error');
+            return;
+        }
+
         const isChanged = editModal.formData.resourceName !== editModal.resource.resourceName ||
-            editModal.formData.email !== editModal.resource.email;
+            editModal.formData.email !== editModal.resource.email ||
+            editModal.formData.level !== editModal.resource.level ||
+            parseInt(editModal.formData.reportingManagerId) !== editModal.resource.reportingManagerId;
 
         if (!isChanged) {
-            setEditModal({ show: false, resource: null, formData: { resourceName: '', email: '' } });
+            setEditModal({ show: false, resource: null, formData: emptyForm });
             return;
         }
 
         try {
-            await api.put(`/resources/${editModal.resource.resourceId}`, editModal.formData);
+            await api.put(`/resources/${editModal.resource.resourceId}`, {
+                ...editModal.formData,
+                reportingManagerId: parseInt(editModal.formData.reportingManagerId)
+            });
             showNotification('Resource updated successfully!', 'success');
-            setEditModal({ show: false, resource: null, formData: { resourceName: '', email: '' } });
+            setEditModal({ show: false, resource: null, formData: emptyForm });
             fetchResources();
+            fetchRmCandidates(); // A level change can add or remove an RM candidate
         } catch (error) {
             console.error('Error updating resource:', error);
             showNotification(error.response?.data?.message || 'Failed to update resource', 'error');
@@ -413,7 +441,9 @@ const AdminResources = () => {
         setAddResourceModal({ show: false });
         setNewResource({
             fullName: '',
-            email: ''
+            email: '',
+            level: 'ABT',
+            reportingManagerId: ''
         });
     };
 
@@ -439,7 +469,7 @@ const AdminResources = () => {
 
     const handleSaveResource = async () => {
         // Validation
-        if (!newResource.fullName || !newResource.email) {
+        if (!newResource.fullName || !newResource.email || !newResource.reportingManagerId) {
             showNotification('Please fill in all fields', 'error');
             return;
         }
@@ -448,7 +478,9 @@ const AdminResources = () => {
             const resourceData = {
                 resourceName: newResource.fullName,
                 email: newResource.email,
-                status: 'AVAILABLE'
+                status: 'AVAILABLE',
+                level: newResource.level,
+                reportingManagerId: parseInt(newResource.reportingManagerId)
             };
             const response = await api.post('/resources', resourceData);
             console.log('Resource API Response Status:', response.status);
@@ -458,38 +490,11 @@ const AdminResources = () => {
             setSearchQuery('');
             setActiveFilter('all');
             fetchResources(); // Refresh the list
+            fetchRmCandidates(); // A new SBT/CEO becomes eligible as RM
         } catch (error) {
             console.error('Error creating resource:', error);
             showNotification(error.response?.data?.message || 'Failed to create resource', 'error');
         }
-    };
-
-    const handleViewDetail = async (resource) => {
-        if (resource.status === 'AVAILABLE') {
-            showNotification(`${resource.resourceName} Currently Available for Assignment`);
-        } else {
-            try {
-                const response = await api.get(`/resources/${resource.resourceId}/assignments`);
-                const assignments = response.data;
-
-                // Format assignments for display (current ones only)
-                const formattedProjects = currentAssignments(assignments).map(a => ({
-                    projectName: a.projectName,
-                    role: a.projectRole,
-                    startDate: new Date(a.startDate).toLocaleDateString('en-GB'),
-                    endDate: new Date(a.endDate).toLocaleDateString('en-GB')
-                }));
-
-                setDetailModal({ show: true, resource, projects: formattedProjects });
-            } catch (error) {
-                console.error('Error fetching assignments:', error);
-                showNotification('Failed to fetch resource assignments', 'error');
-            }
-        }
-    };
-
-    const closeDetailModal = () => {
-        setDetailModal({ show: false, resource: null, projects: [] });
     };
 
     const handleViewTrackRecord = (resource) => {
@@ -521,77 +526,6 @@ const AdminResources = () => {
             />
 
             {/* Detail Modal for ASSIGNED resources */}
-            {detailModal.show && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out animate-fade-in"
-                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-                >
-                    <div
-                        className="bg-white rounded-2xl relative flex flex-col items-center animate-scale-in"
-                        style={{ width: '700px', maxHeight: '90vh' }}
-                    >
-                        {/* Header with Name, Status and Close Button */}
-                        <div className="flex items-center justify-between mt-8 mb-4 px-8 w-full">
-                            <h2 className="font-bold text-gray-800 whitespace-nowrap" style={{ fontSize: '30px' }}>
-                                {detailModal.resource?.resourceName}
-                            </h2>
-                            <div className="flex items-center gap-4">
-                                <span
-                                    className="px-3 py-1 rounded-full font-bold whitespace-nowrap"
-                                    style={{
-                                        fontSize: '12px',
-                                        color: '#0059FF',
-                                        backgroundColor: 'rgba(0, 89, 255, 0.1)',
-                                        border: '1px solid #0059FF'
-                                    }}
-                                >
-                                    ACTIVE IN {detailModal.projects.length} PROJECT{detailModal.projects.length !== 1 ? 'S' : ''}
-                                </span>
-                                <button
-                                    onClick={closeDetailModal}
-                                    className="text-gray-500 hover:text-gray-700 transition-colors"
-                                >
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Separator Line */}
-                        <div className="w-[600px] border-b border-gray-200 mb-4"></div>
-
-                        {/* Projects Table */}
-                        <div
-                            className="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col mb-8"
-                            style={{ width: '600px', maxHeight: '400px' }}
-                        >
-                            <div className="overflow-y-auto custom-scrollbar flex-1">
-                                <table className="w-full table-fixed relative" style={{ borderCollapse: 'collapse' }}>
-                                    <thead className="sticky top-0 z-10 shadow-sm">
-                                        <tr className="bg-[#CAF0F8] border-b border-gray-200">
-                                            <th className="text-center py-3 px-4 font-bold text-gray-700 border-r border-gray-200 bg-[#CAF0F8]" style={{ fontSize: '14px', width: '35%' }}>Project Name</th>
-                                            <th className="text-center py-3 px-4 font-bold text-gray-700 border-r border-gray-200 bg-[#CAF0F8]" style={{ fontSize: '14px', width: '30%' }}>Role</th>
-                                            <th className="text-center py-3 px-4 font-bold text-gray-700 border-r border-gray-200 bg-[#CAF0F8]" style={{ fontSize: '14px', width: '17.5%' }}>Start Date</th>
-                                            <th className="text-center py-3 px-4 font-bold text-gray-700 bg-[#CAF0F8]" style={{ fontSize: '14px', width: '17.5%' }}>End Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {detailModal.projects.map((project, index) => (
-                                            <tr key={index} className="hover:bg-gray-50 border-b border-gray-200">
-                                                <td className="py-3 px-4 font-bold text-gray-800 border-r border-gray-200 text-center" style={{ fontSize: '14px' }}>{project.projectName}</td>
-                                                <td className="py-3 px-4 font-bold text-gray-600 border-r border-gray-200 text-center" style={{ fontSize: '14px' }}>{project.role}</td>
-                                                <td className="py-3 px-4 font-bold text-gray-600 border-r border-gray-200 text-center" style={{ fontSize: '14px' }}>{project.startDate}</td>
-                                                <td className="py-3 px-4 font-bold text-gray-600 text-center" style={{ fontSize: '14px' }}>{project.endDate}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Add Resource Modal */}
             {addResourceModal.show && (
@@ -654,6 +588,40 @@ const AdminResources = () => {
                                             />
                                         </div>
                                     </div>
+                                    <div>
+                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Level</label>
+                                        <select
+                                            value={newResource.level}
+                                            onChange={(e) => setNewResource(prev => ({ ...prev, level: e.target.value }))}
+                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                            style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                        >
+                                            {RESOURCE_LEVELS.map(lvl => (
+                                                <option key={lvl} value={lvl}>{lvl}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Reporting Manager</label>
+                                        <select
+                                            value={newResource.reportingManagerId}
+                                            onChange={(e) => setNewResource(prev => ({ ...prev, reportingManagerId: e.target.value }))}
+                                            className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                            style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                        >
+                                            <option value="">Select reporting manager</option>
+                                            {rmCandidates.map(rm => (
+                                                <option key={rm.resourceId} value={rm.resourceId}>
+                                                    {rm.resourceName} ({rm.level})
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {rmCandidates.length === 0 && (
+                                            <p className="text-gray-500 mt-1" style={{ fontSize: '12px' }}>
+                                                No eligible manager yet — promote someone above ABT first.
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -665,15 +633,15 @@ const AdminResources = () => {
                         <div className="px-8 pb-6">
                             <button
                                 onClick={handleSaveResource}
-                                disabled={!newResource.fullName || !newResource.email}
+                                disabled={!newResource.fullName || !newResource.email || !newResource.reportingManagerId}
                                 className="w-full py-3 bg-[#CAF0F8] text-black font-bold rounded-lg hover:opacity-90 transition-colors"
                                 style={{
                                     fontSize: '14px',
                                     fontFamily: 'SF Pro Display',
                                     backgroundColor: '#CAF0F8',
                                     borderRadius: '8px',
-                                    opacity: (!newResource.fullName || !newResource.email) ? 0.5 : 1,
-                                    cursor: (!newResource.fullName || !newResource.email) ? 'not-allowed' : 'pointer'
+                                    opacity: (!newResource.fullName || !newResource.email || !newResource.reportingManagerId) ? 0.5 : 1,
+                                    cursor: (!newResource.fullName || !newResource.email || !newResource.reportingManagerId) ? 'not-allowed' : 'pointer'
                                 }}
                             >
                                 Save & Create Resource
@@ -973,6 +941,32 @@ const AdminResources = () => {
                             {/* Line below title */}
                             <div className="border-b border-gray-300"></div>
 
+                            {/* Detail summary, merged in from the old Detail modal */}
+                            <div className="px-8 pt-4 flex flex-wrap gap-x-10 gap-y-2" style={{ fontSize: '14px' }}>
+                                <div>
+                                    <span className="text-gray-500">Level: </span>
+                                    <span className="font-bold text-gray-800">{trackRecordModal.resource?.level || '-'}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-500">Email: </span>
+                                    <span className="font-bold text-gray-800">{trackRecordModal.resource?.email}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-500">Reporting Manager: </span>
+                                    <span className="font-bold text-gray-800">{trackRecordModal.resource?.reportingManagerName || '-'}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-500">Status: </span>
+                                    <span className="font-bold text-gray-800">{trackRecordModal.resource?.status}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-500">Active Projects: </span>
+                                    <span className="font-bold text-gray-800">
+                                        {currentAssignments(trackRecordModal.resource?.currentAssignments).length}
+                                    </span>
+                                </div>
+                            </div>
+
                             {/* Timeline Content */}
                             <div className="flex items-center justify-center px-8 py-6 flex-1">
                                 <div className="rounded-lg" style={{ width: '1240px', height: '588px' }}>
@@ -1259,8 +1253,10 @@ const AdminResources = () => {
                                     <thead className="sticky top-0 z-10 bg-[#CAF0F8] shadow-sm">
                                         <tr className="border-b border-gray-200">
                                             <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Name</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Level</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Email</th>
+                                            <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Reporting Manager</th>
                                             <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Status</th>
-                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Detail</th>
                                             <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Track Record</th>
                                             <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Actions</th>
                                         </tr>
@@ -1268,7 +1264,7 @@ const AdminResources = () => {
                                     <tbody>
                                         {filteredResources.length === 0 ? (
                                             <tr>
-                                                <td colSpan="5" className="py-8 text-center text-gray-500">
+                                                <td colSpan="7" className="py-8 text-center text-gray-500">
                                                     No resources found
                                                 </td>
                                             </tr>
@@ -1283,6 +1279,9 @@ const AdminResources = () => {
                                                             {resource.resourceName}
                                                         </span>
                                                     </td>
+                                                    <td className="py-4 px-6 text-gray-700">{resource.level || '-'}</td>
+                                                    <td className="py-4 px-6 text-gray-700">{resource.email}</td>
+                                                    <td className="py-4 px-6 text-gray-700">{resource.reportingManagerName || '-'}</td>
                                                     <td className="py-4 px-6">
                                                         <span
                                                             className="px-3 py-1 rounded-full font-bold text-xs"
@@ -1294,18 +1293,6 @@ const AdminResources = () => {
                                                         >
                                                             {resource.status}
                                                         </span>
-                                                    </td>
-                                                    <td className="py-4 px-6 text-center">
-                                                        <button
-                                                            onClick={() => handleViewDetail(resource)}
-                                                            className="inline-flex items-center gap-1 text-gray-600 hover:text-[#0059FF] transition-colors"
-                                                        >
-                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                            </svg>
-                                                            <span style={{ fontSize: '15px' }}>View Detail</span>
-                                                        </button>
                                                     </td>
                                                     <td className="py-4 px-6 text-center">
                                                         <button
@@ -1414,6 +1401,37 @@ const AdminResources = () => {
                                                     style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
                                                 />
                                             </div>
+                                        </div>
+                                        <div>
+                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Level</label>
+                                            <select
+                                                value={editModal.formData.level}
+                                                onChange={(e) => setEditModal(prev => ({ ...prev, formData: { ...prev.formData, level: e.target.value } }))}
+                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                            >
+                                                {RESOURCE_LEVELS.map(lvl => (
+                                                    <option key={lvl} value={lvl}>{lvl}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block mb-2 text-black" style={{ fontSize: '14px', fontWeight: '500', fontFamily: 'SF Pro Display' }}>Reporting Manager</label>
+                                            <select
+                                                value={editModal.formData.reportingManagerId}
+                                                onChange={(e) => setEditModal(prev => ({ ...prev, formData: { ...prev.formData, reportingManagerId: e.target.value } }))}
+                                                className="bg-white focus:outline-none focus:ring-1 focus:ring-[#00B4A6] w-full"
+                                                style={{ height: '35px', border: '1px solid #A9A9A9', borderRadius: '8px', padding: '0 12px', fontSize: '14px' }}
+                                            >
+                                                <option value="">Select reporting manager</option>
+                                                {rmCandidates
+                                                    .filter(rm => rm.resourceId !== editModal.resource?.resourceId)
+                                                    .map(rm => (
+                                                        <option key={rm.resourceId} value={rm.resourceId}>
+                                                            {rm.resourceName} ({rm.level})
+                                                        </option>
+                                                    ))}
+                                            </select>
                                         </div>
                                     </div>
                                 </div>

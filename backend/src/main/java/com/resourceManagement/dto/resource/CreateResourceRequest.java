@@ -1,5 +1,6 @@
 package com.resourceManagement.dto.resource;
 
+import com.resourceManagement.model.enums.ResourceLevel;
 import com.resourceManagement.model.enums.ResourceStatus;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -22,4 +23,10 @@ public class CreateResourceRequest {
 
     @NotNull(message = "Status is required")
     private ResourceStatus status;
+
+    /** Defaults to ABT when the form leaves it blank. */
+    private ResourceLevel level;
+
+    @NotNull(message = "Reporting manager is required")
+    private Integer reportingManagerId;
 }

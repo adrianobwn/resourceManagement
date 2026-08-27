@@ -1,5 +1,6 @@
 package com.resourceManagement.model.entity;
 
+import com.resourceManagement.model.enums.ResourceLevel;
 import com.resourceManagement.model.enums.ResourceStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,4 +31,15 @@ public class Resource {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ResourceStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private ResourceLevel level = ResourceLevel.ABT;
+
+    // Nullable in the schema so the 30 rows that predate this column still load;
+    // the API requires one on every create and update.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reporting_manager_id")
+    private Resource reportingManager;
 }

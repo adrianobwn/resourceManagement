@@ -26,6 +26,94 @@ public class UserService {
     private final com.resourceManagement.repository.AssignmentRequestRepository assignmentRequestRepository;
     private final com.resourceManagement.repository.HistoryLogRepository historyLogRepository;
     private final HistoryLogService historyLogService;
+    private final com.resourceManagement.repository.ResourceRepository resourceRepository;
+    private final com.resourceManagement.repository.ResourceAssignmentRepository assignmentRepository;
+    private final com.resourceManagement.service.assignment.ResourceAssignmentService assignmentService;
+    private final com.resourceManagement.service.project.NotificationService notificationService;
+    private final com.resourceManagement.repository.ProjectRequestResourceRepository projectRequestResourceRepository;
+
+    /**
+     * Promotes a Resource into a DevMan account. The person stops being a Resource:
+     * their row is removed and any active assignment is released first, so nobody
+     * stays on a project they no longer belong to.
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public void assignDevMan(com.resourceManagement.dto.user.AssignDevManRequest request) {
+        com.resourceManagement.model.entity.Resource resource = resourceRepository.findById(request.getResourceId())
+                .orElseThrow(() -> new RuntimeException("Resource not found"));
+
+        if (userRepository.existsByEmail(resource.getEmail())) {
+            throw new RuntimeException("This resource already has an account");
+        }
+
+        User performedBy = currentUser();
+
+        // Release every active assignment before the resource disappears.
+        List<com.resourceManagement.model.entity.ResourceAssignment> active = assignmentRepository
+                .findByResource_ResourceId(resource.getResourceId())
+                .stream()
+                .filter(a -> a.getStatus() == com.resourceManagement.model.enums.AssignmentStatus.ACTIVE)
+                .collect(Collectors.toList());
+
+        for (com.resourceManagement.model.entity.ResourceAssignment assignment : active) {
+            com.resourceManagement.model.entity.Project project = assignment.getProject();
+            assignmentService.processRelease(assignment, performedBy);
+
+            String message = String.format("%s was released from %s after being assigned as DevMan",
+                    resource.getResourceName(), project.getProjectName());
+
+            notificationService.notifyAllAdmins(
+                    com.resourceManagement.model.enums.NotificationType.APPROVAL_RESULT, message);
+
+            // The project's own DevMan needs to know their member is gone.
+            if (project.getDevMan() != null) {
+                notificationService.createNotification(project.getDevMan(),
+                        com.resourceManagement.model.enums.NotificationType.APPROVAL_RESULT, message);
+            }
+        }
+
+        User devMan = User.builder()
+                .name(resource.getResourceName())
+                .email(resource.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .userType(UserType.DEV_MANAGER)
+                .accountStatus(AccountStatus.ACTIVE)
+                .build();
+        userRepository.saveAndFlush(devMan);
+
+        // Anyone mentored by this person loses their RM; admin must pick a new one.
+        resourceRepository.findAll().stream()
+                .filter(r -> r.getReportingManager() != null
+                        && r.getReportingManager().getResourceId().equals(resource.getResourceId()))
+                .forEach(r -> {
+                    r.setReportingManager(null);
+                    resourceRepository.saveAndFlush(r);
+                });
+
+        // Everything pointing at this resource has to go first, otherwise Hibernate
+        // flushes a reference to a row that is on its way out.
+        historyLogRepository.deleteByResource_ResourceId(resource.getResourceId());
+        projectRequestResourceRepository.deleteByResource_ResourceId(resource.getResourceId());
+        assignmentRequestRepository.deleteByResource_ResourceId(resource.getResourceId());
+        assignmentRepository.deleteByResource_ResourceId(resource.getResourceId());
+
+        resource.setReportingManager(null);
+        resourceRepository.saveAndFlush(resource);
+        resourceRepository.delete(resource);
+        resourceRepository.flush();
+
+        historyLogService.logActivity(
+                EntityType.USER,
+                "ASSIGN",
+                "Assigned Resource as DevMan: " + resource.getResourceName(),
+                performedBy);
+    }
+
+    private User currentUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+    }
 
     public void createPm(CreatePmRequest request) {
         System.out.println("Attempting to create DevMan: " + request.getName() + " (" + request.getEmail() + ")");

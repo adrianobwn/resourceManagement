@@ -17,11 +17,12 @@ const AdminDevman = () => {
 
     // Create DevMan Modal State
     const [showCreateModal, setShowCreateModal] = useState(false);
+    // DevMan accounts come from existing resources, so the form is a picker.
     const [newDevMan, setNewDevMan] = useState({
-        fullName: '',
-        email: '',
+        resourceId: '',
         password: ''
     });
+    const [resources, setResources] = useState([]);
 
     // Detail Modal State
     const [showDetailModal, setShowDetailModal] = useState(false);
@@ -69,13 +70,15 @@ const AdminDevman = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [devManagersRes, projectsRes] = await Promise.all([
+            const [devManagersRes, projectsRes, resourcesRes] = await Promise.all([
                 api.get('/users/pms'),
-                api.get('/projects')
+                api.get('/projects'),
+                api.get('/resources')
             ]);
 
             setDevManagers(devManagersRes.data);
             setProjects(projectsRes.data);
+            setResources(resourcesRes.data);
         } catch (error) {
             console.error('Error fetching data:', error);
             showNotification('Failed to fetch data', 'error');
@@ -85,25 +88,24 @@ const AdminDevman = () => {
     };
 
     const handleCreateDevMan = async () => {
-        if (!newDevMan.fullName || !newDevMan.email || !newDevMan.password) {
+        if (!newDevMan.resourceId || !newDevMan.password) {
             showNotification('Please fill all fields', 'error');
             return;
         }
 
         try {
-            await api.post('/users/pm', {
-                name: newDevMan.fullName,
-                email: newDevMan.email,
+            await api.post('/users/devman/assign', {
+                resourceId: parseInt(newDevMan.resourceId),
                 password: newDevMan.password
             });
 
-            showNotification('DevMan created successfully', 'success');
+            showNotification('Resource assigned as DevMan successfully', 'success');
             setShowCreateModal(false);
-            setNewDevMan({ fullName: '', email: '', password: '' });
+            setNewDevMan({ resourceId: '', password: '' });
             fetchData();
         } catch (error) {
-            console.error('Error creating DevMan:', error);
-            showNotification('Failed to create DevMan', 'error');
+            console.error('Error assigning DevMan:', error);
+            showNotification(error.response?.data?.message || 'Failed to assign DevMan', 'error');
         }
     };
 
@@ -343,31 +345,29 @@ const AdminDevman = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <div className="bg-white rounded-2xl w-[500px] animate-scale-in">
                         <div className="flex justify-between items-center px-8 py-6 border-b border-gray-100">
-                            <h2 className="text-2xl font-bold">Add DevMan</h2>
+                            <h2 className="text-2xl font-bold">Assign DevMan</h2>
                             <button onClick={() => setShowCreateModal(false)} className="text-gray-400 hover:text-gray-600">
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
                         <div className="p-8 space-y-6">
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Full Name</label>
-                                <input
-                                    type="text"
-                                    value={newDevMan.fullName}
-                                    onChange={(e) => setNewDevMan({ ...newDevMan, fullName: e.target.value })}
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Resource</label>
+                                <select
+                                    value={newDevMan.resourceId}
+                                    onChange={(e) => setNewDevMan({ ...newDevMan, resourceId: e.target.value })}
                                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#00B4D8] outline-none"
-                                    placeholder="Enter full name"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
-                                <input
-                                    type="email"
-                                    value={newDevMan.email}
-                                    onChange={(e) => setNewDevMan({ ...newDevMan, email: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#00B4D8] outline-none"
-                                    placeholder="name@company.com"
-                                />
+                                >
+                                    <option value="">Select resource</option>
+                                    {resources.map(r => (
+                                        <option key={r.resourceId} value={r.resourceId}>
+                                            {r.resourceName} ({r.level}) — {r.email}
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-gray-500 mt-2 text-xs">
+                                    The resource is removed from Resources and released from any active project.
+                                </p>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">Password</label>
@@ -381,10 +381,10 @@ const AdminDevman = () => {
                             </div>
                             <button
                                 onClick={handleCreateDevMan}
-                                disabled={!newDevMan.fullName || !newDevMan.email || !newDevMan.password}
+                                disabled={!newDevMan.resourceId || !newDevMan.password}
                                 className="w-full py-3 bg-[#CAF0F8] text-black font-bold rounded-lg hover:bg-[#b8e8ef] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
-                                Save & Create DevMan
+                                Assign as DevMan
                             </button>
                         </div>
                     </div>

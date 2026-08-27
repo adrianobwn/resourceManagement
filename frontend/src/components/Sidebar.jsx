@@ -10,6 +10,11 @@ const Sidebar = () => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [notifCount, setNotifCount] = useState(0);
 
+    // The page you are looking at counts as read, so its badge is hidden immediately
+    // instead of waiting for the next poll to catch up with the server.
+    const notifBadge = location.pathname === '/notifications' ? 0 : notifCount;
+    const activitiesBadge = location.pathname === '/activities' ? 0 : unreadCount;
+
     const isDevMan = user.userType && (
         user.userType.toUpperCase().includes('DEV') ||
         user.userType.toUpperCase().includes('MANAGER')
@@ -66,13 +71,13 @@ const Sidebar = () => {
                         name: 'Activities',
                         path: '/activities',
                         icon: ClipboardList,
-                        badge: unreadCount > 0 ? unreadCount : null
+                        badge: activitiesBadge > 0 ? activitiesBadge : null
                     },
                     {
                         name: 'Notifications',
                         path: '/notifications',
                         icon: Bell,
-                        badge: notifCount > 0 ? notifCount : null
+                        badge: notifBadge > 0 ? notifBadge : null
                     }
                 ]
             }
