@@ -88,31 +88,28 @@ const Activities = () => {
             const response = await api.get('/history-logs');
             const logs = response.data;
 
-            // Define headers
+            // "Assignment Period" used to sit here but the API never sends those dates,
+            // so the column was always blank. The period lives in Description instead.
             const headers = [
+                'Timestamp',
                 'Entity Type',
                 'Activity Type',
                 'Project',
                 'Resource',
                 'Role',
-                'Assignment Period',
                 'Description',
-                'Performed By',
-                'Timestamp'
+                'Performed By'
             ];
 
             const exportData = logs.map(log => ({
+                'Timestamp': log.timestamp ? new Date(log.timestamp).toLocaleString('en-GB') : '',
                 'Entity Type': log.entityType || '',
                 'Activity Type': log.activityType || '',
                 'Project': log.projectName || '',
                 'Resource': log.resourceName || '',
                 'Role': log.resourceRole || '',
-                'Assignment Period': log.assignmentStartDate && log.assignmentEndDate
-                    ? `${new Date(log.assignmentStartDate).toLocaleDateString('en-GB')} - ${new Date(log.assignmentEndDate).toLocaleDateString('en-GB')}`
-                    : '',
                 'Description': log.description || '',
-                'Performed By': log.performedBy || '',
-                'Timestamp': log.timestamp ? new Date(log.timestamp).toLocaleString('en-GB') : ''
+                'Performed By': log.performedBy || ''
             }));
 
             // Create worksheet with headers even if data is empty
@@ -121,15 +118,14 @@ const Activities = () => {
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Activity Log');
 
             const columnWidths = [
+                { wch: 20 }, // Timestamp
                 { wch: 15 }, // Entity Type
                 { wch: 20 }, // Activity Type
                 { wch: 30 }, // Project
                 { wch: 25 }, // Resource
                 { wch: 20 }, // Role
-                { wch: 25 }, // Assignment Period
-                { wch: 50 }, // Description
-                { wch: 20 }, // Performed By
-                { wch: 20 }  // Timestamp
+                { wch: 60 }, // Description
+                { wch: 20 }  // Performed By
             ];
             worksheet['!cols'] = columnWidths;
 

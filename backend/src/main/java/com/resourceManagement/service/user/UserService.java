@@ -105,7 +105,10 @@ public class UserService {
         historyLogService.logActivity(
                 EntityType.USER,
                 "ASSIGN",
-                "Assigned Resource as DevMan: " + resource.getResourceName(),
+                String.format("Assigned %s (%s) as DevMan; removed from Resources%s",
+                        resource.getResourceName(),
+                        resource.getEmail(),
+                        active.isEmpty() ? "" : " and released from " + active.size() + " active project(s)"),
                 performedBy);
     }
 

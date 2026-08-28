@@ -76,19 +76,47 @@ const DevmanResources = () => {
 
     const handleExport = () => {
         try {
-            const exportData = filteredResources.map(resource => {
-                const current = currentAssignments(resource.currentAssignments)[0];
-                return {
+            // One row per active assignment, so someone on two projects is not truncated.
+            const exportData = [];
+
+            filteredResources.forEach(resource => {
+                const identity = {
                     'Resource Name': resource.resourceName,
-                    'Status': resource.status,
-                    'Current Project': current?.projectName || '-',
-                    'Role': current?.projectRole || '-',
-                    'Start Date': current?.startDate || '-',
-                    'End Date': current?.endDate || '-'
+                    'Level': resource.level || 'ABT',
+                    'Email': resource.email,
+                    'Reporting Manager': resource.reportingManagerName || '',
+                    'Status': resource.status
                 };
+
+                const ongoing = currentAssignments(resource.currentAssignments);
+
+                if (ongoing.length === 0) {
+                    exportData.push({ ...identity, 'Project': '', 'Role': '', 'Start Date': '', 'End Date': '' });
+                } else {
+                    ongoing.forEach(a => {
+                        exportData.push({
+                            ...identity,
+                            'Project': a.projectName,
+                            'Role': a.projectRole,
+                            'Start Date': new Date(a.startDate).toLocaleDateString('en-GB'),
+                            'End Date': new Date(a.endDate).toLocaleDateString('en-GB')
+                        });
+                    });
+                }
             });
 
             const ws = XLSX.utils.json_to_sheet(exportData);
+            ws['!cols'] = [
+                { wch: 30 }, // Resource Name
+                { wch: 8 },  // Level
+                { wch: 30 }, // Email
+                { wch: 30 }, // Reporting Manager
+                { wch: 12 }, // Status
+                { wch: 35 }, // Project
+                { wch: 25 }, // Role
+                { wch: 15 }, // Start Date
+                { wch: 15 }  // End Date
+            ];
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Resources');
             XLSX.writeFile(wb, `DevMan_Resources_${new Date().toISOString().split('T')[0]}.xlsx`);
@@ -534,7 +562,7 @@ const DevmanResources = () => {
                 >
                     <div
                         className="rounded-2xl relative flex flex-col animate-scale-in bg-white"
-                        style={{ width: '1300px', height: '771px' }}
+                        style={{ width: 'min(1300px, 95vw)', maxHeight: '90vh' }}
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between px-8 pt-6 pb-4">
@@ -583,8 +611,8 @@ const DevmanResources = () => {
                         </div>
 
                         {/* Timeline Content */}
-                        <div className="flex items-center justify-center px-8 py-6 flex-1">
-                            <div className="rounded-lg" style={{ width: '1240px', height: '588px' }}>
+                        <div className="px-8 py-6 flex-1 overflow-auto custom-scrollbar">
+                            <div className="rounded-lg w-full" style={{ minWidth: '900px' }}>
                                 {/* Month Headers */}
                                 <div className="grid grid-cols-9 gap-0">
                                     {(() => {
@@ -831,7 +859,7 @@ const DevmanResources = () => {
                                             <th className="text-left py-4 px-6 font-bold text-black bg-[#CAF0F8]">Email</th>
                                             <th className="text-left py-4 px-6 font-bold text-black bg-[#CAF0F8]">Reporting Manager</th>
                                             <th className="text-left py-4 px-6 font-bold text-black bg-[#CAF0F8]">Status</th>
-                                            <th className="text-center py-4 px-6 font-bold text-black bg-[#CAF0F8]">Track Record</th>
+                                            <th className="text-center py-4 px-6 font-bold text-black bg-[#CAF0F8]">Detail</th>
                                             <th className="text-right py-4 px-6 font-bold text-black bg-[#CAF0F8]"></th>
                                         </tr>
                                     </thead>
@@ -875,7 +903,7 @@ const DevmanResources = () => {
                                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                             </svg>
-                                                            <span style={{ fontSize: '15px' }}>View Track Record</span>
+                                                            <span style={{ fontSize: '15px' }}>View Detail</span>
                                                         </button>
                                                     </td>
                                                     <td className="py-4 px-6 text-right">

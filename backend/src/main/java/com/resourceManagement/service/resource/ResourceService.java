@@ -119,7 +119,10 @@ public class ResourceService {
                         historyLogService.logActivity(
                                         EntityType.RESOURCE,
                                         "CREATE",
-                                        "Created Resource: " + savedResource.getResourceName(),
+                                        String.format("Created Resource %s (%s) at level %s",
+                                                        savedResource.getResourceName(),
+                                                        savedResource.getEmail(),
+                                                        savedResource.getLevel()),
                                         performedBy);
 
                         return mapToResourceResponse(savedResource);
@@ -284,14 +287,28 @@ public class ResourceService {
                 String email = SecurityContextHolder.getContext().getAuthentication().getName();
                 User actor = userRepository.findByEmail(email).orElseThrow();
 
-                String changeLog = String.format(
-                                "Updated Resource: %s -> %s, %s -> %s, level %s -> %s, RM %s -> %s",
-                                oldName, request.getResourceName(),
-                                oldEmail, request.getEmail(),
-                                oldLevel, updated.getLevel(),
-                                oldManager, updated.getReportingManager() != null
-                                                ? updated.getReportingManager().getResourceName()
-                                                : "-");
+                // Only list what actually changed; repeating unchanged values made the log
+                // unreadable ("Agus Setiawan -> Agus Setiawan").
+                String newManager = updated.getReportingManager() != null
+                                ? updated.getReportingManager().getResourceName()
+                                : "-";
+                List<String> changes = new java.util.ArrayList<>();
+                if (!java.util.Objects.equals(oldName, updated.getResourceName())) {
+                        changes.add(String.format("name %s -> %s", oldName, updated.getResourceName()));
+                }
+                if (!java.util.Objects.equals(oldEmail, updated.getEmail())) {
+                        changes.add(String.format("email %s -> %s", oldEmail, updated.getEmail()));
+                }
+                if (!java.util.Objects.equals(oldLevel, updated.getLevel())) {
+                        changes.add(String.format("level %s -> %s", oldLevel, updated.getLevel()));
+                }
+                if (!java.util.Objects.equals(oldManager, newManager)) {
+                        changes.add(String.format("reporting manager %s -> %s", oldManager, newManager));
+                }
+
+                String changeLog = String.format("Updated Resource %s: %s",
+                                updated.getResourceName(),
+                                changes.isEmpty() ? "no changes" : String.join(", ", changes));
 
                 historyLogService.logActivity(
                                 EntityType.RESOURCE,

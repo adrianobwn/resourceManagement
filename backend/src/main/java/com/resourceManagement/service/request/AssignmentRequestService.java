@@ -288,9 +288,11 @@ public class AssignmentRequestService {
                         resourceAssignmentService.extendAssignment(dto);
 
                         // Log with REQUESTER as performer (PM who submitted the request)
-                        String desc = String.format("Extended assignment until %s - %s",
+                        String desc = String.format("Extended %s until %s (requested by %s)%s",
+                                        describeRequestTarget(req),
                                         req.getNewEndDate(),
-                                        req.getReason() != null ? req.getReason() : "");
+                                        req.getRequester().getName(),
+                                        reasonSuffix(req.getReason()));
                         logToHistory(req.getRequester(), EntityType.ASSIGNMENT, "EXTEND", desc,
                                         req.getProject(), req.getResource(), req.getRole());
 
@@ -302,9 +304,11 @@ public class AssignmentRequestService {
                         resourceAssignmentService.releaseAssignment(dto);
 
                         // Log with REQUESTER as performer (PM who submitted the request)
-                        String desc = String.format("Released from project on %s - %s",
+                        String desc = String.format("Released %s on %s (requested by %s)%s",
+                                        describeRequestTarget(req),
                                         req.getNewEndDate(),
-                                        req.getReason() != null ? req.getReason() : "");
+                                        req.getRequester().getName(),
+                                        reasonSuffix(req.getReason()));
                         logToHistory(req.getRequester(), EntityType.ASSIGNMENT, "RELEASE", desc,
                                         req.getProject(), req.getResource(), req.getRole());
 
@@ -395,6 +399,11 @@ public class AssignmentRequestService {
                                                 req.getRequester().getName()));
         }
 
+        /** " - reason" when there is one, empty otherwise. */
+        private String reasonSuffix(String reason) {
+                return (reason != null && !reason.isBlank()) ? " - " + reason : "";
+        }
+
         /** Project proposals carry a name instead of a linked project/resource. */
         private String describeRequestTarget(AssignmentRequest req) {
                 if (req.getRequestType() == RequestType.PROJECT) {
@@ -420,24 +429,24 @@ public class AssignmentRequestService {
                 req.setRejectionReason(reason);
                 requestRepository.save(req);
 
+                String target = describeRequestTarget(req);
+                String suffix = reasonSuffix(reason);
+
                 // Log to History
-                String desc = String.format("Rejected %s request by %s", req.getRequestType(),
-                                req.getRequester().getName());
+                String desc = String.format("Rejected %s request for %s from %s%s",
+                                req.getRequestType(), target, req.getRequester().getName(), suffix);
                 logToHistory(getCurrentUser(), EntityType.REQUEST, "REJECT", desc, req.getProject(), req.getResource(),
                                 req.getRole());
 
-                String target = describeRequestTarget(req);
-                String reasonSuffix = (reason != null && !reason.isBlank()) ? " - " + reason : "";
-
                 notificationService.createNotification(req.getRequester(), NotificationType.APPROVAL_RESULT,
                                 String.format("Your %s request for %s has been rejected%s",
-                                                req.getRequestType(), target, reasonSuffix));
+                                                req.getRequestType(), target, suffix));
 
                 // Admins get it too, so the outcome shows up on their Activities badge.
                 notificationService.notifyAllAdmins(NotificationType.APPROVAL_RESULT,
                                 String.format("%s request for %s by %s was rejected%s",
                                                 req.getRequestType(), target, req.getRequester().getName(),
-                                                reasonSuffix));
+                                                suffix));
         }
 
         @Transactional

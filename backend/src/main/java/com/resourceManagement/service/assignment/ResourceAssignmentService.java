@@ -43,9 +43,14 @@ public class ResourceAssignmentService {
         details.setRequester(performedBy);
         requestRepository.save(details);
 
-        // Log to History
-        String desc = String.format("Admin directly performed %s: %s", type,
-                details.getReason() != null ? details.getReason() : "");
+        // Log to History. Name the people and project involved; "performed PROJECT:"
+        // on its own told the reader nothing.
+        String who = details.getResource() != null ? details.getResource().getResourceName() : "resource";
+        String where = details.getProject() != null ? details.getProject().getProjectName() : "project";
+        String reason = (details.getReason() != null && !details.getReason().isBlank())
+                ? " - " + details.getReason()
+                : "";
+        String desc = String.format("%s by Admin: %s on %s%s", type, who, where, reason);
         historyLogService.logActivity(EntityType.ASSIGNMENT, type.name(), desc, performedBy, details.getProject(),
                 details.getResource(), details.getRole());
     }
@@ -175,7 +180,8 @@ public class ResourceAssignmentService {
             historyLogService.logActivity(
                     EntityType.PROJECT,
                     "AUTO_CLOSE",
-                    "Project closed automatically as all resources were released",
+                    String.format("Project %s closed automatically: its last resource was released",
+                            project.getProjectName()),
                     performedBy,
                     project,
                     null,
@@ -211,7 +217,10 @@ public class ResourceAssignmentService {
             historyLogService.logActivity(
                     EntityType.ASSIGNMENT,
                     "AUTO_RELEASE",
-                    "Assignment released automatically due to reaching end date",
+                    String.format("%s auto-released from %s: assignment ended %s with no extension",
+                            assignment.getResource().getResourceName(),
+                            assignment.getProject().getProjectName(),
+                            assignment.getEndDate()),
                     systemUser,
                     assignment.getProject(),
                     assignment.getResource(),

@@ -206,40 +206,35 @@ const AdminResources = () => {
             const exportData = [];
 
             resources.forEach((resource) => {
-                if (resource.status === 'AVAILABLE') {
-                    // For AVAILABLE resources, add one row with empty project fields
+                // Identity columns repeat on every row so each line stands alone.
+                const identity = {
+                    'Nama': resource.resourceName,
+                    'Level': resource.level || 'ABT',
+                    'Email': resource.email,
+                    'Reporting Manager': resource.reportingManagerName || '',
+                    'Status': resource.status
+                };
+
+                const ongoing = currentAssignments(resource.currentAssignments);
+
+                if (ongoing.length === 0) {
                     exportData.push({
-                        'Nama': resource.resourceName,
+                        ...identity,
                         'Role': '',
-                        'Status': resource.status,
                         'Project': '',
                         'Start Date': '',
                         'End Date': ''
                     });
-                } else if (resource.status === 'ASSIGNED' && resource.currentAssignments) {
-                    // For ASSIGNED resources, add a row for each active assignment
-                    if (resource.currentAssignments.length === 0) {
-                        // If no assignments found, add one row with empty project fields
+                } else {
+                    ongoing.forEach((assignment) => {
                         exportData.push({
-                            'Nama': resource.resourceName,
-                            'Role': '',
-                            'Status': resource.status,
-                            'Project': '',
-                            'Start Date': '',
-                            'End Date': ''
+                            ...identity,
+                            'Role': assignment.projectRole,
+                            'Project': assignment.projectName,
+                            'Start Date': new Date(assignment.startDate).toLocaleDateString('en-GB'),
+                            'End Date': new Date(assignment.endDate).toLocaleDateString('en-GB')
                         });
-                    } else {
-                        resource.currentAssignments.forEach((assignment) => {
-                            exportData.push({
-                                'Nama': resource.resourceName,
-                                'Role': assignment.projectRole,
-                                'Status': resource.status,
-                                'Project': assignment.projectName,
-                                'Start Date': new Date(assignment.startDate).toLocaleDateString('en-GB'),
-                                'End Date': new Date(assignment.endDate).toLocaleDateString('en-GB')
-                            });
-                        });
-                    }
+                    });
                 }
             });
 
@@ -251,8 +246,11 @@ const AdminResources = () => {
             // Set column widths for better readability
             const columnWidths = [
                 { wch: 30 }, // Nama
-                { wch: 25 }, // Role
+                { wch: 8 },  // Level
+                { wch: 30 }, // Email
+                { wch: 30 }, // Reporting Manager
                 { wch: 12 }, // Status
+                { wch: 25 }, // Role
                 { wch: 35 }, // Project
                 { wch: 15 }, // Start Date
                 { wch: 15 }  // End Date
@@ -924,7 +922,7 @@ const AdminResources = () => {
                     >
                         <div
                             className="rounded-2xl relative flex flex-col animate-scale-in bg-white"
-                            style={{ width: '1300px', height: '771px' }}
+                            style={{ width: 'min(1300px, 95vw)', maxHeight: '90vh' }}
                         >
                             {/* Header */}
                             <div className="flex items-center justify-between px-8 pt-6 pb-4">
@@ -973,8 +971,8 @@ const AdminResources = () => {
                             </div>
 
                             {/* Timeline Content */}
-                            <div className="flex items-center justify-center px-8 py-6 flex-1">
-                                <div className="rounded-lg" style={{ width: '1240px', height: '588px' }}>
+                            <div className="px-8 py-6 flex-1 overflow-auto custom-scrollbar">
+                                <div className="rounded-lg w-full" style={{ minWidth: '900px' }}>
                                     {/* Month Headers */}
                                     <div className="grid grid-cols-9 gap-0">
                                         {(() => {
@@ -1262,7 +1260,7 @@ const AdminResources = () => {
                                             <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Email</th>
                                             <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Reporting Manager</th>
                                             <th className="text-left py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Status</th>
-                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Track Record</th>
+                                            <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Detail</th>
                                             <th className="text-center py-4 px-6 font-bold text-gray-700 bg-[#CAF0F8]">Actions</th>
                                         </tr>
                                     </thead>
@@ -1315,7 +1313,7 @@ const AdminResources = () => {
                                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                             </svg>
-                                                            <span style={{ fontSize: '15px' }}>View Track Record</span>
+                                                            <span style={{ fontSize: '15px' }}>View Detail</span>
                                                         </button>
                                                     </td>
                                                     <td className="py-4 px-6 text-center">
