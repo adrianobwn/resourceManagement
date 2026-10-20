@@ -93,13 +93,8 @@ public class ResourceService {
                         throw new RuntimeException("Email already exists");
                 }
 
-                // Generate sequential Employee ID (e.g., EMP001, EMP002) based on current count
-                long count = resourceRepository.count();
-                String employeeId = String.format("EMP%03d", count + 1);
-
                 Resource resource = Resource.builder()
                                 .resourceName(request.getResourceName())
-                                .employeeId(employeeId) // Fallback for stability
                                 .email(request.getEmail())
                                 .status(request.getStatus() != null ? request.getStatus() : ResourceStatus.AVAILABLE)
                                 .level(request.getLevel() != null ? request.getLevel() : ResourceLevel.ABT)
@@ -107,7 +102,11 @@ public class ResourceService {
                                 .build();
 
                 try {
+                        // employeeId is derived from the generated resourceId (guaranteed unique),
+                        // not from a row count, which could collide after deletions or concurrent creates.
                         Resource savedResource = resourceRepository.saveAndFlush(resource);
+                        savedResource.setEmployeeId(String.format("EMP%03d", savedResource.getResourceId()));
+                        savedResource = resourceRepository.saveAndFlush(savedResource);
                         long totalCount = resourceRepository.count();
                         System.out.println("Resource successfully saved. Total resources in DB: " + totalCount);
 
@@ -241,6 +240,15 @@ public class ResourceService {
 
                 // Delete history logs
                 historyLogRepository.deleteByResource_ResourceId(resourceId);
+
+                // Anyone mentored by this resource loses their RM; admin must pick a new one.
+                resourceRepository.findAll().stream()
+                                .filter(r -> r.getReportingManager() != null
+                                                && r.getReportingManager().getResourceId().equals(resourceId))
+                                .forEach(r -> {
+                                        r.setReportingManager(null);
+                                        resourceRepository.saveAndFlush(r);
+                                });
 
                 // Log deletion (this log will be deleted eventually if we delete everything,
                 // but for now it's okay)

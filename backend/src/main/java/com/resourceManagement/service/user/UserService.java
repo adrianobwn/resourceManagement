@@ -31,6 +31,7 @@ public class UserService {
     private final com.resourceManagement.service.assignment.ResourceAssignmentService assignmentService;
     private final com.resourceManagement.service.project.NotificationService notificationService;
     private final com.resourceManagement.repository.ProjectRequestResourceRepository projectRequestResourceRepository;
+    private final com.resourceManagement.repository.NotificationRepository notificationRepository;
 
     /**
      * Promotes a Resource into a DevMan account. The person stops being a Resource:
@@ -171,7 +172,7 @@ public class UserService {
     @org.springframework.transaction.annotation.Transactional
     public void deleteUser(Integer userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new RuntimeException("DevMan not found with id: " + userId));
 
         if (projectRepository.existsByDevMan_UserId(userId)) {
             throw new RuntimeException(
@@ -183,6 +184,9 @@ public class UserService {
 
         // Delete history logs performed by this user
         historyLogRepository.deleteByPerformedBy_UserId(userId);
+
+        // Delete notifications addressed to this user
+        notificationRepository.deleteByRecipient_UserId(userId);
 
         // Log deletion
         String currentPrincipalName = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -201,7 +205,7 @@ public class UserService {
     @org.springframework.transaction.annotation.Transactional
     public void updateUser(Integer userId, com.resourceManagement.dto.user.UpdateUserRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new RuntimeException("DevMan not found with id: " + userId));
 
         String oldName = user.getName();
         String oldEmail = user.getEmail();

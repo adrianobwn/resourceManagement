@@ -22,7 +22,7 @@ public class Resource {
     @Column(nullable = false)
     private String resourceName;
 
-    @Column(nullable = true)
+    @Column(nullable = true, unique = true)
     private String employeeId;
 
     @Column(nullable = false, unique = true)
