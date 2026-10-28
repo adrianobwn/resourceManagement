@@ -169,6 +169,17 @@ public class ResourceService {
                 LocalDate startDate = LocalDate.parse(request.getStartDate(), formatter);
                 LocalDate endDate = LocalDate.parse(request.getEndDate(), formatter);
 
+                // Same rules as a DevMan assign request, so both paths reject the same input.
+                if (project.getStatus() == com.resourceManagement.model.enums.ProjectStatus.CLOSED) {
+                        throw new RuntimeException("Cannot assign resources to a CLOSED project");
+                }
+                if (startDate.isBefore(LocalDate.now())) {
+                        throw new RuntimeException("Start date cannot be in the past.");
+                }
+                if (!endDate.isAfter(startDate)) {
+                        throw new RuntimeException("End date must be after start date.");
+                }
+
                 ResourceAssignment assignment = ResourceAssignment.builder()
                                 .resource(resource)
                                 .project(project)

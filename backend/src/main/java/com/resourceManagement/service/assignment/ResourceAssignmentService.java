@@ -36,23 +36,27 @@ public class ResourceAssignmentService {
     private final HistoryLogService historyLogService;
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository; // Added injection
+    private final com.resourceManagement.service.project.NotificationService notificationService;
 
+    /** Same wording as AssignmentRequestService.recordDirectAction, so every assign reads alike in the log. */
     private void recordDirectAction(User performedBy, RequestType type, AssignmentRequest details) {
         details.setRequestType(type);
         details.setStatus(RequestStatus.APPROVED);
         details.setRequester(performedBy);
         requestRepository.save(details);
 
-        // Log to History. Name the people and project involved; "performed PROJECT:"
-        // on its own told the reader nothing.
-        String who = details.getResource() != null ? details.getResource().getResourceName() : "resource";
-        String where = details.getProject() != null ? details.getProject().getProjectName() : "project";
-        String reason = (details.getReason() != null && !details.getReason().isBlank())
-                ? " - " + details.getReason()
-                : "";
-        String desc = String.format("%s by Admin: %s on %s%s", type, who, where, reason);
+        String desc = String.format("Assigned %s to %s as %s from %s to %s by Admin",
+                details.getResource().getResourceName(), details.getProject().getProjectName(),
+                details.getRole(), details.getStartDate(), details.getEndDate());
         historyLogService.logActivity(EntityType.ASSIGNMENT, type.name(), desc, performedBy, details.getProject(),
                 details.getResource(), details.getRole());
+    }
+
+    /** Extend and release only make sense on an assignment that is still running. */
+    private void requireActive(ResourceAssignment assignment) {
+        if (assignment.getStatus() != AssignmentStatus.ACTIVE) {
+            throw new RuntimeException("Assignment is no longer active (status " + assignment.getStatus() + ")");
+        }
     }
 
     private User getCurrentUser() {
@@ -127,6 +131,10 @@ public class ResourceAssignmentService {
     public ResourceAssignment extendAssignment(ExtendAssignmentRequest request) {
         ResourceAssignment assignment = assignmentRepository.findById(request.getAssignmentId())
                 .orElseThrow(() -> new RuntimeException("Assignment not found with id: " + request.getAssignmentId()));
+        requireActive(assignment);
+        if (request.getNewEndDate() == null || !request.getNewEndDate().isAfter(assignment.getEndDate())) {
+            throw new RuntimeException("New end date must be after the current end date (" + assignment.getEndDate() + ")");
+        }
 
         assignment.setEndDate(request.getNewEndDate());
         ResourceAssignment saved = assignmentRepository.save(assignment);
@@ -140,6 +148,7 @@ public class ResourceAssignmentService {
     public ResourceAssignment releaseAssignment(ReleaseAssignmentRequest request) {
         ResourceAssignment assignment = assignmentRepository.findById(request.getAssignmentId())
                 .orElseThrow(() -> new RuntimeException("Assignment not found with id: " + request.getAssignmentId()));
+        requireActive(assignment);
 
         assignment.setEndDate(request.getReleaseDate());
         return processRelease(assignment, getCurrentUser());
@@ -204,7 +213,8 @@ public class ResourceAssignmentService {
             return;
         }
 
-        // Use a system user or the first admin for logging
+        // ponytail: performed_by is NOT NULL, so the first Admin stands in for the system; the
+        // description says "by the system". Add a dedicated System account if the export needs it.
         User systemUser = userRepository.findAll().stream()
                 .filter(u -> u.getUserType() == com.resourceManagement.model.enums.UserType.Admin)
                 .findFirst()
@@ -213,18 +223,50 @@ public class ResourceAssignmentService {
         for (ResourceAssignment assignment : expiredAssignments) {
             processRelease(assignment, systemUser);
 
-            // Log the automatic release
+            String desc = String.format("%s released automatically by the system from %s: assignment ended %s with no extension",
+                    assignment.getResource().getResourceName(),
+                    assignment.getProject().getProjectName(),
+                    assignment.getEndDate());
             historyLogService.logActivity(
                     EntityType.ASSIGNMENT,
                     "AUTO_RELEASE",
-                    String.format("%s auto-released from %s: assignment ended %s with no extension",
-                            assignment.getResource().getResourceName(),
-                            assignment.getProject().getProjectName(),
-                            assignment.getEndDate()),
+                    desc,
                     systemUser,
                     assignment.getProject(),
                     assignment.getResource(),
                     assignment.getProjectRole());
+
+            // A RELEASE row marked APPROVED, like a direct action, so the release shows on the Activities page.
+            requestRepository.save(AssignmentRequest.builder()
+                    .requestType(RequestType.RELEASE)
+                    .status(RequestStatus.APPROVED)
+                    .requester(systemUser)
+                    .assignmentId(assignment.getAssignmentId())
+                    .project(assignment.getProject())
+                    .resource(assignment.getResource())
+                    .role(assignment.getProjectRole())
+                    .currentEndDate(assignment.getEndDate())
+                    .newEndDate(assignment.getEndDate())
+                    .reason("Released automatically by the system: assignment ended " + assignment.getEndDate())
+                    .build());
+
+            // Requests still waiting on this assignment can no longer be carried out.
+            for (AssignmentRequest pending : requestRepository.findByAssignmentIdAndStatus(
+                    assignment.getAssignmentId(), RequestStatus.PENDING)) {
+                pending.setStatus(RequestStatus.REJECTED);
+                pending.setRejectionReason("Assignment was released automatically by the system on " + today);
+                requestRepository.save(pending);
+                historyLogService.logActivity(EntityType.REQUEST, "REJECT",
+                        String.format("Rejected %s request for %s on %s from %s automatically by the system: assignment already released",
+                                pending.getRequestType(), assignment.getResource().getResourceName(),
+                                assignment.getProject().getProjectName(), pending.getRequester().getName()),
+                        systemUser, assignment.getProject(), assignment.getResource(), assignment.getProjectRole());
+                notificationService.createNotification(pending.getRequester(),
+                        com.resourceManagement.model.enums.NotificationType.APPROVAL_RESULT,
+                        String.format("Your %s request for %s on %s was rejected: the assignment was released automatically",
+                                pending.getRequestType(), assignment.getResource().getResourceName(),
+                                assignment.getProject().getProjectName()));
+            }
         }
     }
 

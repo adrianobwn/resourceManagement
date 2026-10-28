@@ -29,6 +29,9 @@ public interface AssignmentRequestRepository extends JpaRepository<AssignmentReq
     long countByResource_ResourceIdAndProject_ProjectIdAndRoleAndStatus(Integer resourceId, Integer projectId,
             String role, RequestStatus status);
 
+    // Pending extend/release requests that target one assignment.
+    List<AssignmentRequest> findByAssignmentIdAndStatus(Integer assignmentId, RequestStatus status);
+
     void deleteByProject_ProjectId(Integer projectId);
 
     void deleteByResource_ResourceId(Integer resourceId);

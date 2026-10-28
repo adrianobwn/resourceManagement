@@ -37,12 +37,36 @@ public class AssignmentRequestService {
                                 role);
         }
 
+        /** A DevMan may only ask for changes on projects they manage. */
+        private void requireOwnProject(User requester, Project project) {
+                if (project.getDevMan() == null || !project.getDevMan().getUserId().equals(requester.getUserId())) {
+                        throw new RuntimeException("You can only submit requests for projects you manage.");
+                }
+        }
+
+        /** Extend/release requests need an active assignment with nothing else waiting on it. */
+        private void requireOpenAssignment(ResourceAssignment assignment) {
+                if (assignment.getStatus() != AssignmentStatus.ACTIVE) {
+                        throw new RuntimeException("Assignment is no longer active.");
+                }
+                if (!requestRepository.findByAssignmentIdAndStatus(assignment.getAssignmentId(), RequestStatus.PENDING)
+                                .isEmpty()) {
+                        throw new RuntimeException("This assignment already has a pending request.");
+                }
+        }
+
         @Transactional
         public void createExtendRequest(String requesterEmail, ExtendAssignmentRequest dto) {
                 User requester = userRepository.findByEmail(requesterEmail)
                                 .orElseThrow(() -> new RuntimeException("User not found"));
                 ResourceAssignment currentAssignment = assignmentRepository.findById(dto.getAssignmentId())
                                 .orElseThrow(() -> new RuntimeException("Assignment not found"));
+                requireOwnProject(requester, currentAssignment.getProject());
+                requireOpenAssignment(currentAssignment);
+                if (dto.getNewEndDate() == null || !dto.getNewEndDate().isAfter(currentAssignment.getEndDate())) {
+                        throw new RuntimeException("New end date must be after the current end date ("
+                                        + currentAssignment.getEndDate() + ")");
+                }
 
                 AssignmentRequest request = AssignmentRequest.builder()
                                 .requestType(RequestType.EXTEND)
@@ -73,6 +97,8 @@ public class AssignmentRequestService {
                                 .orElseThrow(() -> new RuntimeException("User not found"));
                 ResourceAssignment currentAssignment = assignmentRepository.findById(dto.getAssignmentId())
                                 .orElseThrow(() -> new RuntimeException("Assignment not found"));
+                requireOwnProject(requester, currentAssignment.getProject());
+                requireOpenAssignment(currentAssignment);
 
                 AssignmentRequest request = AssignmentRequest.builder()
                                 .requestType(RequestType.RELEASE)
@@ -105,6 +131,10 @@ public class AssignmentRequestService {
                                 .orElseThrow(() -> new RuntimeException("Resource not found"));
                 Project project = projectRepository.findById(dto.getProjectId())
                                 .orElseThrow(() -> new RuntimeException("Project not found"));
+                requireOwnProject(requester, project);
+                if (project.getStatus() == ProjectStatus.CLOSED) {
+                        throw new RuntimeException("Cannot assign resources to a CLOSED project");
+                }
 
                 // Check for existing active assignment to this project with the SAME ROLE
                 long activeAssignments = assignmentRepository
@@ -280,20 +310,23 @@ public class AssignmentRequestService {
                         throw new RuntimeException("Request is not pending");
                 }
 
+                // The Admin who decides is the performer; the DevMan is named in the description.
+                User admin = getCurrentUser();
+
                 if (req.getRequestType() == RequestType.EXTEND) {
                         ExtendAssignmentRequest dto = new ExtendAssignmentRequest();
                         dto.setAssignmentId(req.getAssignmentId());
                         dto.setNewEndDate(req.getNewEndDate());
                         dto.setReason(req.getReason());
-                        resourceAssignmentService.extendAssignment(dto);
+                        resourceAssignmentService.extendAssignment(dto); // rejects inactive assignments
 
-                        // Log with REQUESTER as performer (PM who submitted the request)
-                        String desc = String.format("Extended %s until %s (requested by %s)%s",
+                        String desc = String.format("Extended %s from %s to %s (requested by %s)%s",
                                         describeRequestTarget(req),
+                                        req.getCurrentEndDate(),
                                         req.getNewEndDate(),
                                         req.getRequester().getName(),
                                         reasonSuffix(req.getReason()));
-                        logToHistory(req.getRequester(), EntityType.ASSIGNMENT, "EXTEND", desc,
+                        logToHistory(admin, EntityType.ASSIGNMENT, "EXTEND", desc,
                                         req.getProject(), req.getResource(), req.getRole());
 
                 } else if (req.getRequestType() == RequestType.RELEASE) {
@@ -301,15 +334,14 @@ public class AssignmentRequestService {
                         dto.setAssignmentId(req.getAssignmentId());
                         dto.setReleaseDate(req.getNewEndDate());
                         dto.setReason(req.getReason());
-                        resourceAssignmentService.releaseAssignment(dto);
+                        resourceAssignmentService.releaseAssignment(dto); // rejects inactive assignments
 
-                        // Log with REQUESTER as performer (PM who submitted the request)
                         String desc = String.format("Released %s on %s (requested by %s)%s",
                                         describeRequestTarget(req),
                                         req.getNewEndDate(),
                                         req.getRequester().getName(),
                                         reasonSuffix(req.getReason()));
-                        logToHistory(req.getRequester(), EntityType.ASSIGNMENT, "RELEASE", desc,
+                        logToHistory(admin, EntityType.ASSIGNMENT, "RELEASE", desc,
                                         req.getProject(), req.getResource(), req.getRole());
 
                 } else if (req.getRequestType() == RequestType.PROJECT) {
@@ -321,6 +353,11 @@ public class AssignmentRequestService {
                                         .status(ProjectStatus.ONGOING)
                                         .build();
                         Project savedProject = projectRepository.save(project);
+                        logToHistory(admin, EntityType.PROJECT, "PROJECT",
+                                        String.format("Approved project proposal %s for client %s (requested by %s)",
+                                                        savedProject.getProjectName(), savedProject.getClientName(),
+                                                        req.getRequester().getName()),
+                                        savedProject, null, null);
 
                         // Create assignments
                         if (req.getResourcePlan() != null) {
@@ -341,6 +378,9 @@ public class AssignmentRequestService {
                                                         .status(AssignmentStatus.ACTIVE)
                                                         .build();
                                         assignmentRepository.save(assignment);
+                                        logAssign(admin, savedProject, item.getResource(), item.getRole(),
+                                                        item.getStartDate(), item.getEndDate(),
+                                                        "from the approved proposal of " + req.getRequester().getName());
 
                                         // Update resource status
                                         Resource res = item.getResource();
@@ -376,6 +416,9 @@ public class AssignmentRequestService {
                                         .status(AssignmentStatus.ACTIVE)
                                         .build();
                         assignmentRepository.save(assignment);
+                        logAssign(admin, req.getProject(), req.getResource(), req.getRole(),
+                                        req.getStartDate(), req.getEndDate(),
+                                        "requested by " + req.getRequester().getName());
 
                         // Update resource status
                         Resource res = req.getResource();
@@ -397,6 +440,16 @@ public class AssignmentRequestService {
                                 String.format("%s request for %s by %s was approved",
                                                 req.getRequestType(), approvedTarget,
                                                 req.getRequester().getName()));
+        }
+
+        /** One wording for every new assignment, whichever path created it. */
+        private void logAssign(User performedBy, Project project, Resource resource, String role,
+                        LocalDate start, LocalDate end, String origin) {
+                logToHistory(performedBy, EntityType.ASSIGNMENT, "ASSIGN",
+                                String.format("Assigned %s to %s as %s from %s to %s (%s)",
+                                                resource.getResourceName(), project.getProjectName(), role, start, end,
+                                                origin),
+                                project, resource, role);
         }
 
         /** " - reason" when there is one, empty otherwise. */
@@ -424,6 +477,9 @@ public class AssignmentRequestService {
         public void rejectRequest(Integer requestId, String reason) {
                 AssignmentRequest req = requestRepository.findById(requestId)
                                 .orElseThrow(() -> new RuntimeException("Request not found"));
+                if (req.getStatus() != RequestStatus.PENDING) {
+                        throw new RuntimeException("Request is not pending");
+                }
 
                 req.setStatus(RequestStatus.REJECTED);
                 req.setRejectionReason(reason);
@@ -457,10 +513,27 @@ public class AssignmentRequestService {
                 // createdAt handled by @PrePersist
                 requestRepository.save(details);
 
-                // Log to History
-                String desc = String.format("Admin directly performed %s: %s", type,
-                                details.getReason() != null ? details.getReason() : "");
-                logToHistory(performedBy, EntityType.ASSIGNMENT, type.name(), desc, details.getProject(),
+                // Same facts as the approval path: who, where, and the dates that changed.
+                String who = details.getResource() != null ? details.getResource().getResourceName() : "";
+                String where = details.getProject() != null ? details.getProject().getProjectName() : "";
+                String desc;
+                EntityType entity = EntityType.ASSIGNMENT;
+                switch (type) {
+                        case ASSIGN -> desc = String.format("Assigned %s to %s as %s from %s to %s by Admin",
+                                        who, where, details.getRole(), details.getStartDate(), details.getEndDate());
+                        case EXTEND -> desc = String.format("Extended %s on %s from %s to %s by Admin%s",
+                                        who, where, details.getCurrentEndDate(), details.getNewEndDate(),
+                                        reasonSuffix(details.getReason()));
+                        case RELEASE -> desc = String.format("Released %s from %s on %s by Admin%s",
+                                        who, where, details.getNewEndDate(), reasonSuffix(details.getReason()));
+                        case PROJECT -> {
+                                entity = EntityType.PROJECT;
+                                desc = String.format("Created project %s for client %s by Admin",
+                                                details.getProjectName(), details.getClientName());
+                        }
+                        default -> desc = type + " by Admin";
+                }
+                logToHistory(performedBy, entity, type.name(), desc, details.getProject(),
                                 details.getResource(),
                                 details.getRole());
         }

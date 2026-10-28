@@ -1,6 +1,8 @@
 package com.resourceManagement.security;
 
 import org.springframework.context.annotation.*;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.*;
@@ -13,6 +15,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
+@EnableMethodSecurity // without it the @PreAuthorize on POST /api/assignments was ignored
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
@@ -33,6 +36,14 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/users/**").hasRole("Admin")
+                // Admin-only writes. DevMan changes go through /api/requests/** and
+                // /api/assignments/extend|release, which turn them into pending requests.
+                .requestMatchers(HttpMethod.POST, "/api/requests/*/approve", "/api/requests/*/reject").hasRole("Admin")
+                .requestMatchers(HttpMethod.POST, "/api/assignments", "/api/resources", "/api/resources/assign",
+                        "/api/projects").hasRole("Admin")
+                .requestMatchers(HttpMethod.PUT, "/api/resources/**", "/api/projects/**").hasRole("Admin")
+                .requestMatchers(HttpMethod.PATCH, "/api/projects/**").hasRole("Admin")
+                .requestMatchers(HttpMethod.DELETE, "/api/resources/**", "/api/projects/**").hasRole("Admin")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(
