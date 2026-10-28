@@ -19,3 +19,5 @@ frontend/.env.local
 # System Files
 .DS_Store
 Thumbs.db
+# Claude Code
+.claude/
