@@ -65,7 +65,7 @@ const AdminNotifications = () => {
             fetchRequests(); // Refresh data
         } catch (error) {
             console.error('Error approving request:', error);
-            showNotification('Failed to approve request', 'error');
+            showNotification(error.response?.data?.message || 'Failed to approve request', 'error');
         }
     };
 
@@ -78,7 +78,7 @@ const AdminNotifications = () => {
                 fetchRequests(); // Refresh data
             } catch (error) {
                 console.error('Error declining request:', error);
-                showNotification('Failed to decline request', 'error');
+                showNotification(error.response?.data?.message || 'Failed to decline request', 'error');
             }
         }
     };

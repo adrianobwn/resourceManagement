@@ -245,7 +245,7 @@ const DevmanProject = () => {
             showNotification('Project proposal submitted successfully!', 'success');
         } catch (error) {
             console.error('Error proposing project:', error);
-            showNotification('Failed to submit proposal', 'error');
+            showNotification(error.response?.data?.message || 'Failed to submit proposal', 'error');
         }
     };
 

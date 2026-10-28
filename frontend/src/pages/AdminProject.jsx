@@ -163,7 +163,7 @@ const AdminProject = () => {
             fetchProjectResources(selectedProject.projectId);
         } catch (error) {
             console.error('Error extending assignment:', error);
-            showNotification('Failed to extend assignment', 'error');
+            showNotification(error.response?.data?.message || 'Failed to extend assignment', 'error');
         }
     };
 
@@ -192,7 +192,7 @@ const AdminProject = () => {
             }
         } catch (error) {
             console.error('Error releasing assignment:', error);
-            showNotification('Failed to release resource', 'error');
+            showNotification(error.response?.data?.message || 'Failed to release resource', 'error');
         }
     };
 
