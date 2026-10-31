@@ -250,23 +250,7 @@ public class ResourceAssignmentService {
                     .reason("Released automatically by the system: assignment ended " + assignment.getEndDate())
                     .build());
 
-            // Requests still waiting on this assignment can no longer be carried out.
-            for (AssignmentRequest pending : requestRepository.findByAssignmentIdAndStatus(
-                    assignment.getAssignmentId(), RequestStatus.PENDING)) {
-                pending.setStatus(RequestStatus.REJECTED);
-                pending.setRejectionReason("Assignment was released automatically by the system on " + today);
-                requestRepository.save(pending);
-                historyLogService.logActivity(EntityType.REQUEST, "REJECT",
-                        String.format("Rejected %s request for %s on %s from %s automatically by the system: assignment already released",
-                                pending.getRequestType(), assignment.getResource().getResourceName(),
-                                assignment.getProject().getProjectName(), pending.getRequester().getName()),
-                        systemUser, assignment.getProject(), assignment.getResource(), assignment.getProjectRole());
-                notificationService.createNotification(pending.getRequester(),
-                        com.resourceManagement.model.enums.NotificationType.APPROVAL_RESULT,
-                        String.format("Your %s request for %s on %s was rejected: the assignment was released automatically",
-                                pending.getRequestType(), assignment.getResource().getResourceName(),
-                                assignment.getProject().getProjectName()));
-            }
+            rejectPendingRequests(assignment, systemUser, "automatically by the system");
         }
     }
 
@@ -279,5 +263,27 @@ public class ResourceAssignmentService {
     public ResourceAssignment getAssignmentById(Integer id) {
         return assignmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Assignment not found with id: " + id));
+    }
+
+    // Requests still waiting on a released assignment can no longer be carried out.
+    // Used by both automatic release and Admin direct release so the two paths stay consistent.
+    @Transactional
+    public void rejectPendingRequests(ResourceAssignment assignment, User performedBy, String releasedBy) {
+        for (AssignmentRequest pending : requestRepository.findByAssignmentIdAndStatus(
+                assignment.getAssignmentId(), RequestStatus.PENDING)) {
+            pending.setStatus(RequestStatus.REJECTED);
+            pending.setRejectionReason("Assignment was released " + releasedBy + " on " + LocalDate.now());
+            requestRepository.save(pending);
+            historyLogService.logActivity(EntityType.REQUEST, "REJECT",
+                    String.format("Rejected %s request for %s on %s from %s %s: assignment already released",
+                            pending.getRequestType(), assignment.getResource().getResourceName(),
+                            assignment.getProject().getProjectName(), pending.getRequester().getName(), releasedBy),
+                    performedBy, assignment.getProject(), assignment.getResource(), assignment.getProjectRole());
+            notificationService.createNotification(pending.getRequester(),
+                    com.resourceManagement.model.enums.NotificationType.APPROVAL_RESULT,
+                    String.format("Your %s request for %s on %s was rejected: the assignment was released %s",
+                            pending.getRequestType(), assignment.getResource().getResourceName(),
+                            assignment.getProject().getProjectName(), releasedBy));
+        }
     }
 }

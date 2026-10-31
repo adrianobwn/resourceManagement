@@ -98,6 +98,7 @@ public class ResourceAssignmentController {
                     .reason(request.getReason())
                     .build();
             requestService.recordDirectAction(user, com.resourceManagement.model.enums.RequestType.RELEASE, details);
+            assignmentService.rejectPendingRequests(updatedAssignment, user, "directly by " + user.getName());
 
             return ResponseEntity.ok("Assignment released successfully");
         }

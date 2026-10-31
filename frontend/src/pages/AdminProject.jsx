@@ -141,7 +141,7 @@ const AdminProject = () => {
 
     const handleOpenReleaseModal = (resource) => {
         setSelectedResourceForAction(resource);
-        setActionDate(new Date().toISOString().split('T')[0]);
+        setActionDate(new Date().toLocaleDateString('en-CA'));
         setActionReason('');
         setShowExtendModal(false);
         setShowReleaseModal(true);

@@ -129,7 +129,7 @@ const Activities = () => {
             ];
             worksheet['!cols'] = columnWidths;
 
-            const fileName = `Activity_Log_${new Date().toISOString().split('T')[0]}.xlsx`;
+            const fileName = `Activity_Log_${new Date().toLocaleDateString('en-CA')}.xlsx`;
             XLSX.writeFile(workbook, fileName);
             showNotification('Export successful! File downloaded.', 'success');
         } catch (error) {
